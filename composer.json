@@ -1,0 +1,19 @@
+{
+    "name": "tecnm/insignias-sistema",
+    "description": "Sistema de Insignias Digitales TecNM",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "phpoffice/phpspreadsheet": "^1.29"
+    },
+    "autoload": {
+        "psr-4": {
+            "TecNM\\Insignias\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

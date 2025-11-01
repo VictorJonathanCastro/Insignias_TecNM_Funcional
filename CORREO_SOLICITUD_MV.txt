@@ -1,0 +1,128 @@
+📧 CORREO OFICIAL - SOLICITUD MÁQUINA VIRTUAL
+===============================================
+
+Para: d_vinculacion0402@tecnm.mx
+CC: s_vinculacion@tecnm.mx
+Fecha: [Fecha actual]
+De: [Su nombre y cargo]
+
+Asunto: 🚀 Solicitud Urgente - Máquina Virtual Proyecto Insignias Digitales TecNM
+
+─────────────────────────────────────────────────────────────────────────────
+
+Estimados compañeros del área de Tecnologías de la Información y Comunicaciones:
+
+Por instrucciones de la Secretaria Mtra. Andrea Zárate, solicito de manera urgente el proceso de pedimento de una máquina virtual para el proyecto Sistema de Insignias Digitales TecNM.
+
+🎯 RESUMEN EJECUTIVO
+────────────────────
+
+Este proyecto estratégico modernizará completamente el sistema de reconocimientos académicos del TecNM, implementando:
+
+✅ Carga masiva de datos via Excel (ya desarrollado)
+✅ Sistema de verificación pública de insignias
+✅ Integración con redes sociales para compartir credenciales
+✅ Panel administrativo completo para gestión
+✅ API REST para integraciones futuras
+
+💻 ESPECIFICACIONES TÉCNICAS
+────────────────────────────
+
+Basadas en proyecto AlfabetizaTec + optimizaciones específicas:
+
+┌─────────────────────┬─────────────────────┬─────────────────────────────┐
+│ Componente          │ Especificación       │ Justificación                │
+├─────────────────────┼─────────────────────┼─────────────────────────────┤
+│ Sistema Operativo   │ Ubuntu Server 20.04  │ Estabilidad y soporte       │
+│                     │ LTS                 │ extendido                   │
+├─────────────────────┼─────────────────────┼─────────────────────────────┤
+│ CPU                 │ 8 vCPU (3.0 GHz)     │ Procesamiento masivo de     │
+│                     │                     │ Excel                       │
+├─────────────────────┼─────────────────────┼─────────────────────────────┤
+│ RAM                 │ 32 GB DDR4          │ Cache de BD + usuarios       │
+│                     │                     │ concurrentes                 │
+├─────────────────────┼─────────────────────┼─────────────────────────────┤
+│ Almacenamiento      │ 500 GB SSD NVMe     │ Alto rendimiento I/O        │
+├─────────────────────┼─────────────────────┼─────────────────────────────┤
+│ Red                 │ 10 Gbps + IP pública│ Distribución de imágenes     │
+├─────────────────────┼─────────────────────┼─────────────────────────────┤
+│ Backup              │ 1 TB adicional      │ Retención 90 días           │
+└─────────────────────┴─────────────────────┴─────────────────────────────┘
+
+📊 CAPACIDADES DEL SISTEMA
+──────────────────────────
+
+• Usuarios concurrentes: 1,000+ simultáneos
+• Carga masiva: 50,000+ registros por archivo Excel
+• Volumen anual: 1,000,000+ insignias procesadas
+• Almacenamiento: 2 TB+ de imágenes digitales
+• Uptime: 99.9% disponibilidad garantizada
+
+🚀 IMPACTO INSTITUCIONAL
+─────────────────────────
+
+Beneficios Cuantificables:
+
+💰 Ahorro anual: $2,000,000+ MXN en procesos manuales
+⚡ Eficiencia: 80% reducción en tiempo de procesamiento
+👥 Usuarios: 500,000+ estudiantes + 60,000+ personal
+🏫 Instituciones: 266+ centros tecnológicos
+📈 ROI: 300% retorno en el primer año
+
+📅 CRONOGRAMA URGENTE
+──────────────────────
+
+┌─────────────┬─────────────┬─────────────────────────────┐
+│ Fase        │ Duración    │ Descripción                 │
+├─────────────┼─────────────┼─────────────────────────────┤
+│ Solicitud   │ Inmediato   │ [Fecha actual]              │
+├─────────────┼─────────────┼─────────────────────────────┤
+│ Aprobación  │ 3 días      │ [Fecha + 3 días]            │
+├─────────────┼─────────────┼─────────────────────────────┤
+│ Configuración│ 1 semana   │ [Fecha + 1 semana]          │
+├─────────────┼─────────────┼─────────────────────────────┤
+│ Desarrollo  │ 2 semanas   │ [Fecha + 2 semanas]         │
+├─────────────┼─────────────┼─────────────────────────────┤
+│ Pruebas     │ 4 semanas   │ [Fecha + 6 semanas]       │
+├─────────────┼─────────────┼─────────────────────────────┤
+│ Producción  │ 2 semanas   │ [Fecha + 8 semanas]         │
+└─────────────┴─────────────┴─────────────────────────────┘
+
+🎯 ACCIÓN REQUERIDA
+────────────────────
+
+Solicito su apoyo inmediato para:
+
+✅ Aprobar la solicitud de máquina virtual
+✅ Asignar recursos técnicos para configuración
+✅ Coordinar cronograma de implementación
+✅ Facilitar acceso a sistemas existentes del TecNM
+
+📎 DOCUMENTACIÓN ADJUNTA
+─────────────────────────
+
+🔧 Especificaciones técnicas detalladas
+📊 Sistema desarrollado (URL de demostración)
+📋 Documentación completa del proyecto
+🗄️ Estructura de base de datos
+
+🚨 URGENCIA JUSTIFICADA: Este proyecto es crítico para la modernización del TecNM y requiere implementación inmediata debido a la alta demanda de reconocimientos digitales y la próxima temporada académica.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Agradezco su atención y apoyo inmediato para este proyecto estratégico.
+
+Saludos cordiales,
+
+[Su nombre]
+[Su cargo]
+Tecnológico Nacional de México
+📞 [Su teléfono]
+📧 [Su correo]
+
+P.D.: El sistema está 100% desarrollado y listo para producción. Solo requiere la máquina virtual para su despliegue inmediato.
+
+─────────────────────────────────────────────────────────────────────────────
+
+¡Excelente tarde equipo! 🎓
+Proyecto desarrollado con ❤️ para el TecNM

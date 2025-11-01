@@ -1,0 +1,429 @@
+<?php
+session_start();
+
+// Verificar sesión
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: login.php?error=sesion_invalida');
+    exit();
+}
+
+// Verificar permisos (solo Admin y SuperUsuario pueden registrar reconocimientos)
+if ($_SESSION['rol'] !== 'Admin' && $_SESSION['rol'] !== 'SuperUsuario') {
+    header('Location: login.php?error=acceso_denegado');
+    exit();
+}
+
+// Incluir conexión a la base de datos
+require_once 'conexion.php';
+require_once 'funciones_correo_real.php';
+require_once 'firma_digital_tecnm.php';
+
+// Consultar categorías e insignias disponibles
+$categorias_insignias = [];
+$subcategorias_insignias = [];
+$periodos_emision = [];
+$estatus_disponibles = [];
+$responsables_emision = [];
+
+try {
+    // Consultar categorías de insignias
+    $sql_categorias = "SELECT DISTINCT ID_cat as id, Nombre_cat as nombre_categoria FROM cat_insignias ORDER BY Nombre_cat";
+    $result_categorias = $conexion->query($sql_categorias);
+    
+    if ($result_categorias && $result_categorias->num_rows > 0) {
+        while ($row = $result_categorias->fetch_assoc()) {
+            $categorias_insignias[] = $row;
+        }
+    }
+    
+    // Consultar tipos de insignias (subcategorías)
+    $sql_subcategorias = "SELECT ti.ID_tipo as id, ti.Nombre_ins as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria 
+                         FROM tipo_insignia ti 
+                         JOIN cat_insignias ci ON ti.Cat_ins = ci.ID_cat 
+                         ORDER BY ci.Nombre_cat, ti.Nombre_ins";
+    $result_subcategorias = $conexion->query($sql_subcategorias);
+    
+    if ($result_subcategorias && $result_subcategorias->num_rows > 0) {
+        while ($row = $result_subcategorias->fetch_assoc()) {
+            $subcategorias_insignias[] = $row;
+        }
+    }
+    
+    // Consultar periodos de emisión
+    $sql_periodos = "SELECT DISTINCT ID_periodo as id, periodo FROM periodo_emision ORDER BY periodo DESC";
+    $result_periodos = $conexion->query($sql_periodos);
+    
+    if ($result_periodos && $result_periodos->num_rows > 0) {
+        while ($row = $result_periodos->fetch_assoc()) {
+            $periodos_emision[] = $row;
+        }
+    }
+    
+    // Consultar estatus disponibles
+    $sql_estatus = "SELECT DISTINCT ID_estatus as id, Estatus as nombre_estatus FROM estatus ORDER BY Estatus";
+    $result_estatus = $conexion->query($sql_estatus);
+    
+    if ($result_estatus && $result_estatus->num_rows > 0) {
+        while ($row = $result_estatus->fetch_assoc()) {
+            $estatus_disponibles[] = $row;
+        }
+    }
+    
+    // Consultar responsables de emisión
+    $sql_responsables = "SELECT DISTINCT ID_responsable as id, Nombre_Completo as nombre_completo, Cargo as cargo FROM responsable_emision ORDER BY Nombre_Completo";
+    $result_responsables = $conexion->query($sql_responsables);
+    
+    if ($result_responsables && $result_responsables->num_rows > 0) {
+        while ($row = $result_responsables->fetch_assoc()) {
+            $responsables_emision[] = $row;
+        }
+    }
+    
+} catch (Exception $e) {
+    // Si hay error, usar arrays vacíos
+    $categorias_insignias = [];
+    $subcategorias_insignias = [];
+    $periodos_emision = [
+        ['id' => 1, 'periodo' => '2025-1'],
+        ['id' => 2, 'periodo' => '2025-2'],
+        ['id' => 3, 'periodo' => '2024-2']
+    ];
+    $estatus_disponibles = [
+        ['id' => 1, 'nombre_estatus' => 'Pendiente'],
+        ['id' => 2, 'nombre_estatus' => 'Autorizado'],
+        ['id' => 3, 'nombre_estatus' => 'Rechazado']
+    ];
+    $responsables_emision = [
+        ['id' => 1, 'nombre_completo' => 'Director Tecnológico de San Marcos', 'cargo' => 'Director'],
+        ['id' => 2, 'nombre_completo' => 'Coordinador Académico', 'cargo' => 'Coordinador'],
+        ['id' => 3, 'nombre_completo' => 'Jefe de Departamento', 'cargo' => 'Jefe de Departamento']
+    ];
+}
+
+// Si no hay datos, usar datos por defecto
+// Las categorías se cargan desde la base de datos
+
+// Las subcategorías se cargan desde la base de datos
+
+if (empty($periodos_emision)) {
+    $periodos_emision = [
+        ['id' => 1, 'periodo' => '2025-1'],
+        ['id' => 2, 'periodo' => '2025-2'],
+        ['id' => 3, 'periodo' => '2024-2']
+    ];
+}
+
+if (empty($estatus_disponibles)) {
+    $estatus_disponibles = [
+        ['id' => 1, 'nombre_estatus' => 'Pendiente'],
+        ['id' => 2, 'nombre_estatus' => 'Autorizado'],
+        ['id' => 3, 'nombre_estatus' => 'Rechazado']
+    ];
+}
+
+if (empty($responsables_emision)) {
+    $responsables_emision = [
+        ['id' => 1, 'nombre_completo' => 'Director Tecnológico de San Marcos', 'cargo' => 'Director'],
+        ['id' => 2, 'nombre_completo' => 'Coordinador Académico', 'cargo' => 'Coordinador'],
+        ['id' => 3, 'nombre_completo' => 'Jefe de Departamento', 'cargo' => 'Jefe de Departamento']
+    ];
+}
+
+// Procesar formulario si se envió
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    error_log("DEBUG: Formulario POST recibido");
+    // echo "<!-- DEBUG: Formulario enviado -->";
+    // echo "<!-- DEBUG: POST data: " . print_r($_POST, true) . " -->";
+    
+    $categoria_id = $_POST['categoria'] ?? '';
+    $subcategoria_id = $_POST['subcategoria'] ?? '';
+    $insignia = $_POST['insignia'] ?? '';
+    $estudiante = $_POST['estudiante'] ?? '';
+    $curp = $_POST['curp'] ?? '';
+    $correo = $_POST['correo'] ?? '';
+    $matricula = $_POST['matricula'] ?? '';
+    $periodo = $_POST['periodo'] ?? '';
+    $responsable = $_POST['responsable'] ?? '';
+    $estatus = $_POST['estatus'] ?? '';
+    $clave = $_POST['clave'] ?? '';
+    $fecha_otorgamiento = $_POST['fecha_otorgamiento'] ?? '';
+    $fecha_autorizacion = $_POST['fecha_autorizacion'] ?? '';
+    $evidencia = $_POST['evidencia'] ?? '';
+    $descripcion_formulario = $_POST['descripcion'] ?? '';
+    
+    // echo "<!-- DEBUG: Valores extraídos -->";
+    // echo "<!-- DEBUG: categoria_id = '$categoria_id' -->";
+    // echo "<!-- DEBUG: subcategoria_id = '$subcategoria_id' -->";
+    // echo "<!-- DEBUG: insignia = '$insignia' -->";
+    // echo "<!-- DEBUG: estudiante = '$estudiante' -->";
+    // echo "<!-- DEBUG: periodo = '$periodo' -->";
+    // echo "<!-- DEBUG: responsable =oller '$responsable' -->";
+    // echo "<!-- DEBUG: estatus = '$estatus' -->";
+    // echo "<!-- DEBUG: fecha_otorgamiento = '$fecha_otorgamiento' -->";
+    // echo "<!-- DEBUG: fecha_autorizacion = '$fecha_autorizacion' -->";
+    
+    // Obtener información de las tablas para nombres dinámicos
+    $categoria_nombre = '';
+    $tipo_insignia_nombre = '';
+    
+    if (!empty($subcategoria_id)) {
+        $sql_info_completa = "SELECT 
+                                ci.Nombre_cat as nombre_categoria,
+                                ti.Nombre_ins as nombre_insignia
+                             FROM tipo_insignia ti 
+                             JOIN cat_insignias ci ON ti.Cat_ins = ci.ID_cat
+                             WHERE ti.ID_tipo = ? 
+                             LIMIT 1";
+        $stmt_info = $conexion->prepare($sql_info_completa);
+        
+        if ($stmt_info) {
+            $stmt_info->bind_param("i", $subcategoria_id);
+            $stmt_info->execute();
+            $result_info = $stmt_info->get_result();
+            
+            if ($result_info && $result_info->num_rows > 0) {
+                $row_info = $result_info->fetch_assoc();
+                $categoria_nombre = $row_info['nombre_categoria'];
+                $tipo_insignia_nombre = $row_info['nombre_insignia'];
+            }
+            $stmt_info->close();
+        }
+    }
+    
+    // Usar la descripción del formulario si está disponible, sino usar una genérica
+    if (!empty($descripcion_formulario)) {
+        $descripcion_real = $descripcion_formulario;
+    } else {
+        $descripcion_real = "Esta insignia reconoce la participación destacada en actividades de " . ($tipo_insignia_nombre ?: $insignia) . " desarrollando competencias de " . ($categoria_nombre ?: 'Formación Integral') . ", por parte de " . $estudiante . ".";
+    }
+    
+    // Validar que el estatus existe en la base de datos
+    $estatus_valido = false;
+    if (!empty($estatus)) {
+        $sql_verificar_estatus = "SELECT ID_estatus FROM estatus WHERE ID_estatus = ?";
+        $stmt_estatus = $conexion->prepare($sql_verificar_estatus);
+        if ($stmt_estatus) {
+            $stmt_estatus->bind_param("i", $estatus);
+            $stmt_estatus->execute();
+            $result_estatus = $stmt_estatus->get_result();
+            $estatus_valido = ($result_estatus && $result_estatus->num_rows > 0);
+            $stmt_estatus->close();
+        }
+    }
+    
+    if (!empty($categoria_id) && !empty($subcategoria_id) && !empty($insignia) && !empty($estudiante) && !empty($curp) && !empty($correo) && !empty($matricula) && !empty($periodo) && !empty($responsable) && !empty($estatus) && !empty($fecha_otorgamiento) && !empty($fecha_autorizacion) && $estatus_valido) {
+        // echo "<!-- DEBUG: Validación pasada, procesando insignia -->";
+        // echo "<!-- DEBUG: Estatus seleccionado: " . $estatus . " -->";
+        // echo "<!-- DEBUG: Estatus válido: " . ($estatus_valido ? 'SÍ' : 'NO') . " -->";
+        
+        // Continuar con el registro (sin validación de duplicados estricta)
+        if (true) {
+            // Determinar código de tipo para generación
+                $tipo_codigo = strtoupper(substr($tipo_insignia_nombre, 0, 3)); // Primeras 3 letras del tipo
+                $tipo_codigo = preg_replace('/[^A-Z]/', '', $tipo_codigo); // Solo letras
+                if (strlen($tipo_codigo) < 3) $tipo_codigo = 'INS'; // Fallback
+                
+            // Generar clave única si no se proporcionó O si ya existe en la BD
+            if (empty($clave)) {
+                $clave = "TECNM-ITSM-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
+            }
+                
+            // Verificar que la clave no exista en Codigo_Insignia
+            $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
+                $stmt_verificar_clave->bind_param("s", $clave);
+                $stmt_verificar_clave->execute();
+                $resultado_clave = $stmt_verificar_clave->get_result();
+                $clave_existe = $resultado_clave->fetch_assoc()['total'] > 0;
+                $stmt_verificar_clave->close();
+                
+                // Si la clave existe, generar una nueva
+                $intentos = 0;
+            while ($clave_existe && $intentos < 20) {
+                    $clave = "TECNM-ITSM-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
+                $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
+                    $stmt_verificar_clave->bind_param("s", $clave);
+                    $stmt_verificar_clave->execute();
+                    $resultado_clave = $stmt_verificar_clave->get_result();
+                    $clave_existe = $resultado_clave->fetch_assoc()['total'] > 0;
+                    $stmt_verificar_clave->close();
+                    $intentos++;
+                }
+            
+            // Si después de 20 intentos sigue existiendo, usar timestamp para hacerla única
+            if ($clave_existe) {
+                $clave = "TECNM-ITSM-" . $periodo . "-" . $tipo_codigo . "-" . time();
+            }
+        
+        try {
+            // Verificar conexión antes de proceder
+            if (!$conexion) {
+                throw new Exception("No hay conexión a la base de datos");
+            }
+            
+            // Insertar datos en la base de datos
+            $sql = "INSERT INTO insigniasotorgadas (
+                Codigo_Insignia, 
+                Destinatario, 
+                Periodo_Emision, 
+                Responsable_Emision,
+                Estatus, 
+                Fecha_Emision, 
+                Fecha_Vencimiento
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $conexion->prepare($sql);
+            
+            if (!$stmt) {
+                throw new Exception("Error en prepare: " . $conexion->error . " | SQL: " . $sql);
+            }
+            
+            // Obtener IDs de las tablas relacionadas
+            
+            // 1. Manejar destinatario con la estructura real de la base de datos
+            $destinatario_id = null;
+            
+            // Buscar por nombre completo (único campo disponible)
+            if (!empty($estudiante)) {
+                $sql_buscar_nombre = "SELECT ID_destinatario FROM destinatario WHERE Nombre_Completo = ? LIMIT 1";
+                $stmt_nombre = $conexion->prepare($sql_buscar_nombre);
+                if ($stmt_nombre) {
+                    $stmt_nombre->bind_param("s", $estudiante);
+                    $stmt_nombre->execute();
+                    $result_nombre = $stmt_nombre->get_result();
+                    if ($result_nombre && $result_nombre->num_rows > 0) {
+                        $row_nombre = $result_nombre->fetch_assoc();
+                        $destinatario_id = $row_nombre['ID_destinatario'];
+                    }
+                    $stmt_nombre->close();
+                }
+            }
+            
+            // Si existe el destinatario, actualizar todos los datos
+            if ($destinatario_id) {
+                $sql_update = "UPDATE destinatario SET Nombre_Completo = ?, Curp = ?, Correo = ?, Matricula = ? WHERE ID_destinatario = ?";
+                $stmt_update = $conexion->prepare($sql_update);
+                if ($stmt_update) {
+                    $stmt_update->bind_param("ssssi", $estudiante, $curp, $correo, $matricula, $destinatario_id);
+                    $stmt_update->execute();
+                    $stmt_update->close();
+                }
+            } else {
+                // Crear nuevo destinatario con todos los datos
+                $sql_insert = "INSERT INTO destinatario (Nombre_Completo, Curp, Correo, Matricula, ITCentro) VALUES (?, ?, ?, ?, 1)";
+                $stmt_insert = $conexion->prepare($sql_insert);
+                if ($stmt_insert) {
+                    $stmt_insert->bind_param("ssss", $estudiante, $curp, $correo, $matricula);
+                    if ($stmt_insert->execute()) {
+                        $destinatario_id = $conexion->insert_id;
+                    } else {
+                        throw new Exception("No se pudo crear destinatario: " . $stmt_insert->error);
+                    }
+                    $stmt_insert->close();
+                } else {
+                    throw new Exception("Error al preparar inserción de destinatario: " . $conexion->error);
+                }
+            }
+            
+            // 2. Obtener periodo_id
+            $sql_periodo_id = "SELECT ID_periodo FROM periodo_emision WHERE periodo = ? LIMIT 1";
+            $stmt_periodo = $conexion->prepare($sql_periodo_id);
+            $periodo_id = null;
+            
+            if ($stmt_periodo) {
+                $stmt_periodo->bind_param("s", $periodo);
+                $stmt_periodo->execute();
+                $result_periodo = $stmt_periodo->get_result();
+                
+                if ($result_periodo && $result_periodo->num_rows > 0) {
+                    $row_periodo = $result_periodo->fetch_assoc();
+                    $periodo_id = $row_periodo['ID_periodo'];
+                } else {
+                    // Crear periodo si no existe
+                    $sql_insert_periodo = "INSERT INTO periodo_emision (periodo) VALUES (?)";
+                    $stmt_insert_periodo = $conexion->prepare($sql_insert_periodo);
+                    if ($stmt_insert_periodo) {
+                        $stmt_insert_periodo->bind_param("s", $periodo);
+                        if ($stmt_insert_periodo->execute()) {
+                            $periodo_id = $conexion->insert_id;
+                        } else {
+                            throw new Exception("No se pudo crear periodo: " . $stmt_insert_periodo->error);
+                        }
+                        $stmt_insert_periodo->close();
+                    }
+                }
+                $stmt_periodo->close();
+            }
+            
+            // 3. Obtener responsable_id
+            $sql_resp_emision = "SELECT ID_responsable FROM responsable_emision WHERE Nombre_Completo = ? LIMIT 1";
+            $stmt_resp = $conexion->prepare($sql_resp_emision);
+            $responsable_id = null;
+            
+            if ($stmt_resp) {
+                $stmt_resp->bind_param("s", $responsable);
+                $stmt_resp->execute();
+                $result_resp = $stmt_resp->get_result();
+                
+                if ($result_resp && $result_resp->num_rows > 0) {
+                    $row_resp = $result_resp->fetch_assoc();
+                    $responsable_id = $row_resp['ID_responsable'];
+                } else {
+                    // Crear responsable si no existe
+                    $sql_insert_resp = "INSERT INTO responsable_emision (Nombre_Completo, Cargo) VALUES (?, 'Responsable')";
+                    $stmt_insert_resp = $conexion->prepare($sql_insert_resp);
+                    if ($stmt_insert_resp) {
+                        $stmt_insert_resp->bind_param("s", $responsable);
+                        if ($stmt_insert_resp->execute()) {
+                            $responsable_id = $conexion->insert_id;
+                        } else {
+                            throw new Exception("No se pudo crear responsable: " . $stmt_insert_resp->error);
+                        }
+                        $stmt_insert_resp->close();
+                    }
+                }
+                $stmt_resp->close();
+            }
+            
+            // Usar el estatus seleccionado
+            $estatus_id = $estatus;
+            
+            $stmt->bind_param("siiiiss", 
+                $clave,
+                $destinatario_id, 
+                $periodo_id, 
+                $responsable_id,
+                $estatus_id, 
+                $fecha_otorgamiento, 
+                $fecha_autorizacion
+            );
+            
+            if ($stmt->execute()) {
+                $stmt->close();
+                header("Location: ver_insignia_completa.php?insignia=" . urlencode($clave));
+                exit();
+            } else {
+                $mensaje_error = "Error al guardar en la base de datos: " . $stmt->error;
+            }
+            
+            $stmt->close();
+            
+        } catch (Exception $e) {
+            $mensaje_error = "Error: " . $e->getMessage();
+        }
+        } // Cerrar el if (true) de registro
+    } else {
+        // echo "<!-- DEBUG: Validación falló -->";
+        // echo "<!-- DEBUG: categoria_id: " . ($categoria_id ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: subcategoria_id: " . ($subcategoria_id ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: insignia: " . ($insignia ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: estudiante: " . ($estudiante ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: periodo: " . ($periodo ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: responsable: " . ($responsable ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: estatus: " . ($estatus ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: fecha_otorgamiento: " . ($fecha_otorgamiento ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: fecha_autorizacion: " . ($ cancelled ?: 'VACÍO') . " -->";
+        // echo "<!-- DEBUG: estatus_valido: " . ($estatus_valido ? 'SÍ' : 'NO') . " -->";
+        $mensaje_error = "Por favor, completa todos los campos obligatorios, incluyendo la selección de categoría, subcategoría y estatus válido";
+    }
+}
+?>

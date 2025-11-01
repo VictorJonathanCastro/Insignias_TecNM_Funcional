@@ -1,0 +1,40 @@
+# Archivos de configuración local (NO subir)
+conexion.php
+
+# Archivos temporales
+*.tmp
+*.bak
+*.log
+*.swp
+*~
+
+# Archivos de prueba
+prueba_*.php
+test_*.php
+debug_*.php
+verificar_*.php
+
+# Backups
+*.zip
+*.sql
+BD/*.sql
+!BD/backup_sistema_funcional.sql
+
+# Carpetas eliminadas
+certificados/
+firmas_digitales/*.html
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Uploads locales
+uploads/*
+!uploads/.gitkeep
+

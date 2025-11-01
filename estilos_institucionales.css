@@ -1,0 +1,140 @@
+/* ================================================
+   ESTILOS INSTITUCIONALES TECNM
+   Paleta de colores: Azul y Blanco Profesional
+   ================================================ */
+
+:root {
+  /* Colores Institucionales TecNM */
+  --azul-oscuro: #003366;
+  --azul-medio: #0066CC;
+  --azul-claro: #1976d2;
+  --azul-very-light: #e3f2fd;
+  --blanco: #FFFFFF;
+  --gris-claro: #F5F7FA;
+  --texto-oscuro: #1e293b;
+  --texto-gris: #64748b;
+  
+  /* Sombras profesionales */
+  --shadow-sm: 0 2px 4px rgba(0, 51, 102, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 51, 102, 0.15);
+  --shadow-lg: 0 8px 24px rgba(0, 51, 102, 0.2);
+  --shadow-xl: 0 12px 40px rgba(0, 51, 102, 0.25);
+}
+
+/* Botones Azul Institucional */
+.btn-azul-tecnm {
+  background: linear-gradient(135deg, var(--azul-oscuro) 0%, var(--azul-medio) 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-md);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-azul-tecnm:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135degциональный, var(--azul-medio), var(--azul-oscuro));
+}
+
+/* Tarjetas profesionales */
+.card-profesional {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0, 102, 204, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card-profesional:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Títulos con gradiente azul */
+.titulo-gradiente-azul {
+  background: linear-gradient(135deg, var(--azul-oscuro) 0%, var(--azul-medio) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+/* Badges azules */
+.badge-azul {
+  background: var(--azul-very-light);
+  color: var(--azul-medio);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--azul-claro);
+}
+
+/* Inputs profesionales */
+.input-profesional {
+  padding: 12px 16px;
+  border: 2px solid rgba(0, 102, 204, 0.2);
+  border-radius: 10px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.input-profesional:focus {
+  outline: none;
+  border-color: var(--azul-medio);
+  box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+}
+
+/* Badge de firma digital */
+.firma-digital-badge {
+  background: white;
+  border: 1px solid var(--azul-claro);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-md);
+}
+
+.firma-digital-hash {
+  font-size: 4px;
+  color: var(--azul-claro);
+  font-family: monospace;
+  background: var(--azul-very-light);
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(25, 118, 210, 0.3);
+  line-height: 1.3;
+}
+
+/* Responsable firma */
+.responsable-nombre {
+  font-weight: bold;
+  color: var(--azul-oscuro);
+  font-size: 7px;
+}
+
+.responsable-cargo {
+  font-size: 6px;
+  color: var(--azul-claro);
+  font-weight: 600;
+}
+
+/* Separador azul */
+.separador-azul {
+  border-bottom: 2px solid var(--azul-oscuro);
+  width: 100%;
+}
+
+/* Fecha y ubicación */
+.fecha-ubicacion {
+  font-size: 5px;
+  color: #546e7a;
+  border-top: 1px dashed rgba(25, 118, 210, 0.3);
+}
+
