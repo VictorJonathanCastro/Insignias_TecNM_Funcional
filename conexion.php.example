@@ -1,0 +1,181 @@
+<?php
+// ========================================
+// CONFIGURACIÓN DE BASE DE DATOS
+// Compatible con XAMPP (Windows) y Ubuntu
+// ========================================
+// 
+// INSTRUCCIONES:
+// 1. Copia este archivo como conexion.php
+// 2. Configura las credenciales según tu entorno
+// 3. Este archivo NO debe subirse a Git (está en .gitignore)
+
+// Detectar el entorno (XAMPP vs Ubuntu)
+function detectarEntorno() {
+    // Verificar si estamos en XAMPP (Windows)
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        return 'xampp';
+    }
+    // Verificar si estamos en Ubuntu/Linux
+    if (file_exists('/etc/apache2/') || file_exists('/var/www/html/')) {
+        return 'ubuntu';
+    }
+    return 'desconocido';
+}
+
+$entorno = detectarEntorno();
+
+// Configuración según el entorno
+switch ($entorno) {
+    case 'xampp':
+        $servidor = "127.0.0.1";
+        $usuario = "root";
+        $password = "";
+        $bd = "insignia";
+        $puerto = 3306;
+        break;
+        
+    case 'ubuntu':
+        // CONFIGURAR ESTAS CREDENCIALES SEGÚN TU SERVIDOR
+        $servidor = "localhost";
+        $usuario = "insignia_user";  // Cambiar por tu usuario MySQL
+        $password = "InsigniaTecNM2024!";  // Cambiar por tu contraseña MySQL
+        $bd = "insignia";
+        $puerto = 3306;
+        break;
+        
+    default:
+        // Configuración manual
+        $servidor = "localhost";
+        $usuario = "root";
+        $password = "";
+        $bd = "insignia";
+        $puerto = 3306;
+}
+
+// Configuración de charset para compatibilidad
+$charset = "utf8mb4";
+
+// Desactivar excepciones de mysqli para manejar errores manualmente
+mysqli_report(MYSQLI_REPORT_OFF);
+
+// Función para crear conexión con múltiples intentos
+function crearConexion($servidor, $usuario, $password, $bd, $puerto, $charset) {
+    $conexion = null;
+    
+    // Intentar diferentes configuraciones
+    $configuraciones = [
+        [$servidor, $puerto],
+        ["127.0.0.1", $puerto],
+        ["localhost", $puerto],
+        [$servidor, 3307], // Puerto alternativo para XAMPP
+    ];
+    
+    foreach ($configuraciones as $config) {
+        $conexion = @new mysqli($config[0], $usuario, $password, $bd, $config[1]);
+        
+        if (!$conexion->connect_errno) {
+            // Configurar charset
+            $conexion->set_charset($charset);
+            return $conexion;
+        }
+    }
+    
+    return $conexion;
+}
+
+// Crear conexión
+$conexion = crearConexion($servidor, $usuario, $password, $bd, $puerto, $charset);
+
+// Verificar conexión
+if ($conexion->connect_errno) {
+    $error_msg = "Error en la conexión a MySQL: " . $conexion->connect_error . " (Código: " . $conexion->connect_errno . ")\n\n";
+    
+    if ($entorno === 'xampp') {
+        $error_msg .= "SOLUCIONES PARA XAMPP:\n";
+        $error_msg .= "- Inicia el servicio MySQL desde el Panel de Control de XAMPP\n";
+        $error_msg .= "- Verifica que el puerto 3306 o 3307 esté disponible\n";
+        $error_msg .= "- Confirma que la BD '$bd' existe\n";
+    } else {
+        $error_msg .= "SOLUCIONES PARA UBUNTU:\n";
+        $error_msg .= "- Verifica que MySQL esté instalado y corriendo: sudo systemctl status mysql\n";
+        $error_msg .= "- Inicia MySQL si está detenido: sudo systemctl start mysql\n";
+        $error_msg .= "- Crea la base de datos: mysql -u root -p -e 'CREATE DATABASE $bd;'\n";
+        $error_msg .= "- Verifica permisos del usuario MySQL\n";
+    }
+    
+    // Mostrar error de forma más amigable
+    if (isset($_SERVER['HTTP_HOST'])) {
+        // Si es una petición web, mostrar página de error
+        echo "<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error de Conexión - Insignias TecNM</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 50px; background: #f5f5f5; }
+                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .error-title { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                .error-content { background: #f8f9fa; padding: 20px; border-radius: 5px; white-space: pre-line; }
+                .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+            </style>
+        </head>
+        <body>
+            <div class='error-box'>
+                <div class='error-title'>⚠️ Error de Conexión a Base de Datos</div>
+                <div class='error-content'>$error_msg</div>
+                <button class='btn' onclick='location.reload()'>Reintentar</button>
+            </div>
+        </body>
+        </html>";
+    } else {
+        // Si es ejecución por CLI, mostrar error simple
+        die($error_msg);
+    }
+    exit();
+}
+
+// Configurar zona horaria
+$conexion->query("SET time_zone = '+00:00'");
+
+// Función para ejecutar consultas de forma segura
+function ejecutarConsulta($conexion, $sql, $tipos = "", $parametros = []) {
+    if (empty($parametros)) {
+        return $conexion->query($sql);
+    }
+    
+    $stmt = $conexion->prepare($sql);
+    if (!$stmt) {
+        throw new Exception("Error al preparar consulta: " . $conexion->error);
+    }
+    
+    if (!empty($tipos) && !empty($parametros)) {
+        $stmt->bind_param($tipos, ...$parametros);
+    }
+    
+    $stmt->execute();
+    return $stmt;
+}
+
+// Función para obtener el entorno actual
+function obtenerEntorno() {
+    global $entorno;
+    return $entorno;
+}
+
+// Función para mostrar información de debug (solo en desarrollo)
+function mostrarInfoDebug() {
+    global $conexion, $entorno;
+    
+    if (isset($_GET['debug']) && $_GET['debug'] === 'info') {
+        echo "<div style='background: #e9ecef; padding: 10px; margin: 10px 0; border-radius: 5px;'>";
+        echo "<strong>Información de Debug:</strong><br>";
+        echo "Entorno: " . $entorno . "<br>";
+        echo "Servidor MySQL: " . $conexion->server_info . "<br>";
+        echo "Charset: " . $conexion->character_set_name() . "<br>";
+        echo "Estado: " . ($conexion->ping() ? "Conectado" : "Desconectado");
+        echo "</div>";
+    }
+}
+
+// Mostrar info de debug si se solicita
+// mostrarInfoDebug(); // Comentado para evitar problemas de headers
+

@@ -102,14 +102,19 @@ El sistema estará disponible en:
 **⚠️ Situación actual:** 
 - ✅ Tienes las llaves SSH (`priv_insignias.ppk` y `ssh_insignias`)
 - ✅ Tienes el usuario (`devusr01`)
+- ✅ El proyecto está en GitHub: `https://github.com/VictorJonathanCastro/Insignias_TecNM_Funcional`
 - ✅ La máquina virtual se solicitó en el correo con todas las especificaciones
 - ⏳ **La MV probablemente aún NO está creada** o está en proceso
-- ❌ **Falta la IP del servidor** - Te la darán cuando la máquina virtual esté lista y configurada
 
 **📝 Pasos siguientes:**
 1. **Espera** la notificación de que la máquina virtual está lista
-2. **Solicita la IP pública** del servidor
-3. **Usa esta guía** para conectarte y subir el proyecto una vez que tengas la IP
+2. **Intenta conectarte** usando el dominio `InsigniasTecNM` primero
+3. **Si el dominio no funciona**, solicita la IP pública del servidor
+4. **Usa esta guía** para conectarte y clonar el proyecto desde GitHub
+
+**💡 Nota importante**: 
+- Si el dominio `InsigniasTecNM` ya está configurado en el DNS, puedes conectarte directamente sin necesidad de la IP
+- Si el dominio NO funciona aún, necesitarás la IP del servidor para conectarte
 
 ---
 
@@ -122,7 +127,8 @@ El sistema estará disponible en:
 **Instala PuTTY ahora** (para cuando tengas la IP):
 - ✅ Descarga: https://www.putty.org/
 - ✅ Instala normalmente
-- ✅ Abre PuTTYgen y carga `priv_insignias.ppk` para verificar que funciona
+- ✅ Abre **PuTTYgen** y carga `priv_insignias.ppk` para verificar que funciona
+- ✅ Abre **Pageant** y carga `priv_insignias.ppk` para facilitar conexiones futuras
 
 **Opcional - Editores de texto:**
 - ✅ Notepad++: https://notepad-plus-plus.org/downloads/
@@ -407,9 +413,16 @@ git push -u origin main
 #### 2.1. Conectarse al servidor por SSH
 
 ```bash
-# Usando PuTTY (configura la sesión con la clave privada)
-# O desde PowerShell:
-ssh -i "C:\Users\vc556\Desktop\llaves\ssh_insignias" devusr01@IP_SERVIDOR
+# Usando PuTTY (configura la sesión con la clave privada):
+# - Host: InsigniasTecNM (o IP_SERVIDOR si el DNS no funciona)
+# - Usuario: devusr01
+# - Clave: C:\Users\vc556\Desktop\llaves\priv_insignias.ppk
+
+# O desde PowerShell usando el dominio:
+ssh -i "C:\Users\vc556\Desktop\llaves\ssh_insignias" devusr01@InsigniasTecNM
+
+# Si el dominio no funciona aún, usa la IP directamente:
+# ssh -i "C:\Users\vc556\Desktop\llaves\ssh_insignias" devusr01@IP_SERVIDOR
 ```
 
 #### 2.2. Instalar Git en el servidor (si no está instalado)
@@ -569,7 +582,88 @@ PuTTY incluye todas las herramientas necesarias para conectarse por SSH y transf
 
 **💡 Consejo:** PuTTYgen es **el programa ideal** para trabajar con archivos `.ppk` y ver toda su información.
 
-### 1.2. Configurar sesión SSH en PuTTY
+### 1.2. Usar Pageant (Agente SSH de PuTTY) - RECOMENDADO ⭐
+
+**Pageant** es el agente de autenticación SSH de PuTTY. Carga tu clave privada en memoria una vez y luego puedes conectarte sin especificar la clave en cada comando.
+
+#### 1.2.1. Cargar la clave en Pageant
+
+1. Abre **Pageant** (viene con PuTTY, búscalo en el menú de inicio)
+2. Verás un icono en la bandeja del sistema (esquina inferior derecha)
+3. **Clic derecho** en el icono de Pageant → **Add Key**
+4. Selecciona: `C:\Users\vc556\Desktop\llaves\priv_insignias.ppk`
+5. Si tiene **passphrase** (contraseña), introdúcela
+6. ✅ La clave ahora está cargada y disponible para todas tus conexiones SSH
+
+**Ventajas de Pageant:**
+- ✅ No necesitas especificar la clave en cada comando
+- ✅ Funciona con PuTTY, PSCP, PSFTP automáticamente
+- ✅ Más seguro (la clave está en memoria, no en archivos temporales)
+
+#### 1.2.2. Usar PuTTY con Pageant
+
+Una vez que Pageant tiene tu clave cargada:
+
+1. Abre **PuTTY**
+2. En **Session**:
+   - **Host Name (or IP address)**: 
+     - Si el DNS está configurado: `InsigniasTecNM`
+     - Si NO está configurado: **Usa la IP del servidor** (ejemplo: `192.168.1.100` o la IP que te hayan dado)
+   - **Port**: `22`
+   - **Connection type**: SSH
+3. En el panel izquierdo, ve a **Connection** → **SSH** → **Auth**
+   - Marca **"Allow agent forwarding"** (recomendado)
+   - ✅ NO necesitas especificar la clave privada (Pageant la carga automáticamente)
+4. Regresa a **Session**
+   - En **"Saved Sessions"**, escribe: `InsigniasTecNM`
+   - Haz clic en **Save**
+5. Haz clic en **Open** para conectarte
+
+#### 1.2.3. Usar PSCP/PSFTP con Pageant
+
+Con Pageant activo, puedes usar PSCP sin especificar la clave:
+
+```powershell
+# PSCP con Pageant (sin -i)
+"C:\Program Files\PuTTY\pscp.exe" -r * devusr01@InsigniasTecNM:/var/www/Insignias_TecNM_Funcional/
+
+# O si usas la IP:
+"C:\Program Files\PuTTY\pscp.exe" -r * devusr01@IP_SERVIDOR:/var/www/Insignias_TecNM_Funcional/
+```
+
+#### 1.2.4. Convertir .ppk a formato OpenSSH (para Git Bash/VS Code)
+
+Si vas a usar **Git Bash** o **VS Code** para clonar, necesitas convertir la clave:
+
+1. Abre **PuTTYgen**
+2. Clic en **Load**
+3. Selecciona: `C:\Users\vc556\Desktop\llaves\priv_insignias.ppk`
+4. Ve a **Conversions** → **Export OpenSSH key**
+5. Guárdala como: `C:\Users\vc556\.ssh\id_rsa_insignias`
+6. Establece permisos en PowerShell:
+
+```powershell
+# Crear carpeta .ssh si no existe
+if (!(Test-Path "$env:USERPROFILE\.ssh")) { New-Item -ItemType Directory -Path "$env:USERPROFILE\.ssh" }
+
+# Establecer permisos (solo lectura para el propietario)
+icacls "$env:USERPROFILE\.ssh\id_rsa_insignias" /inheritance:r
+icacls "$env:USERPROFILE\.ssh\id_rsa_insignias" /grant:r "$env:USERNAME:R"
+```
+
+7. Usar con Git Bash/VS Code:
+
+```bash
+# Desde Git Bash:
+ssh -i ~/.ssh/id_rsa_insignias devusr01@InsigniasTecNM
+
+# O usar la IP:
+ssh -i ~/.ssh/id_rsa_insignias devusr01@IP_SERVIDOR
+```
+
+### 1.3. Configurar sesión SSH en PuTTY (método tradicional - sin Pageant)
+
+**Si prefieres NO usar Pageant**, puedes configurar la clave directamente en PuTTY:
 
 **⚠️ IMPORTANTE**: Si obtienes el error "Host does not exist", significa que el dominio `InsigniasTecNM` no está configurado en el DNS aún. En ese caso, **usa la IP del servidor directamente**.
 
@@ -590,7 +684,7 @@ PuTTY incluye todas las herramientas necesarias para conectarse por SSH y transf
    - Haz clic en **Save**
 6. Haz clic en **Open** para conectarte
 
-### 1.3. Subir archivos usando PSCP (desde PowerShell o CMD)
+### 1.4. Subir archivos usando PSCP (desde PowerShell o CMD)
 
 **PSCP** viene incluido con PuTTY y se encuentra en la carpeta de instalación (generalmente `C:\Program Files\PuTTY\`)
 
@@ -624,7 +718,7 @@ put -r *
 exit
 ```
 
-### 1.4. Subir carpeta completa (método fácil)
+### 1.5. Subir carpeta completa (método fácil)
 
 ```powershell
 # Desde PowerShell (como Administrador)
@@ -935,9 +1029,24 @@ ssh-keygen -R ip_servidor
    git push -u origin main
    ```
 
-2. ✅ Conectarse al servidor por SSH (cuando tengas la IP):
+2. ✅ Conectarse al servidor por SSH:
+   
+   **Opción A: Usando Pageant (MÁS FÁCIL)** ⭐
+   ```powershell
+   # Primero carga la clave en Pageant (una sola vez):
+   # 1. Abre Pageant
+   # 2. Clic derecho → Add Key → priv_insignias.ppk
+   
+   # Luego conecta con PuTTY (sin especificar clave):
+   # - Host: InsigniasTecNM (o IP_SERVIDOR si el dominio no funciona)
+   # - Usuario: devusr01
+   # La clave ya está cargada en Pageant
+   ```
+   
+   **Opción B: Usando ssh_insignias directamente**
    ```bash
-   ssh -i "C:\Users\vc556\Desktop\llaves\ssh_insignias" devusr01@IP_SERVIDOR
+   ssh -i "C:\Users\vc556\Desktop\llaves\ssh_insignias" devusr01@InsigniasTecNM
+   # Si el dominio no funciona aún, usa la IP: devusr01@IP_SERVIDOR
    ```
 
 3. ✅ Clonar el proyecto en el servidor:

@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS T_insignias_otorgadas (
     Id_Estatus INT NOT NULL,
     Fecha_Creacion_Registro DATE DEFAULT (CURRENT_DATE),
     FOREIGN KEY (Id_Insignia) REFERENCES T_insignias(id),
-    FOREIGN KEY (Id_Destinatario) REFERENCES destinatario(id),
+    FOREIGN KEY (Id_Destinatario) REFERENCES destinatario(ID_destinatario),
     FOREIGN KEY (Id_Periodo_Emision) REFERENCES periodo_emision(id),
     FOREIGN KEY (Id_Estatus) REFERENCES estatus(id)
 );
@@ -172,11 +172,11 @@ SELECT
     CONCAT(ti.id, ' # ', tin.Nombre_Insignia) AS Nombre_Insignia_TecNM,
     CONCAT(ti.id, ' # ', ci.Nombre_cat) AS Categoria_Insignia_TecNM,
     CONCAT(ti.id, ' # ', d.Nombre_Completo) AS Destinatario,
-    d.Nombre AS Nombre_Destinatario,
-    d.Apellido_Paterno AS Apellido_Paterno_Destinatario,
-    d.Apellido_Materno AS Apellido_Materno_Destinatario,
+    d.Nombre_Completo AS Nombre_Destinatario,
+    NULL AS Apellido_Paterno_Destinatario,
+    NULL AS Apellido_Materno_Destinatario,
     d.Correo AS Correo_Destinatario,
-    d.Rol AS Rol_Destinatario,
+    NULL AS Rol_Destinatario,
     CONCAT(ti.id, ' # ', itc.Nombre_itc) AS Institucion_IT_TecNM,
     itc.Nombre_itc AS Nombre_IT_TecNM,
     itc.Acron AS Acron_IT_TecNM,
@@ -195,7 +195,7 @@ FROM T_insignias_otorgadas tio
 JOIN T_insignias ti ON tio.Id_Insignia = ti.id
 JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
 JOIN cat_insignias ci ON tin.id = ci.id
-JOIN destinatario d ON tio.Id_Destinatario = d.id
+JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
 JOIN it_centros itc ON ti.Propone_Insignia = itc.id
 JOIN estatus e ON ti.Estatus = e.id
 JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id;
