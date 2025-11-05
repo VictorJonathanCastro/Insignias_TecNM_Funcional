@@ -414,15 +414,10 @@ if ($insignia_data === null) {
     
     <!-- Meta tags para Facebook y redes sociales -->
     <?php
-    // Generar URLs para las imágenes - usar URL pública para Facebook
+    // Generar URLs para las imágenes - usar URL del servidor remoto
     $host = $_SERVER['HTTP_HOST'];
-    
-    // Si es localhost o IP local, usar localtunnel para compartir
-    if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || strpos($host, '192.168.') !== false) {
-        $base_url = 'https://bad-elephant-84.loca.lt/Insignias_TecNM_Funcional';
-    } else {
-        $base_url = 'http://' . $host . '/Insignias_TecNM_Funcional';
-    }
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $base_url = $protocol . '://' . $host . '/Insignias_TecNM_Funcional';
     
     $image_url = $base_url . '/' . $insignia_data['imagen_path'];
     $validation_url = $base_url . '/validacion.php?insignia=' . urlencode($insignia_data['codigo']);
