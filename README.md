@@ -75,23 +75,6 @@ chmod 644 *.php
 4. **Cargar archivo**: Subir el archivo Excel completado
 5. **Revisar resultados**: Verificar éxitos y errores del proceso
 
-### Formato de Plantillas Excel
-
-#### Insignias Otorgadas
-| Id_Insignia | Id_Destinatario | Fecha_Emision | Id_Periodo_Emision | Id_Estatus |
-|-------------|-----------------|---------------|-------------------|------------|
-| 1           | 1               | 2024-01-15    | 1                 | 1          |
-
-#### Destinatarios
-| Id_Centro | Nombre_Completo | Nombre | Apellido_Paterno | Apellido_Materno | Genero | Curp | Matricula | Correo | Telefono | Rol |
-|-----------|-----------------|--------|------------------|------------------|--------|------|-----------|--------|----------|-----|
-| 1         | Juan Pérez Gómez | Juan   | Pérez            | Gómez            | Masculino | PERJ800101HDFRGN01 | 2024001 | juan.perez@tecnm.mx | 5551234567 | Estudiante |
-
-#### Centros IT
-| Nombre_itc | Acron | Estado | Clave_ct | Tipo_itc |
-|------------|-------|--------|----------|----------|
-| Instituto Tecnológico de Celaya | ITC | Guanajuato | 11DIT0001A | Federal |
-
 ## 🗄️ Estructura de Base de Datos
 
 ### Tablas Principales
@@ -241,26 +224,10 @@ Los logs se almacenan en el directorio `logs/`:
 - `access.log`: Accesos y actividades
 - `upload.log`: Actividades de carga masiva
 
-## 📞 Soporte
-
-### Contacto
-
-- **Desarrollo**: Equipo de Desarrollo TecNM
-- **TICs**: d_vinculacion0402@tecnm.mx
-- **Vinculación**: s_vinculacion@tecnm.mx
-
-### Documentación Adicional
-
-- Manual de Usuario: `docs/manual_usuario.pdf`
-- API Documentation: `docs/api_documentation.md`
-- Guía de Instalación: `docs/guia_instalacion.md`
 
 ## 📄 Licencia
 
 Este proyecto está desarrollado para el Tecnológico Nacional de México y está sujeto a las políticas institucionales correspondientes.
 
----
 
-**¡Excelente tarde equipo! 🎓**
 
-*Sistema desarrollado con ❤️ para el TecNM*
