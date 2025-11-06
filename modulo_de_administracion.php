@@ -98,14 +98,45 @@ try {
         ob_end_clean();
     }
     
-    // Evitar bucle de redirecciones - verificar si ya estamos en login
-    if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
-        // Solo redirigir si no estamos ya en login
-        header("Location: login.php?error=error_sistema");
+    // Detectar si estamos en desarrollo local (XAMPP) o producción
+    $es_desarrollo = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') || 
+                     (isset($_SERVER['HTTP_HOST']) && 
+                      ($_SERVER['HTTP_HOST'] === 'localhost' || 
+                       $_SERVER['HTTP_HOST'] === '127.0.0.1' ||
+                       strpos($_SERVER['HTTP_HOST'], 'localhost') !== false));
+    
+    // En desarrollo, mostrar error detallado; en producción, redirigir
+    if ($es_desarrollo) {
+        // Mostrar error detallado en desarrollo
+        echo "<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error - Insignias TecNM</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 50px; background: #f5f5f5; }
+                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .error-title { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                .error-content { background: #f8f9fa; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; }
+                .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class='error-box'>
+                <div class='error-title'>⚠️ Error en Módulo de Administración</div>
+                <div class='error-content'><strong>Mensaje:</strong> " . htmlspecialchars($e->getMessage()) . "\n\n<strong>Archivo:</strong> " . htmlspecialchars($e->getFile()) . "\n<strong>Línea:</strong> " . $e->getLine() . "\n<strong>Timestamp:</strong> " . date('Y-m-d H:i:s') . "</div>
+                <a href='login.php' class='btn'>Volver al Login</a>
+            </div>
+        </body>
+        </html>";
         exit();
     } else {
-        // Si ya estamos en login o hay un error, mostrar mensaje directo
-        die("Error del sistema: " . htmlspecialchars($e->getMessage()) . ". Por favor, contacta al administrador.");
+        // En producción, redirigir a login
+        if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
+            header("Location: login.php?error=error_sistema");
+            exit();
+        } else {
+            die("Error del sistema. Por favor, contacta al administrador.");
+        }
     }
 } catch (Error $e) {
     // Capturar errores fatales de PHP 7+
@@ -118,12 +149,39 @@ try {
         ob_end_clean();
     }
     
-    // Evitar bucle de redirecciones
-    if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
-        header("Location: login.php?error=error_sistema");
+    // Detectar si estamos en desarrollo
+    $es_desarrollo = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') || 
+                     (isset($_SERVER['HTTP_HOST']) && 
+                      ($_SERVER['HTTP_HOST'] === 'localhost' || 
+                       $_SERVER['HTTP_HOST'] === '127.0.0.1'));
+    
+    if ($es_desarrollo) {
+        echo "<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error Fatal - Insignias TecNM</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 50px; background: #f5f5f5; }
+                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .error-title { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                .error-content { background: #f8f9fa; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; }
+            </style>
+        </head>
+        <body>
+            <div class='error-box'>
+                <div class='error-title'>❌ Error Fatal</div>
+                <div class='error-content'><strong>Mensaje:</strong> " . htmlspecialchars($e->getMessage()) . "\n\n<strong>Archivo:</strong> " . htmlspecialchars($e->getFile()) . "\n<strong>Línea:</strong> " . $e->getLine() . "</div>
+            </div>
+        </body>
+        </html>";
         exit();
     } else {
-        die("Error fatal del sistema: " . htmlspecialchars($e->getMessage()) . ". Por favor, contacta al administrador.");
+        if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
+            header("Location: login.php?error=error_sistema");
+            exit();
+        } else {
+            die("Error fatal del sistema. Por favor, contacta al administrador.");
+        }
     }
 }
 
