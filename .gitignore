@@ -13,6 +13,7 @@ prueba_*.php
 test_*.php
 debug_*.php
 verificar_*.php
+!verificar_sesion.php  # EXCEPCIÓN: Este archivo es esencial para el sistema
 
 # Backups
 *.zip

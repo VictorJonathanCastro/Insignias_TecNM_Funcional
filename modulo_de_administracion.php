@@ -4,11 +4,29 @@
 // Compatible con XAMPP y Ubuntu
 // ========================================
 
-// Configurar manejo de errores
+// Configurar manejo de errores según el entorno
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-ini_set('error_log', '/var/log/apache2/php_errors.log');
+
+// Configurar ruta de log según el entorno (detectar sin depender de funciones externas)
+$es_windows = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
+$es_ubuntu = (file_exists('/etc/apache2/') || file_exists('/var/www/html/'));
+
+if ($es_ubuntu && !$es_windows) {
+    // En Ubuntu, intentar usar el log del sistema, pero con fallback
+    $log_path = '/var/log/apache2/php_errors.log';
+    // Si no se puede escribir, usar un archivo local
+    if (!is_writable(dirname($log_path))) {
+        $log_path = __DIR__ . '/php_errors.log';
+    }
+} else {
+    // En XAMPP/Windows o entorno desconocido, usar un archivo local
+    $log_path = __DIR__ . '/php_errors.log';
+}
+
+// Intentar configurar el log, pero no fallar si no se puede
+@ini_set('error_log', $log_path);
 
 // Iniciar buffer de salida para evitar output no deseado
 ob_start();
@@ -20,11 +38,21 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Verificar conexión antes de incluir archivos
 try {
+    // Incluir conexión con manejo de errores
+    if (!file_exists("conexion.php")) {
+        throw new Exception("Archivo conexion.php no encontrado");
+    }
+    
     include("conexion.php");
     
     // Verificar que la conexión existe y funciona
-    if (!isset($conexion) || $conexion->connect_errno) {
-        throw new Exception("Error de conexión a la base de datos");
+    if (!isset($conexion) || !is_object($conexion) || (property_exists($conexion, 'connect_errno') && $conexion->connect_errno)) {
+        throw new Exception("Error de conexión a la base de datos: " . (isset($conexion) && property_exists($conexion, 'connect_error') ? $conexion->connect_error : 'Desconocido'));
+    }
+    
+    // Incluir verificar_sesion con manejo de errores
+    if (!file_exists("verificar_sesion.php")) {
+        throw new Exception("Archivo verificar_sesion.php no encontrado");
     }
     
     include("verificar_sesion.php");
@@ -33,6 +61,15 @@ try {
     if (!isset($_SESSION['usuario_id'])) {
         header("Location: login.php");
         exit();
+    }
+
+    // Verificar que las funciones necesarias existan
+    if (!function_exists('verificarRoles')) {
+        throw new Exception("Función verificarRoles no encontrada. Verifique que verificar_sesion.php esté completo.");
+    }
+    
+    if (!function_exists('obtenerUsuarioActual')) {
+        throw new Exception("Función obtenerUsuarioActual no encontrada. Verifique que verificar_sesion.php esté completo.");
     }
 
     // Verificar que sea administrador
@@ -49,13 +86,32 @@ try {
     }
     
 } catch (Exception $e) {
-    // Log del error
-    error_log("Error en modulo_de_administracion.php: " . $e->getMessage());
+    // Log del error con más detalles
+    $error_msg = "Error en modulo_de_administracion.php: " . $e->getMessage();
+    $error_msg .= " | Archivo: " . __FILE__;
+    $error_msg .= " | Línea: " . $e->getLine();
+    $error_msg .= " | Timestamp: " . date('Y-m-d H:i:s');
+    error_log($error_msg);
     
     // Limpiar buffer de salida
-    ob_end_clean();
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     
     // Mostrar error genérico o redirigir
+    header("Location: login.php?error=error_sistema");
+    exit();
+} catch (Error $e) {
+    // Capturar errores fatales de PHP 7+
+    $error_msg = "Error fatal en modulo_de_administracion.php: " . $e->getMessage();
+    $error_msg .= " | Archivo: " . $e->getFile();
+    $error_msg .= " | Línea: " . $e->getLine();
+    error_log($error_msg);
+    
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    
     header("Location: login.php?error=error_sistema");
     exit();
 }
