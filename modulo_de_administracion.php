@@ -4,6 +4,12 @@
 // Compatible con XAMPP y Ubuntu
 // ========================================
 
+// Configurar manejo de errores
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', '/var/log/apache2/php_errors.log');
+
 // Iniciar buffer de salida para evitar output no deseado
 ob_start();
 
@@ -12,20 +18,47 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-include("conexion.php");
-include("verificar_sesion.php");
+// Verificar conexión antes de incluir archivos
+try {
+    include("conexion.php");
+    
+    // Verificar que la conexión existe y funciona
+    if (!isset($conexion) || $conexion->connect_errno) {
+        throw new Exception("Error de conexión a la base de datos");
+    }
+    
+    include("verificar_sesion.php");
+    
+    // Verificar si el usuario está autenticado y es administrador
+    if (!isset($_SESSION['usuario_id'])) {
+        header("Location: login.php");
+        exit();
+    }
 
-// Verificar si el usuario está autenticado y es administrador
-if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
+    // Verificar que sea administrador
+    verificarRoles(['Administrador', 'Admin', 'SuperUsuario']);
+
+    // Obtener información del usuario actual
+    $usuario = obtenerUsuarioActual();
+    
+    if (!$usuario) {
+        // Si no se puede obtener el usuario, cerrar sesión y redirigir
+        session_destroy();
+        header("Location: login.php?error=usuario_inactivo");
+        exit();
+    }
+    
+} catch (Exception $e) {
+    // Log del error
+    error_log("Error en modulo_de_administracion.php: " . $e->getMessage());
+    
+    // Limpiar buffer de salida
+    ob_end_clean();
+    
+    // Mostrar error genérico o redirigir
+    header("Location: login.php?error=error_sistema");
     exit();
 }
-
-// Verificar que sea administrador
-verificarRoles(['Administrador', 'Admin', 'SuperUsuario']);
-
-// Obtener información del usuario actual
-$usuario = obtenerUsuarioActual();
 
 
 // =======================
