@@ -98,9 +98,15 @@ try {
         ob_end_clean();
     }
     
-    // Mostrar error genérico o redirigir
-    header("Location: login.php?error=error_sistema");
-    exit();
+    // Evitar bucle de redirecciones - verificar si ya estamos en login
+    if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
+        // Solo redirigir si no estamos ya en login
+        header("Location: login.php?error=error_sistema");
+        exit();
+    } else {
+        // Si ya estamos en login o hay un error, mostrar mensaje directo
+        die("Error del sistema: " . htmlspecialchars($e->getMessage()) . ". Por favor, contacta al administrador.");
+    }
 } catch (Error $e) {
     // Capturar errores fatales de PHP 7+
     $error_msg = "Error fatal en modulo_de_administracion.php: " . $e->getMessage();
@@ -112,8 +118,13 @@ try {
         ob_end_clean();
     }
     
-    header("Location: login.php?error=error_sistema");
-    exit();
+    // Evitar bucle de redirecciones
+    if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
+        header("Location: login.php?error=error_sistema");
+        exit();
+    } else {
+        die("Error fatal del sistema: " . htmlspecialchars($e->getMessage()) . ". Por favor, contacta al administrador.");
+    }
 }
 
 
