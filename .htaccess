@@ -1,0 +1,60 @@
+# Configuración para Insignias Digitales TecNM
+# Dominio: insigniasdigitales.tecnm.mx
+
+# Habilitar mod_rewrite
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    
+    # Redirigir HTTP a HTTPS (opcional, si tienes SSL)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+    
+    # Ocultar index.php de la URL
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} !^/index\.php
+    RewriteRule ^$ index.php [L]
+    
+    # Si se accede a /index.php, redirigir a /
+    RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+index\.php[\s?] [NC]
+    RewriteRule ^index\.php$ / [R=301,L]
+    
+    # Permitir acceso directo a archivos existentes
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+    
+    # Permitir acceso directo a directorios existentes
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+</IfModule>
+
+# Configurar index.php como archivo por defecto
+DirectoryIndex index.php index.html
+
+# Prevenir acceso a archivos sensibles
+<FilesMatch "^(conexion\.php|\.git|\.htaccess|\.env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Configuración de seguridad
+<IfModule mod_headers.c>
+    # Prevenir clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevenir MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Habilitar XSS protection
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# Configuración de PHP (si está permitido)
+<IfModule mod_php7.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 300
+    php_value max_input_time 300
+</IfModule>
+
