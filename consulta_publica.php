@@ -218,18 +218,17 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
         die('Error al ejecutar la consulta: ' . $stmt->error);
     }
     
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $resultados[] = $row;
-    }
-    $stmt->close();
-    
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $resultados[] = $row;
+        }
+        $stmt->close();
+        
         if (empty($resultados)) {
             $mensaje = "🔍 No se encontraron insignias con los criterios de búsqueda '" . htmlspecialchars($busqueda) . "'.";
         } else {
             $mensaje = "";
         }
-        $stmt->close();
     } elseif (!empty($codigo)) {
         // Búsqueda por código específico
         if ($usar_tabla_t) {
@@ -312,23 +311,22 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
         }
         
         $stmt->bind_param("s", $codigo);
-    
-    if (!$stmt->execute()) {
-        die('Error al ejecutar la consulta: ' . $stmt->error);
-    }
-    
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $resultados[] = $row;
-    }
-    $stmt->close();
-    
+        
+        if (!$stmt->execute()) {
+            die('Error al ejecutar la consulta: ' . $stmt->error);
+        }
+        
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $resultados[] = $row;
+        }
+        $stmt->close();
+        
         if (empty($resultados)) {
             $mensaje = "🔍 No se encontraron insignias con el código '" . htmlspecialchars($codigo) . "'.";
         } else {
             $mensaje = "";
         }
-        $stmt->close();
     } elseif (!empty($subcategoria_id) || !empty($categoria_id)) {
         // Búsqueda por categoría/subcategoría
         if ($usar_tabla_t) {
@@ -415,19 +413,18 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
         if (!$stmt->execute()) {
             die('Error al ejecutar la consulta: ' . $stmt->error);
         }
-    
-    $result = $stmt->get_result();
-    while ($row = $result->fetch_assoc()) {
-        $resultados[] = $row;
-    }
-    $stmt->close();
-    
+        
+        $result = $stmt->get_result();
+        while ($row = $result->fetch_assoc()) {
+            $resultados[] = $row;
+        }
+        $stmt->close();
+        
         if (empty($resultados)) {
             $mensaje = "🔍 No se encontraron insignias para la categoría seleccionada.";
         } else {
             $mensaje = "";
         }
-        $stmt->close();
     } else {
         // No hay búsqueda: no mostrar nada, solo el formulario
         $mensaje = "";
