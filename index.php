@@ -1107,31 +1107,87 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       font-size: 14px;
     }
     
-    /* RESPONSIVE */
-    @media (max-width: 768px) {
-      .hero h1 {
-        font-size: 2.5rem;
-      }
-      
-      .hero .subtitle {
-        font-size: 1.15rem;
-      }
-      
-      .section-title {
-        font-size: 2rem;
-      }
-      
-      .header-content {
-        padding: 0 15px;
+    /* RESPONSIVE - Tablet */
+    @media (max-width: 1024px) {
+      .header {
+        padding: 25px 0;
       }
       
       .header-logo {
         height: 50px;
-        left: -160px;
+        left: -180px;
       }
       
       .header h1 {
-        font-size: 24px;
+        font-size: 28px;
+      }
+      
+      .hero {
+        padding: 8rem 2rem;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles y tablets pequeñas */
+    @media (max-width: 768px) {
+      .header {
+        padding: 20px 0;
+      }
+      
+      .header-content {
+        padding: 0 15px;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .header-logo {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        height: 45px;
+        width: auto;
+        display: block;
+        margin: 0;
+      }
+      
+      .header h1 {
+        font-size: 22px;
+        margin: 0;
+      }
+      
+      .hero {
+        padding: 6rem 1.5rem;
+      }
+      
+      .hero h1 {
+        font-size: 2.2rem;
+        line-height: 1.2;
+      }
+      
+      .hero .subtitle {
+        font-size: 1.1rem;
+        padding: 0 1rem;
+      }
+      
+      .section-title {
+        font-size: 1.8rem;
+      }
+      
+      .hero-buttons {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+      }
+      
+      .btn-primary,
+      .btn-secondary {
+        width: 100%;
+        padding: 1rem 2rem;
+        font-size: 1rem;
       }
       
       .nav-actions {
@@ -1228,6 +1284,185 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       
       .testimonials-section .carousel-container {
         padding: 2rem 3rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 0 1rem;
+      }
+      
+      .stat-card {
+        padding: 1.5rem 1rem;
+      }
+      
+      .stat-number {
+        font-size: 2rem;
+      }
+      
+      .stat-label {
+        font-size: 0.9rem;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles pequeños */
+    @media (max-width: 480px) {
+      .header {
+        padding: 15px 0;
+      }
+      
+      .header-content {
+        padding: 0 10px;
+        gap: 8px;
+      }
+      
+      .header-logo {
+        height: 35px;
+      }
+      
+      .header h1 {
+        font-size: 18px;
+      }
+      
+      .hero {
+        padding: 4rem 1rem;
+      }
+      
+      .hero h1 {
+        font-size: 1.8rem;
+        line-height: 1.3;
+      }
+      
+      .hero .subtitle {
+        font-size: 1rem;
+        padding: 0 0.5rem;
+      }
+      
+      .section-title {
+        font-size: 1.5rem;
+      }
+      
+      .hero-buttons {
+        max-width: 100%;
+        padding: 0 1rem;
+      }
+      
+      .btn-primary,
+      .btn-secondary {
+        padding: 0.9rem 1.5rem;
+        font-size: 0.95rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0 0.5rem;
+      }
+      
+      .stat-card {
+        padding: 1.2rem 0.8rem;
+      }
+      
+      .stat-number {
+        font-size: 1.8rem;
+      }
+      
+      .stat-label {
+        font-size: 0.85rem;
+      }
+      
+      .testimonial-item {
+        min-width: 90%;
+        max-width: 90%;
+        width: 90%;
+      }
+      
+      .testimonial-item .testimonial-card {
+        padding: 1.2rem;
+      }
+      
+      .testimonial-text {
+        font-size: 0.9rem;
+      }
+      
+      .carousel-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+      }
+      
+      .carousel-btn-prev {
+        left: -15px;
+      }
+      
+      .carousel-btn-next {
+        right: -15px;
+      }
+      
+      .testimonials-section .carousel-container {
+        padding: 1.5rem 2rem;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles muy pequeños */
+    @media (max-width: 360px) {
+      .header {
+        padding: 12px 0;
+      }
+      
+      .header-logo {
+        height: 30px;
+      }
+      
+      .header h1 {
+        font-size: 16px;
+      }
+      
+      .hero {
+        padding: 3rem 0.8rem;
+      }
+      
+      .hero h1 {
+        font-size: 1.5rem;
+      }
+      
+      .hero .subtitle {
+        font-size: 0.9rem;
+      }
+      
+      .section-title {
+        font-size: 1.3rem;
+      }
+      
+      .stats-grid {
+        padding: 0 0.3rem;
+      }
+      
+      .stat-card {
+        padding: 1rem 0.6rem;
+      }
+      
+      .stat-number {
+        font-size: 1.6rem;
+      }
+      
+      .stat-label {
+        font-size: 0.8rem;
+      }
+    }
+    
+    /* Orientación horizontal en móviles */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .header {
+        padding: 15px 0;
+      }
+      
+      .hero {
+        padding: 4rem 1.5rem;
+      }
+      
+      .hero h1 {
+        font-size: 2rem;
       }
     }
   </style>
