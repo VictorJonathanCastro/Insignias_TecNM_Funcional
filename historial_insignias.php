@@ -61,7 +61,12 @@ if (!empty($busqueda)) {
                 COALESCE(d.Matricula, 'No especificada') as Matricula,
                 COALESCE(ti.Programa, 'Programa no especificado') as Programa,
                 COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
-                COALESCE(ci.Nombre_cat, 'Formación Integral') as categoria,
+                CASE 
+                    WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
+                    WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria,
                 COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
                 pe.Nombre_Periodo as periodo,
                 COALESCE(e.Nombre_Estatus, 'Activo') as estatus,
@@ -74,7 +79,6 @@ if (!empty($busqueda)) {
             FROM T_insignias_otorgadas tio
             LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
             LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
-            LEFT JOIN cat_insignias ci ON tin.Cat_ins = ci.id
             LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
             LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
             LEFT JOIN estatus e ON tio.Id_Estatus = e.id
@@ -139,7 +143,12 @@ if (!empty($busqueda)) {
                 COALESCE(d.Matricula, 'No especificada') as Matricula,
                 COALESCE(ti.Programa, 'Programa no especificado') as Programa,
                 COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
-                COALESCE(ci.Nombre_cat, 'Formación Integral') as categoria,
+                CASE 
+                    WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
+                    WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria,
                 COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
                 pe.Nombre_Periodo as periodo,
                 COALESCE(e.Nombre_Estatus, 'Activo') as estatus,
@@ -152,7 +161,6 @@ if (!empty($busqueda)) {
             FROM T_insignias_otorgadas tio
             LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
             LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
-            LEFT JOIN cat_insignias ci ON tin.Cat_ins = ci.id
             LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
             LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
             LEFT JOIN estatus e ON tio.Id_Estatus = e.id
@@ -216,7 +224,12 @@ if (!empty($busqueda)) {
                 COALESCE(d.Matricula, 'No especificada') as Matricula,
                 COALESCE(ti.Programa, 'Programa no especificado') as Programa,
                 COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
-                COALESCE(ci.Nombre_cat, 'Formación Integral') as categoria,
+                CASE 
+                    WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
+                    WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria,
                 COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
                 pe.Nombre_Periodo as periodo,
                 COALESCE(e.Nombre_Estatus, 'Activo') as estatus,
@@ -229,7 +242,6 @@ if (!empty($busqueda)) {
             FROM T_insignias_otorgadas tio
             LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
             LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
-            LEFT JOIN cat_insignias ci ON tin.Cat_ins = ci.id
             LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
             LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
             LEFT JOIN estatus e ON tio.Id_Estatus = e.id
