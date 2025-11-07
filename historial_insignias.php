@@ -517,14 +517,39 @@ function formatearFecha($fecha) {
           text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
         
-        /* Responsive */
+        /* RESPONSIVE - Tablet */
+        @media (max-width: 1024px) {
+          .historial-header {
+            padding: 35px 25px;
+          }
+          
+          .historial-header h1 {
+            font-size: 2.5rem;
+          }
+          
+          .insignias-table {
+            margin: 25px;
+            padding: 25px;
+          }
+          
+          .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+          }
+        }
+        
+        /* RESPONSIVE - Móviles y tablets pequeñas */
         @media (max-width: 768px) {
           .historial-header {
             padding: 30px 20px;
           }
           
           .historial-header h1 {
-            font-size: 2.2rem;
+            font-size: 2rem;
+          }
+          
+          .historial-header p {
+            font-size: 1rem;
           }
           
           .back-button {
@@ -532,6 +557,13 @@ function formatearFecha($fecha) {
             transform: none;
             margin-bottom: 20px;
             align-self: flex-start;
+            width: auto;
+            padding: 12px 20px;
+            font-size: 14px;
+          }
+          
+          .search-section {
+            padding: 30px 20px;
           }
           
           .search-form {
@@ -541,11 +573,192 @@ function formatearFecha($fecha) {
           
           .search-input {
             width: 100%;
+            padding: 14px 18px;
+            font-size: 16px;
+          }
+          
+          .search-btn {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 16px;
           }
           
           .insignias-table {
             margin: 20px;
             padding: 20px;
+          }
+          
+          .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 15px;
+          }
+          
+          .insignias-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+          
+          .insignia-card {
+            padding: 25px 20px;
+          }
+          
+          .insignia-title {
+            font-size: 1.2rem;
+          }
+          
+          .insignia-category {
+            font-size: 0.8rem;
+            padding: 6px 14px;
+          }
+          
+          .btn-action {
+            width: 100%;
+            padding: 12px 20px;
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+        }
+        
+        /* RESPONSIVE - Móviles pequeños */
+        @media (max-width: 480px) {
+          .historial-header {
+            padding: 25px 15px;
+          }
+          
+          .historial-header h1 {
+            font-size: 1.8rem;
+          }
+          
+          .historial-header p {
+            font-size: 0.9rem;
+          }
+          
+          .back-button {
+            padding: 10px 16px;
+            font-size: 13px;
+          }
+          
+          .search-section {
+            padding: 25px 15px;
+          }
+          
+          .search-input {
+            padding: 12px 16px;
+            font-size: 16px;
+          }
+          
+          .search-btn {
+            padding: 12px 18px;
+            font-size: 15px;
+          }
+          
+          .insignias-table {
+            margin: 15px;
+            padding: 15px;
+          }
+          
+          .stats-grid {
+            gap: 12px;
+          }
+          
+          .stat-card {
+            padding: 20px 15px;
+          }
+          
+          .stat-number {
+            font-size: 2.5rem;
+          }
+          
+          .stat-label {
+            font-size: 0.9rem;
+          }
+          
+          .insignias-grid {
+            gap: 15px;
+          }
+          
+          .insignia-card {
+            padding: 20px 15px;
+          }
+          
+          .insignia-title {
+            font-size: 1.1rem;
+          }
+          
+          .detail-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+          }
+          
+          .detail-value {
+            text-align: left;
+            max-width: 100%;
+          }
+          
+          .btn-action {
+            padding: 10px 16px;
+            font-size: 13px;
+          }
+        }
+        
+        /* RESPONSIVE - Móviles muy pequeños */
+        @media (max-width: 360px) {
+          .historial-header {
+            padding: 20px 12px;
+          }
+          
+          .historial-header h1 {
+            font-size: 1.5rem;
+          }
+          
+          .historial-header p {
+            font-size: 0.85rem;
+          }
+          
+          .back-button {
+            padding: 8px 14px;
+            font-size: 12px;
+          }
+          
+          .search-section {
+            padding: 20px 12px;
+          }
+          
+          .insignias-table {
+            margin: 12px;
+            padding: 12px;
+          }
+          
+          .stat-card {
+            padding: 18px 12px;
+          }
+          
+          .stat-number {
+            font-size: 2rem;
+          }
+          
+          .stat-label {
+            font-size: 0.85rem;
+          }
+          
+          .insignia-card {
+            padding: 18px 12px;
+          }
+          
+          .insignia-title {
+            font-size: 1rem;
+          }
+        }
+        
+        /* Orientación horizontal en móviles */
+        @media (max-width: 768px) and (orientation: landscape) {
+          .historial-header {
+            padding: 20px 20px;
+          }
+          
+          .historial-header h1 {
+            font-size: 1.8rem;
           }
         }
 

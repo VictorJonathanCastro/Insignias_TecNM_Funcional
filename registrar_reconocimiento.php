@@ -14,6 +14,7 @@ if ($_SESSION['rol'] !== 'Admin' && $_SESSION['rol'] !== 'SuperUsuario') {
 }
 
 require_once 'conexion.php';
+require_once 'funciones_correo_real.php';
 $conexion->select_db("insignia");
 
 // Procesar formulario si se envió
@@ -60,7 +61,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($stmt2->execute()) {
                     $otorgada_id = $conexion->insert_id;
                     
+                    // Obtener datos del destinatario para enviar correo
+                    $stmt_destinatario = $conexion->prepare("SELECT Nombre_Completo, Correo, Matricula, Curp FROM destinatario WHERE ID_destinatario = ?");
+                    $stmt_destinatario->bind_param("i", $destinatario_id);
+                    $stmt_destinatario->execute();
+                    $result_destinatario = $stmt_destinatario->get_result();
+                    $destinatario_data = $result_destinatario->fetch_assoc();
+                    $stmt_destinatario->close();
+                    
+                    // Obtener nombre de la insignia
+                    $stmt_tipo = $conexion->prepare("SELECT Nombre_insignia FROM tipo_insignia WHERE id = ?");
+                    $stmt_tipo->bind_param("i", $tipo_insignia);
+                    $stmt_tipo->execute();
+                    $result_tipo = $stmt_tipo->get_result();
+                    $tipo_data = $result_tipo->fetch_assoc();
+                    $nombre_insignia = $tipo_data['Nombre_insignia'] ?? 'Insignia TecNM';
+                    $stmt_tipo->close();
+                    
+                    // Obtener nombre del período
+                    $stmt_periodo = $conexion->prepare("SELECT Nombre_Periodo FROM periodo_emision WHERE id = ?");
+                    $stmt_periodo->bind_param("i", $periodo_id);
+                    $stmt_periodo->execute();
+                    $result_periodo = $stmt_periodo->get_result();
+                    $periodo_data = $result_periodo->fetch_assoc();
+                    $nombre_periodo = $periodo_data['Nombre_Periodo'] ?? date('Y') . '-1';
+                    $stmt_periodo->close();
+                    
+                    // Generar URL de verificación
+                    $server_ip = $_SERVER['HTTP_HOST'] ?? 'localhost';
+                    if (empty($server_ip) || $server_ip === '::1') {
+                        $server_ip = 'localhost';
+                    }
+                    $port = $_SERVER['SERVER_PORT'] ?? '80';
+                    $base_url = "http://" . $server_ip . ($port != '80' ? ':' . $port : '');
+                    $url_verificacion = $base_url . "/Insignias_TecNM_Funcional/validacion.php?insignia=" . urlencode($codigo_insignia);
+                    
                     $mensaje_exito = "Reconocimiento registrado exitosamente. <a href='ver_metadatos_insignia.php?id=" . $otorgada_id . "' style='color: white; text-decoration: underline;'>Ver insignia completa</a>";
+                    
+                    // ENVIAR NOTIFICACIÓN POR CORREO si el destinatario tiene correo
+                    if (!empty($destinatario_data['Correo']) && filter_var($destinatario_data['Correo'], FILTER_VALIDATE_EMAIL)) {
+                        $datos_correo = [
+                            'estudiante' => $destinatario_data['Nombre_Completo'] ?? 'Estudiante',
+                            'matricula' => $destinatario_data['Matricula'] ?? 'No especificada',
+                            'curp' => $destinatario_data['Curp'] ?? 'No especificada',
+                            'nombre_insignia' => $nombre_insignia,
+                            'categoria' => 'Formación Integral', // Puedes obtenerla de la BD si es necesario
+                            'codigo_insignia' => $codigo_insignia,
+                            'periodo' => $nombre_periodo,
+                            'fecha_otorgamiento' => date('Y-m-d'),
+                            'responsable' => $_SESSION['nombre'] . ' ' . $_SESSION['apellido_paterno'],
+                            'descripcion' => $descripcion,
+                            'url_verificacion' => $url_verificacion
+                        ];
+                        
+                        $correo_enviado = enviarNotificacionInsigniaCompleta($destinatario_data['Correo'], $datos_correo);
+                        
+                        if ($correo_enviado) {
+                            $mensaje_exito .= " | ✅ Notificación enviada por correo a: " . htmlspecialchars($destinatario_data['Correo']);
+                        } else {
+                            $mensaje_exito .= " | ⚠️ Error al enviar correo a: " . htmlspecialchars($destinatario_data['Correo']);
+                        }
+                    } else {
+                        $mensaje_exito .= " | ⚠️ No se pudo enviar correo: el destinatario no tiene correo válido registrado";
+                    }
                 } else {
                     $mensaje_error = "Error al registrar el reconocimiento: " . $stmt2->error;
                 }
