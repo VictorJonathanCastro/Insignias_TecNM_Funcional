@@ -12,34 +12,65 @@ if (empty($codigo_insignia)) {
 $insignia = null;
 
 try {
-    $sql = "
-        SELECT 
-            io.ID_otorgada as id,
-            io.Codigo_Insignia as codigo,
-            io.Fecha_Emision as fecha_emision,
-            d.Nombre_Completo as destinatario,
-            d.Curp as curp,
-            d.Matricula as matricula,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
-                WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
-                WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
-                WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-                WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
-                ELSE 'Insignia TecNM'
-            END as nombre_insignia,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
-                WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
-                ELSE 'Formación Integral'
-            END as categoria
-        FROM insigniasotorgadas io
-        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-        WHERE io.Codigo_Insignia = ?
-    ";
+    // Verificar qué tabla existe
+    $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+    $usar_tabla_t = ($tabla_existe_t && $tabla_existe_t->num_rows > 0);
+    
+    if ($usar_tabla_t) {
+        // Usar T_insignias_otorgadas con JOIN a T_insignias
+        $sql = "
+            SELECT 
+                tio.id,
+                CONCAT(ti.id, '-', pe.Nombre_Periodo) as codigo,
+                tio.Fecha_Emision as fecha_emision,
+                d.Nombre_Completo as destinatario,
+                d.Curp as curp,
+                d.Matricula as matricula,
+                COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
+                CASE 
+                    WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
+                    WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria
+            FROM T_insignias_otorgadas tio
+            LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+            LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
+            LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
+            LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
+            WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?
+        ";
+    } else {
+        // Usar insigniasotorgadas (estructura antigua)
+        $sql = "
+            SELECT 
+                io.ID_otorgada as id,
+                io.Codigo_Insignia as codigo,
+                io.Fecha_Emision as fecha_emision,
+                d.Nombre_Completo as destinatario,
+                d.Curp as curp,
+                d.Matricula as matricula,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
+                    WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
+                    WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
+                    WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
+                    WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+                    ELSE 'Insignia TecNM'
+                END as nombre_insignia,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
+                    WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria
+            FROM insigniasotorgadas io
+            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            WHERE io.Codigo_Insignia = ?
+        ";
+    }
     
     $stmt = $conexion->prepare($sql);
     if ($stmt) {

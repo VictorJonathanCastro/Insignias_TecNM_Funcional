@@ -20,44 +20,84 @@ if (empty($codigo_insignia)) {
 }
 
 try {
-    // Consulta para obtener los datos de la insignia - CORREGIDA
-    $query = "SELECT 
-        io.ID_otorgada as id,
-        io.Codigo_Insignia as codigo,
-        CASE 
-            WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
-            WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
-            WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
-            WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
-            WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
-            WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-            WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
-            ELSE 'Insignia TecNM'
-        END as nombre,
-        CASE 
-            WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
-            WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
-            WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
-            ELSE 'Formación Integral'
-        END as categoria,
-        d.Nombre_Completo as destinatario,
-        NULL as descripcion,
-        NULL as criterios,
-        'Certificación oficial' as evidencias,
-        COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable,
-        COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
-        io.Fecha_Emision as fecha_emision,
-        'Tecnológico Nacional de México' as emisor,
-        'Certificación oficial' as evidencia,
-        'insignia_default.png' as archivo_visual,
-        COALESCE(re.Nombre_Completo, 'Administrador') as responsable_captura,
-        'ADMIN001' as codigo_responsable,
-        'imagen/Insignias/insignia_default.png' as imagen_path,
-        io.Responsable_Emision as responsable_id
-    FROM insigniasotorgadas io
-    LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-    LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.ID_responsable
-    WHERE io.Codigo_Insignia = ?";
+    // Verificar qué tabla existe
+    $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+    $usar_tabla_t = ($tabla_existe_t && $tabla_existe_t->num_rows > 0);
+    
+    if ($usar_tabla_t) {
+        // Usar T_insignias_otorgadas con JOIN a T_insignias
+        $query = "SELECT 
+            tio.id,
+            CONCAT(ti.id, '-', pe.Nombre_Periodo) as codigo,
+            COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre,
+            CASE 
+                WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
+                WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
+                ELSE 'Formación Integral'
+            END as categoria,
+            d.Nombre_Completo as destinatario,
+            ti.Descripcion as descripcion,
+            ti.Criterio as criterios,
+            'Certificación oficial' as evidencias,
+            COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable,
+            COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
+            tio.Fecha_Emision as fecha_emision,
+            COALESCE(itc.Nombre_itc, 'Tecnológico Nacional de México') as emisor,
+            'Certificación oficial' as evidencia,
+            COALESCE(ti.Archivo_Visual, 'insignia_default.png') as archivo_visual,
+            COALESCE(re.Nombre_Completo, 'Administrador') as responsable_captura,
+            'ADMIN001' as codigo_responsable,
+            CONCAT('imagen/Insignias/', COALESCE(ti.Archivo_Visual, 'insignia_default.png')) as imagen_path,
+            NULL as responsable_id
+        FROM T_insignias_otorgadas tio
+        LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+        LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
+        LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
+        LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
+        LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
+        LEFT JOIN responsable_emision re ON itc.id = re.Adscripcion
+        WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?";
+    } else {
+        // Usar insigniasotorgadas (estructura antigua)
+        $query = "SELECT 
+            io.ID_otorgada as id,
+            io.Codigo_Insignia as codigo,
+            CASE 
+                WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
+                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
+                WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
+                WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
+                WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
+                WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
+                WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+                ELSE 'Insignia TecNM'
+            END as nombre,
+            CASE 
+                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
+                WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
+                ELSE 'Formación Integral'
+            END as categoria,
+            d.Nombre_Completo as destinatario,
+            NULL as descripcion,
+            NULL as criterios,
+            'Certificación oficial' as evidencias,
+            COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable,
+            COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
+            io.Fecha_Emision as fecha_emision,
+            'Tecnológico Nacional de México' as emisor,
+            'Certificación oficial' as evidencia,
+            'insignia_default.png' as archivo_visual,
+            COALESCE(re.Nombre_Completo, 'Administrador') as responsable_captura,
+            'ADMIN001' as codigo_responsable,
+            'imagen/Insignias/insignia_default.png' as imagen_path,
+            io.Responsable_Emision as responsable_id
+        FROM insigniasotorgadas io
+        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+        LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.ID_responsable
+        WHERE io.Codigo_Insignia = ?";
+    }
     
     $stmt = $conexion->prepare($query);
     if (!$stmt) {
