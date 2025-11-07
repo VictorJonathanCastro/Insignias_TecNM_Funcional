@@ -57,17 +57,39 @@ try {
     $campo_nombre_tipo = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
     
     // Consultar tipos de insignias (subcategorías)
-    // Si tiene Cat_ins, hacer JOIN con cat_insignias, si no, solo obtener tipos
+    // Si tiene Cat_ins, hacer JOIN con cat_insignias, si no, asignar categorías inteligentemente
     if ($tiene_cat_ins) {
         $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria 
                              FROM tipo_insignia ti 
                              LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
                              ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
     } else {
-        // Si no tiene Cat_ins, obtener todos los tipos y asignar categoría por defecto
-        $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, 1 as categoria_id, 'Formación Integral' as nombre_categoria 
+        // Si no tiene Cat_ins, asignar categorías basándose en el nombre de la insignia
+        $sql_subcategorias = "SELECT 
+                                ti.$campo_id_tipo as id, 
+                                ti.$campo_nombre_tipo as nombre_insignia,
+                                CASE 
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Movilidad%' OR ti.$campo_nombre_tipo LIKE '%Intercambio%' OR 
+                                         ti.$campo_nombre_tipo LIKE '%Arte%' OR ti.$campo_nombre_tipo LIKE '%Deporte%' THEN 1
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Responsabilidad%' OR ti.$campo_nombre_tipo LIKE '%Social%' THEN 2
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Formacion%' OR ti.$campo_nombre_tipo LIKE '%Actualizacion%' OR 
+                                         ti.$campo_nombre_tipo LIKE '%Cientifico%' OR ti.$campo_nombre_tipo LIKE '%Talento%' THEN 3
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Innovacion%' OR ti.$campo_nombre_tipo LIKE '%Emprendimiento%' THEN 4
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Liderazgo%' OR ti.$campo_nombre_tipo LIKE '%Sustentabilidad%' THEN 5
+                                    ELSE 1
+                                END as categoria_id,
+                                CASE 
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Movilidad%' OR ti.$campo_nombre_tipo LIKE '%Intercambio%' OR 
+                                         ti.$campo_nombre_tipo LIKE '%Arte%' OR ti.$campo_nombre_tipo LIKE '%Deporte%' THEN 'Formacion Integral'
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Responsabilidad%' OR ti.$campo_nombre_tipo LIKE '%Social%' THEN 'Responsabilidad Social'
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Formacion%' OR ti.$campo_nombre_tipo LIKE '%Actualizacion%' OR 
+                                         ti.$campo_nombre_tipo LIKE '%Cientifico%' OR ti.$campo_nombre_tipo LIKE '%Talento%' THEN 'Excelencia Academica'
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Innovacion%' OR ti.$campo_nombre_tipo LIKE '%Emprendimiento%' THEN 'Innovacion Tecnologica'
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Liderazgo%' OR ti.$campo_nombre_tipo LIKE '%Sustentabilidad%' THEN 'Cultura y Deporte'
+                                    ELSE 'Formacion Integral'
+                                END as nombre_categoria
                              FROM tipo_insignia ti 
-                             ORDER BY ti.$campo_nombre_tipo";
+                             ORDER BY nombre_categoria, ti.$campo_nombre_tipo";
     }
     
     $result_subcategorias = $conexion->query($sql_subcategorias);
