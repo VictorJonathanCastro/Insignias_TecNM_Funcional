@@ -131,9 +131,34 @@ try {
         </html>";
         exit();
     } else {
-        // En producción, destruir sesión y redirigir a login
+        // En producción, mostrar error específico para diagnóstico
+        // Guardar error en archivo de log
+        $log_file = __DIR__ . '/php_errors.log';
+        @file_put_contents($log_file, date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . " | Archivo: " . $e->getFile() . " | Línea: " . $e->getLine() . "\n", FILE_APPEND);
+        
+        // Mostrar error específico en página
         session_destroy();
-        header("Location: login.php?error=error_sistema");
+        echo "<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error del Sistema - Insignias TecNM</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 50px; background: #f5f5f5; }
+                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+                .error-title { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                .error-content { background: #f8f9fa; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; font-size: 14px; }
+                .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <div class='error-box'>
+                <div class='error-title'>⚠️ Error del Sistema</div>
+                <div class='error-content'><strong>Mensaje de error:</strong>\n" . htmlspecialchars($e->getMessage()) . "\n\n<strong>Archivo:</strong> " . htmlspecialchars(basename($e->getFile())) . "\n<strong>Línea:</strong> " . $e->getLine() . "\n\n<strong>Posibles causas:</strong>\n- El archivo conexion.php no existe o tiene credenciales incorrectas\n- La base de datos no está accesible\n- Falta el archivo verificar_sesion.php\n- Las funciones necesarias no están disponibles</div>
+                <a href='login.php' class='btn'>Volver al Login</a>
+                <a href='diagnostico_servidor.php' class='btn' style='background: #28a745; margin-left: 10px;'>Ejecutar Diagnóstico</a>
+            </div>
+        </body>
+        </html>";
         exit();
     }
 } catch (Error $e) {
@@ -174,9 +199,30 @@ try {
         </html>";
         exit();
     } else {
-        // En producción, destruir sesión y redirigir
+        // En producción, mostrar error específico
+        $log_file = __DIR__ . '/php_errors.log';
+        @file_put_contents($log_file, date('Y-m-d H:i:s') . " - ERROR FATAL: " . $e->getMessage() . " | Archivo: " . $e->getFile() . " | Línea: " . $e->getLine() . "\n", FILE_APPEND);
+        
         session_destroy();
-        header("Location: login.php?error=error_sistema");
+        echo "<!DOCTYPE html>
+        <html>
+        <head>
+            <title>Error Fatal - Insignias TecNM</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 50px; background: #f5f5f5; }
+                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+                .error-title { color: #dc3545; font-size: 24px; margin-bottom: 20px; }
+                .error-content { background: #f8f9fa; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; }
+            </style>
+        </head>
+        <body>
+            <div class='error-box'>
+                <div class='error-title'>❌ Error Fatal del Sistema</div>
+                <div class='error-content'><strong>Mensaje:</strong> " . htmlspecialchars($e->getMessage()) . "\n\n<strong>Archivo:</strong> " . htmlspecialchars(basename($e->getFile())) . "\n<strong>Línea:</strong> " . $e->getLine() . "</div>
+                <a href='login.php' style='background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; margin-top: 20px;'>Volver al Login</a>
+            </div>
+        </body>
+        </html>";
         exit();
     }
 }
