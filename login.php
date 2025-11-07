@@ -2,7 +2,8 @@
 session_start();
 
 // Si el usuario ya está logueado, redirigir al módulo correspondiente
-if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
+// PERO NO si hay un error en la URL (para evitar bucles de redirección)
+if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol']) && !isset($_GET['error'])) {
     if ($_SESSION['rol'] === 'Admin' || $_SESSION['rol'] === 'SuperUsuario') {
         header('Location: modulo_de_administracion.php');
     } else if ($_SESSION['rol'] === 'Estudiante') {
@@ -11,6 +12,12 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
         header('Location: index.php');
     }
     exit();
+}
+
+// Si hay un error en la URL, destruir la sesión para evitar bucles
+if (isset($_GET['error']) && isset($_GET['error']) && $_GET['error'] === 'error_sistema') {
+    // No destruir la sesión inmediatamente, solo mostrar el error
+    // La sesión se destruirá cuando el usuario intente iniciar sesión de nuevo
 }
 ?>
 <!DOCTYPE html>

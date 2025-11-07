@@ -106,6 +106,7 @@ try {
                        strpos($_SERVER['HTTP_HOST'], 'localhost') !== false));
     
     // En desarrollo, mostrar error detallado; en producción, redirigir
+    // Detectar si estamos en desarrollo local
     if ($es_desarrollo) {
         // Mostrar error detallado en desarrollo
         echo "<!DOCTYPE html>
@@ -130,13 +131,10 @@ try {
         </html>";
         exit();
     } else {
-        // En producción, redirigir a login
-        if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
-            header("Location: login.php?error=error_sistema");
-            exit();
-        } else {
-            die("Error del sistema. Por favor, contacta al administrador.");
-        }
+        // En producción, destruir sesión y redirigir a login
+        session_destroy();
+        header("Location: login.php?error=error_sistema");
+        exit();
     }
 } catch (Error $e) {
     // Capturar errores fatales de PHP 7+
@@ -176,12 +174,10 @@ try {
         </html>";
         exit();
     } else {
-        if (basename($_SERVER['PHP_SELF']) !== 'login.php' && !isset($_GET['error'])) {
-            header("Location: login.php?error=error_sistema");
-            exit();
-        } else {
-            die("Error fatal del sistema. Por favor, contacta al administrador.");
-        }
+        // En producción, destruir sesión y redirigir
+        session_destroy();
+        header("Location: login.php?error=error_sistema");
+        exit();
     }
 }
 
