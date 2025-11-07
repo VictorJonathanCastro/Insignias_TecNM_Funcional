@@ -20,132 +20,247 @@ $rol_usuario = $_SESSION['rol'] ?? 'Estudiante';
 // Verificar si hay búsqueda específica
 $busqueda = $_GET['buscar'] ?? '';
 
+// Verificar qué tabla existe (T_insignias_otorgadas o insigniasotorgadas)
+$tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+$tabla_existe_i = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+
+// Determinar qué tabla usar
+$usar_tabla_t = ($tabla_existe_t && $tabla_existe_t->num_rows > 0);
+$usar_tabla_i = ($tabla_existe_i && $tabla_existe_i->num_rows > 0);
+
 // Consulta básica para obtener las insignias otorgadas usando la estructura actual
 if (!empty($busqueda)) {
     // Modo búsqueda: mostrar solo lo que se busque
-    $sql = "
-        SELECT 
-            io.ID_otorgada as id,
-            io.Codigo_Insignia as clave_insignia,
-            io.Fecha_Emision as fecha_otorgamiento,
-            'Certificación oficial' as evidencia,
-            d.Nombre_Completo as destinatario,
-            'No especificada' as Matricula,
-            'Programa no especificado' as Programa,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
-                WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
-                WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
-                WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-                WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
-                ELSE 'Insignia TecNM'
-            END as nombre_insignia,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
-                WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
-                ELSE 'Formación Integral'
-            END as categoria,
-            'TecNM' as institucion,
-            '2025-1' as periodo,
-            'Activo' as estatus,
-            'Sistema' as responsable,
-            'Administrador' as cargo,
-            io.firma_digital_base64,
-            io.hash_verificacion,
-            io.certificado_info,
-            io.fecha_firma
-        FROM insigniasotorgadas io
-        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-        WHERE d.Nombre_Completo LIKE ?
-        ORDER BY io.Fecha_Emision DESC
-    ";
+    if ($usar_tabla_t) {
+        // Usar T_insignias_otorgadas con JOIN a T_insignias y tipo_insignia
+        $sql = "
+            SELECT 
+                tio.id,
+                CONCAT(ti.id, '-', pe.Nombre_Periodo) as clave_insignia,
+                tio.Fecha_Emision as fecha_otorgamiento,
+                'Certificación oficial' as evidencia,
+                d.Nombre_Completo as destinatario,
+                COALESCE(d.Matricula, 'No especificada') as Matricula,
+                COALESCE(ti.Programa, 'Programa no especificado') as Programa,
+                COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
+                COALESCE(ci.Nombre_cat, 'Formación Integral') as categoria,
+                COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
+                pe.Nombre_Periodo as periodo,
+                COALESCE(e.Nombre_Estatus, 'Activo') as estatus,
+                'Sistema' as responsable,
+                'Administrador' as cargo,
+                NULL as firma_digital_base64,
+                NULL as hash_verificacion,
+                NULL as certificado_info,
+                NULL as fecha_firma
+            FROM T_insignias_otorgadas tio
+            LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+            LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
+            LEFT JOIN cat_insignias ci ON tin.Cat_ins = ci.id
+            LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
+            LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
+            LEFT JOIN estatus e ON tio.Id_Estatus = e.id
+            LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
+            WHERE d.Nombre_Completo LIKE ?
+            ORDER BY tio.Fecha_Emision DESC
+        ";
+    } else {
+        // Usar insigniasotorgadas (estructura antigua)
+        $sql = "
+            SELECT 
+                io.ID_otorgada as id,
+                io.Codigo_Insignia as clave_insignia,
+                io.Fecha_Emision as fecha_otorgamiento,
+                'Certificación oficial' as evidencia,
+                d.Nombre_Completo as destinatario,
+                'No especificada' as Matricula,
+                'Programa no especificado' as Programa,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
+                    WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
+                    WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
+                    WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
+                    WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+                    ELSE 'Insignia TecNM'
+                END as nombre_insignia,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
+                    WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria,
+                'TecNM' as institucion,
+                '2025-1' as periodo,
+                'Activo' as estatus,
+                'Sistema' as responsable,
+                'Administrador' as cargo,
+                io.firma_digital_base64,
+                io.hash_verificacion,
+                io.certificado_info,
+                io.fecha_firma
+            FROM insigniasotorgadas io
+            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            WHERE d.Nombre_Completo LIKE ?
+            ORDER BY io.Fecha_Emision DESC
+        ";
+    }
     $filtro_por_busqueda = true;
 } elseif ($rol_usuario === 'Admin' || $rol_usuario === 'Administrador' || $rol_usuario === 'SuperUsuario') {
     // Modo administrador: mostrar TODAS las insignias
-    $sql = "
-        SELECT 
-            io.ID_otorgada as id,
-            io.Codigo_Insignia as clave_insignia,
-            io.Fecha_Emision as fecha_otorgamiento,
-            'Certificación oficial' as evidencia,
-            COALESCE(d.Nombre_Completo, 'Destinatario no especificado') as destinatario,
-            COALESCE(d.Matricula, 'No especificada') as Matricula,
-            'Programa no especificado' as Programa,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
-                WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
-                WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
-                WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-                WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
-                ELSE 'Insignia TecNM'
-            END as nombre_insignia,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
-                WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
-                ELSE 'Formación Integral'
-            END as categoria,
-            'TecNM' as institucion,
-            '2025-1' as periodo,
-            'Activo' as estatus,
-            'Sistema' as responsable,
-            'Administrador' as cargo,
-            io.firma_digital_base64,
-            io.hash_verificacion,
-            io.certificado_info,
-            io.fecha_firma
-        FROM insigniasotorgadas io
-        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-        ORDER BY io.Fecha_Emision DESC
-    ";
+    if ($usar_tabla_t) {
+        // Usar T_insignias_otorgadas
+        $sql = "
+            SELECT 
+                tio.id,
+                CONCAT(ti.id, '-', pe.Nombre_Periodo) as clave_insignia,
+                tio.Fecha_Emision as fecha_otorgamiento,
+                'Certificación oficial' as evidencia,
+                COALESCE(d.Nombre_Completo, 'Destinatario no especificado') as destinatario,
+                COALESCE(d.Matricula, 'No especificada') as Matricula,
+                COALESCE(ti.Programa, 'Programa no especificado') as Programa,
+                COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
+                COALESCE(ci.Nombre_cat, 'Formación Integral') as categoria,
+                COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
+                pe.Nombre_Periodo as periodo,
+                COALESCE(e.Nombre_Estatus, 'Activo') as estatus,
+                'Sistema' as responsable,
+                'Administrador' as cargo,
+                NULL as firma_digital_base64,
+                NULL as hash_verificacion,
+                NULL as certificado_info,
+                NULL as fecha_firma
+            FROM T_insignias_otorgadas tio
+            LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+            LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
+            LEFT JOIN cat_insignias ci ON tin.Cat_ins = ci.id
+            LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
+            LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
+            LEFT JOIN estatus e ON tio.Id_Estatus = e.id
+            LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
+            ORDER BY tio.Fecha_Emision DESC
+        ";
+    } else {
+        // Usar insigniasotorgadas
+        $sql = "
+            SELECT 
+                io.ID_otorgada as id,
+                io.Codigo_Insignia as clave_insignia,
+                io.Fecha_Emision as fecha_otorgamiento,
+                'Certificación oficial' as evidencia,
+                COALESCE(d.Nombre_Completo, 'Destinatario no especificado') as destinatario,
+                COALESCE(d.Matricula, 'No especificada') as Matricula,
+                'Programa no especificado' as Programa,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
+                    WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
+                    WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
+                    WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
+                    WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+                    ELSE 'Insignia TecNM'
+                END as nombre_insignia,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
+                    WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria,
+                'TecNM' as institucion,
+                '2025-1' as periodo,
+                'Activo' as estatus,
+                'Sistema' as responsable,
+                'Administrador' as cargo,
+                io.firma_digital_base64,
+                io.hash_verificacion,
+                io.certificado_info,
+                io.fecha_firma
+            FROM insigniasotorgadas io
+            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            ORDER BY io.Fecha_Emision DESC
+        ";
+    }
     $filtro_por_busqueda = false;
     $filtro_por_correo = false;
 } else {
     // Filtrar por nombre del usuario
-    $sql = "
-        SELECT 
-            io.ID_otorgada as id,
-            io.Codigo_Insignia as clave_insignia,
-            io.Fecha_Emision as fecha_otorgamiento,
-            'Certificación oficial' as evidencia,
-            d.Nombre_Completo as destinatario,
-            'No especificada' as Matricula,
-            'Programa no especificado' as Programa,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
-                WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
-                WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
-                WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-                WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
-                ELSE 'Insignia TecNM'
-            END as nombre_insignia,
-            CASE 
-                WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
-                WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
-                WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
-                ELSE 'Formación Integral'
-            END as categoria,
-            'TecNM' as institucion,
-            '2025-1' as periodo,
-            'Activo' as estatus,
-            'Sistema' as responsable,
-            'Administrador' as cargo,
-            io.firma_digital_base64,
-            io.hash_verificacion,
-            io.certificado_info,
-            io.fecha_firma
-        FROM insigniasotorgadas io
-        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-        WHERE d.Nombre_Completo LIKE ?
-        ORDER BY io.Fecha_Emision DESC
-    ";
+    if ($usar_tabla_t) {
+        // Usar T_insignias_otorgadas
+        $sql = "
+            SELECT 
+                tio.id,
+                CONCAT(ti.id, '-', pe.Nombre_Periodo) as clave_insignia,
+                tio.Fecha_Emision as fecha_otorgamiento,
+                'Certificación oficial' as evidencia,
+                d.Nombre_Completo as destinatario,
+                COALESCE(d.Matricula, 'No especificada') as Matricula,
+                COALESCE(ti.Programa, 'Programa no especificado') as Programa,
+                COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
+                COALESCE(ci.Nombre_cat, 'Formación Integral') as categoria,
+                COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
+                pe.Nombre_Periodo as periodo,
+                COALESCE(e.Nombre_Estatus, 'Activo') as estatus,
+                'Sistema' as responsable,
+                'Administrador' as cargo,
+                NULL as firma_digital_base64,
+                NULL as hash_verificacion,
+                NULL as certificado_info,
+                NULL as fecha_firma
+            FROM T_insignias_otorgadas tio
+            LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+            LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
+            LEFT JOIN cat_insignias ci ON tin.Cat_ins = ci.id
+            LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
+            LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
+            LEFT JOIN estatus e ON tio.Id_Estatus = e.id
+            LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
+            WHERE d.Nombre_Completo LIKE ?
+            ORDER BY tio.Fecha_Emision DESC
+        ";
+    } else {
+        // Usar insigniasotorgadas
+        $sql = "
+            SELECT 
+                io.ID_otorgada as id,
+                io.Codigo_Insignia as clave_insignia,
+                io.Fecha_Emision as fecha_otorgamiento,
+                'Certificación oficial' as evidencia,
+                d.Nombre_Completo as destinatario,
+                'No especificada' as Matricula,
+                'Programa no especificado' as Programa,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
+                    WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
+                    WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
+                    WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
+                    WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+                    ELSE 'Insignia TecNM'
+                END as nombre_insignia,
+                CASE 
+                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
+                    WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria,
+                'TecNM' as institucion,
+                '2025-1' as periodo,
+                'Activo' as estatus,
+                'Sistema' as responsable,
+                'Administrador' as cargo,
+                io.firma_digital_base64,
+                io.hash_verificacion,
+                io.certificado_info,
+                io.fecha_firma
+            FROM insigniasotorgadas io
+            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            WHERE d.Nombre_Completo LIKE ?
+            ORDER BY io.Fecha_Emision DESC
+        ";
+    }
     $filtro_por_correo = false;
     $filtro_por_busqueda = false;
 }
