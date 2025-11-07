@@ -714,24 +714,91 @@ if (isset($_GET['error']) && isset($_GET['error']) && $_GET['error'] === 'error_
       font-size: 14px;
     }
     
-    @media (max-width: 768px) {
-      .header-content {
-        padding: 0 15px;
+    /* RESPONSIVE - Tablet */
+    @media (max-width: 1024px) {
+      .header {
+        padding: 25px 0;
       }
       
       .header-logo {
         height: 50px;
-        left: -160px;
+        left: -180px;
       }
       
       header h1 {
-        font-size: 24px;
+        font-size: 28px;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles y tablets pequeñas */
+    @media (max-width: 768px) {
+      .header {
+        padding: 20px 0;
+      }
+      
+      .header-content {
+        padding: 0 15px;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .header-logo {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        height: 45px;
+        width: auto;
+        display: block;
+        margin: 0;
+      }
+      
+      header h1 {
+        font-size: 22px;
+        margin: 0;
       }
       
       .footer-links {
         flex-direction: column;
         align-items: center;
         gap: 12px;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles pequeños */
+    @media (max-width: 480px) {
+      .header {
+        padding: 15px 0;
+      }
+      
+      .header-content {
+        padding: 0 10px;
+        gap: 8px;
+      }
+      
+      .header-logo {
+        height: 35px;
+      }
+      
+      header h1 {
+        font-size: 18px;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles muy pequeños */
+    @media (max-width: 360px) {
+      .header {
+        padding: 12px 0;
+      }
+      
+      .header-logo {
+        height: 30px;
+      }
+      
+      header h1 {
+        font-size: 16px;
       }
     }
 
@@ -742,79 +809,100 @@ if (isset($_GET['error']) && isset($_GET['error']) && $_GET['error'] === 'error_
     }
 
     /* -------- RESPONSIVE ULTRA-OPTIMIZADO -------- */
-    @media (max-width: 768px) {
+    /* Tablet */
+    @media (max-width: 1024px) {
       .login-container {
-        padding: 30px 15px;
-        padding-top: 120px;
-        padding-bottom: 120px;
+        padding: 40px 20px;
+        padding-top: 100px;
+        padding-bottom: 100px;
       }
       
       .login-box {
         padding: 50px 40px;
-        max-width: 420px;
+        max-width: 500px;
+      }
+    }
+    
+    /* Móviles y tablets pequeñas */
+    @media (max-width: 768px) {
+      .login-container {
+        padding: 30px 15px;
+        padding-top: 100px;
+        padding-bottom: 100px;
+      }
+      
+      .login-box {
+        padding: 40px 30px;
+        max-width: 100%;
+        width: 100%;
       }
       
       .login-box h2 {
-        font-size: 28px;
+        font-size: 26px;
       }
       
       .login-box .subtitle {
-        font-size: 16px;
-      }
-      
-      header h1 {
-        font-size: 24px;
+        font-size: 15px;
       }
       
       .input-group input {
         font-size: 16px; /* Previene zoom en iOS */
-        padding: 18px 18px 18px 55px;
+        padding: 16px 16px 16px 50px;
       }
       
       .input-wrapper i {
-        left: 18px;
+        left: 16px;
         font-size: 16px;
       }
       
       .password-toggle {
-        right: 18px;
+        right: 16px;
         width: 36px;
         height: 36px;
       }
       
       .btn {
-        padding: 18px 35px;
-        font-size: 18px;
+        padding: 16px 30px;
+        font-size: 16px;
+        width: 100%;
       }
     }
 
+    /* Móviles pequeños */
     @media (max-width: 480px) {
+      .login-container {
+        padding: 20px 10px;
+        padding-top: 90px;
+        padding-bottom: 90px;
+      }
+      
       .login-box {
-        padding: 40px 30px;
-        max-width: 380px;
+        padding: 35px 25px;
+        max-width: 100%;
+        border-radius: 16px;
       }
       
       .login-box img.logo {
-        width: 100px;
-        height: 100px;
+        width: 90px;
+        height: 90px;
       }
       
       .back-arrow {
-        top: 15px;
-        left: 15px;
+        top: 12px;
+        left: 12px;
       }
       
       .back-arrow a {
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
       }
       
       .back-arrow i {
-        font-size: 16px;
+        font-size: 14px;
       }
       
       .login-box h2 {
-        font-size: 24px;
+        font-size: 22px;
       }
       
       .login-box .subtitle {
@@ -822,24 +910,78 @@ if (isset($_GET['error']) && isset($_GET['error']) && $_GET['error'] === 'error_
       }
       
       .input-group input {
-        padding: 16px 16px 16px 50px;
+        padding: 14px 14px 14px 45px;
         font-size: 16px;
       }
       
       .input-wrapper i {
-        left: 16px;
+        left: 14px;
         font-size: 14px;
       }
       
       .password-toggle {
-        right: 16px;
+        right: 14px;
         width: 32px;
         height: 32px;
       }
       
       .btn {
-        padding: 16px 30px;
+        padding: 14px 25px;
+        font-size: 15px;
+      }
+    }
+    
+    /* Móviles muy pequeños */
+    @media (max-width: 360px) {
+      .login-container {
+        padding: 15px 8px;
+        padding-top: 80px;
+        padding-bottom: 80px;
+      }
+      
+      .login-box {
+        padding: 30px 20px;
+      }
+      
+      .login-box h2 {
+        font-size: 20px;
+      }
+      
+      .login-box .subtitle {
+        font-size: 13px;
+      }
+      
+      .input-group input {
+        padding: 12px 12px 12px 40px;
         font-size: 16px;
+      }
+      
+      .input-wrapper i {
+        left: 12px;
+        font-size: 13px;
+      }
+      
+      .password-toggle {
+        right: 12px;
+        width: 30px;
+        height: 30px;
+      }
+      
+      .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+      }
+    }
+    
+    /* Orientación horizontal en móviles */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .login-container {
+        padding-top: 70px;
+        padding-bottom: 70px;
+      }
+      
+      .login-box {
+        padding: 30px 25px;
       }
     }
 

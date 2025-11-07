@@ -993,29 +993,58 @@ if ($total_insignias > 1) {
             font-size: 14px;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .header-content {
-                padding: 0 15px;
+        /* RESPONSIVE - Tablet */
+        @media (max-width: 1024px) {
+            .header {
+                padding: 25px 0;
             }
             
             .header-logo {
                 height: 50px;
-                left: -160px;
+                left: -180px;
             }
             
             header h1 {
-                font-size: 24px;
+                font-size: 28px;
             }
             
             .main-container {
-                padding-top: 100px;
+                padding: 90px 25px 120px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles y tablets pequeñas */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px 0;
             }
             
             .header-content {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
+                padding: 0 15px;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .header-logo {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                height: 45px;
+                width: auto;
+                display: block;
+                margin: 0;
+            }
+            
+            header h1 {
+                font-size: 22px;
+                margin: 0;
+            }
+            
+            .main-container {
+                padding: 80px 20px 120px;
             }
 
             .header-right {
@@ -1025,10 +1054,12 @@ if ($total_insignias > 1) {
 
             .stats-grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
             }
 
             .insignias-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
                 padding: 20px;
             }
 
@@ -1041,6 +1072,129 @@ if ($total_insignias > 1) {
                 flex-direction: column;
                 align-items: center;
                 gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 25px 20px;
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+            
+            .stat-label {
+                font-size: 1rem;
+            }
+            
+            .insignia-card {
+                padding: 25px 20px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles pequeños */
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 0;
+            }
+            
+            .header-content {
+                padding: 0 10px;
+                gap: 8px;
+            }
+            
+            .header-logo {
+                height: 35px;
+            }
+            
+            header h1 {
+                font-size: 18px;
+            }
+            
+            .main-container {
+                padding: 70px 15px 100px;
+            }
+            
+            .stats-grid {
+                gap: 12px;
+            }
+            
+            .stat-card {
+                padding: 20px 15px;
+            }
+            
+            .stat-number {
+                font-size: 2rem;
+            }
+            
+            .stat-label {
+                font-size: 0.9rem;
+            }
+            
+            .insignias-grid {
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .insignia-card {
+                padding: 20px 15px;
+            }
+            
+            .btn {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles muy pequeños */
+        @media (max-width: 360px) {
+            .header {
+                padding: 12px 0;
+            }
+            
+            .header-logo {
+                height: 30px;
+            }
+            
+            header h1 {
+                font-size: 16px;
+            }
+            
+            .main-container {
+                padding: 60px 10px 90px;
+            }
+            
+            .stat-card {
+                padding: 18px 12px;
+            }
+            
+            .stat-number {
+                font-size: 1.8rem;
+            }
+            
+            .stat-label {
+                font-size: 0.85rem;
+            }
+            
+            .insignia-card {
+                padding: 18px 12px;
+            }
+        }
+        
+        /* Orientación horizontal en móviles */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .header {
+                padding: 15px 0;
+            }
+            
+            .main-container {
+                padding: 60px 20px 100px;
             }
         }
     </style>

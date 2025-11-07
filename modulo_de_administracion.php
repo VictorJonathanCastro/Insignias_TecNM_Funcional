@@ -1173,8 +1173,73 @@ ob_clean();
       color: white;
     }
     
-    /* Responsive */
+    /* RESPONSIVE - Tablet */
+    @media (max-width: 1024px) {
+      .header-principal {
+        padding: 25px 0;
+      }
+      
+      .header-logo-admin {
+        height: 50px;
+        left: -180px;
+      }
+      
+      .header-content-admin h1 {
+        font-size: 28px;
+      }
+      
+      .main-container {
+        padding: 90px 25px 120px;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles y tablets pequeñas */
     @media (max-width: 768px) {
+      .header-principal {
+        padding: 20px 0;
+      }
+      
+      .header-content-admin {
+        padding: 0 15px;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .header-logo-admin {
+        position: relative;
+        left: auto;
+        top: auto;
+        transform: none;
+        height: 45px;
+        width: auto;
+        display: block;
+        margin: 0;
+      }
+      
+      .header-content-admin h1 {
+        font-size: 22px;
+        margin: 0;
+      }
+      
+      .main-container {
+        padding: 80px 20px 120px;
+      }
+      
+      .card {
+        padding: 30px 20px;
+        border-radius: 16px;
+      }
+      
+      .card-title {
+        font-size: 24px;
+      }
+      
+      .card-subtitle {
+        font-size: 16px;
+      }
+      
       .admin-header {
         flex-direction: column;
         gap: 20px;
@@ -1184,21 +1249,146 @@ ob_clean();
       .nav-tabs {
         flex-direction: column;
         align-items: center;
+        gap: 12px;
       }
       
       .nav-tabs button {
         width: 100%;
-        max-width: 300px;
+        max-width: 100%;
+        padding: 14px 20px;
+        font-size: 15px;
       }
       
       .stats-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
       }
       
       .user-info {
         flex-direction: column;
         gap: 15px;
         text-align: center;
+      }
+      
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      table {
+        min-width: 500px;
+        font-size: 13px;
+      }
+      
+      th, td {
+        padding: 10px 6px;
+        font-size: 13px;
+      }
+      
+      .btn {
+        width: 100%;
+        padding: 14px 20px;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles pequeños */
+    @media (max-width: 480px) {
+      .header-principal {
+        padding: 15px 0;
+      }
+      
+      .header-content-admin {
+        padding: 0 10px;
+        gap: 8px;
+      }
+      
+      .header-logo-admin {
+        height: 35px;
+      }
+      
+      .header-content-admin h1 {
+        font-size: 18px;
+      }
+      
+      .main-container {
+        padding: 70px 15px 100px;
+      }
+      
+      .card {
+        padding: 25px 15px;
+      }
+      
+      .card-title {
+        font-size: 20px;
+      }
+      
+      .card-subtitle {
+        font-size: 14px;
+      }
+      
+      .nav-tabs button {
+        padding: 12px 16px;
+        font-size: 14px;
+      }
+      
+      table {
+        min-width: 400px;
+        font-size: 12px;
+      }
+      
+      th, td {
+        padding: 8px 4px;
+        font-size: 11px;
+      }
+      
+      .btn {
+        padding: 12px 16px;
+        font-size: 13px;
+      }
+    }
+    
+    /* RESPONSIVE - Móviles muy pequeños */
+    @media (max-width: 360px) {
+      .header-principal {
+        padding: 12px 0;
+      }
+      
+      .header-logo-admin {
+        height: 30px;
+      }
+      
+      .header-content-admin h1 {
+        font-size: 16px;
+      }
+      
+      .main-container {
+        padding: 60px 10px 90px;
+      }
+      
+      .card {
+        padding: 20px 12px;
+      }
+      
+      .card-title {
+        font-size: 18px;
+      }
+    }
+    
+    /* Orientación horizontal en móviles */
+    @media (max-width: 768px) and (orientation: landscape) {
+      .header-principal {
+        padding: 15px 0;
+      }
+      
+      .main-container {
+        padding: 60px 20px 100px;
       }
     }
     
