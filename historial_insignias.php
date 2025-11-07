@@ -21,12 +21,30 @@ $rol_usuario = $_SESSION['rol'] ?? 'Estudiante';
 $busqueda = $_GET['buscar'] ?? '';
 
 // Verificar qué tabla existe (T_insignias_otorgadas o insigniasotorgadas)
-$tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
-$tabla_existe_i = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+// Priorizar T_insignias_otorgadas si existe
+$usar_tabla_t = false;
+$usar_tabla_i = false;
 
-// Determinar qué tabla usar
-$usar_tabla_t = ($tabla_existe_t && $tabla_existe_t->num_rows > 0);
-$usar_tabla_i = ($tabla_existe_i && $tabla_existe_i->num_rows > 0);
+try {
+    $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+    if ($tabla_existe_t && $tabla_existe_t->num_rows > 0) {
+        $usar_tabla_t = true;
+    }
+} catch (Exception $e) {
+    // Si hay error, no usar T_insignias_otorgadas
+}
+
+// Solo verificar insigniasotorgadas si T_insignias_otorgadas no existe
+if (!$usar_tabla_t) {
+    try {
+        $tabla_existe_i = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        if ($tabla_existe_i && $tabla_existe_i->num_rows > 0) {
+            $usar_tabla_i = true;
+        }
+    } catch (Exception $e) {
+        // Si hay error, no usar insigniasotorgadas
+    }
+}
 
 // Consulta básica para obtener las insignias otorgadas usando la estructura actual
 if (!empty($busqueda)) {
@@ -265,10 +283,15 @@ if (!empty($busqueda)) {
     $filtro_por_busqueda = false;
 }
 
+// Validar que se haya determinado qué tabla usar
+if (!$usar_tabla_t && !$usar_tabla_i) {
+    die('Error: No se encontró ninguna tabla de insignias otorgadas. Verifica que exista T_insignias_otorgadas o insigniasotorgadas en la base de datos.');
+}
+
 // Preparar y ejecutar la consulta
 $stmt = $conexion->prepare($sql);
 if (!$stmt) {
-    die('Error al preparar la consulta: ' . $conexion->error);
+    die('Error al preparar la consulta: ' . $conexion->error . '<br>Tabla usada: ' . ($usar_tabla_t ? 'T_insignias_otorgadas' : 'insigniasotorgadas'));
 }
 
 // Bind parameters según el tipo de filtro
