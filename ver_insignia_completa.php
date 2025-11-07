@@ -559,9 +559,48 @@ try {
             margin: 5px 0;
         }
         
+        /* Responsive - Tablet */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .insignia-section {
+                gap: 15px;
+            }
+            
+            .document-preview {
+                padding: 30px;
+            }
+        }
+        
+        /* Responsive - Móviles y tablets pequeñas */
         @media (max-width: 768px) {
+            .header {
+                padding: 20px 0;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .header-logo {
+                height: 40px;
+                left: -120px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
             .insignia-section {
                 grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 15px;
             }
             
             .insignia-preview {
@@ -572,10 +611,117 @@ try {
             .insignia-hexagon {
                 margin-right: 0;
                 margin-bottom: 20px;
+                width: 150px;
+                height: 150px;
             }
             
             .document-preview {
-                height: 300px;
+                height: auto;
+                min-height: 500px;
+                padding: 20px;
+                font-size: 12px;
+            }
+            
+            .metadata-section {
+                margin-top: 20px;
+            }
+            
+            .metadata-item {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .metadata-item strong {
+                font-size: 13px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 14px;
+            }
+            
+            footer {
+                padding: 30px 15px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        /* Responsive - Móviles pequeños */
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 0;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .header-logo {
+                height: 35px;
+                left: -100px;
+            }
+            
+            .container {
+                padding: 5px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
+            .insignia-section {
+                padding: 10px;
+            }
+            
+            .insignia-hexagon {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .document-preview {
+                padding: 15px;
+                font-size: 11px;
+                min-height: 400px;
+            }
+            
+            .metadata-item {
+                padding: 6px;
+                font-size: 12px;
+            }
+            
+            .metadata-item strong {
+                font-size: 12px;
+            }
+            
+            .btn {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+            
+            footer {
+                padding: 20px 10px;
+                font-size: 11px;
+            }
+        }
+        
+        /* Orientación horizontal en móviles */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .header {
+                padding: 12px 0;
+            }
+            
+            .document-preview {
+                min-height: 350px;
             }
         }
     </style>
