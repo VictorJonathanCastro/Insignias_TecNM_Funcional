@@ -28,8 +28,13 @@ $estatus_disponibles = [];
 $responsables_emision = [];
 
 try {
-    // Consultar categorías de insignias
-    $sql_categorias = "SELECT DISTINCT ID_cat as id, Nombre_cat as nombre_categoria FROM cat_insignias ORDER BY Nombre_cat";
+    // Verificar estructura de cat_insignias (puede tener id o ID_cat)
+    $check_cat = $conexion->query("SHOW COLUMNS FROM cat_insignias LIKE 'id'");
+    $tiene_id_cat = ($check_cat && $check_cat->num_rows > 0);
+    $campo_id_cat = $tiene_id_cat ? 'id' : 'ID_cat';
+    
+    // Consultar categorías de insignias (usar el campo correcto)
+    $sql_categorias = "SELECT DISTINCT $campo_id_cat as id, Nombre_cat as nombre_categoria FROM cat_insignias ORDER BY Nombre_cat";
     $result_categorias = $conexion->query($sql_categorias);
     
     if ($result_categorias && $result_categorias->num_rows > 0) {
@@ -38,11 +43,33 @@ try {
         }
     }
     
+    // Verificar estructura de tipo_insignia (puede tener id o ID_tipo, y puede o no tener Cat_ins)
+    $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'id'");
+    $tiene_id_tipo = ($check_tipo && $check_tipo->num_rows > 0);
+    $campo_id_tipo = $tiene_id_tipo ? 'id' : 'ID_tipo';
+    
+    $check_cat_ins = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Cat_ins'");
+    $tiene_cat_ins = ($check_cat_ins && $check_cat_ins->num_rows > 0);
+    
+    // Verificar nombre de columna en tipo_insignia
+    $check_nombre = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+    $tiene_nombre_insignia = ($check_nombre && $check_nombre->num_rows > 0);
+    $campo_nombre_tipo = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
+    
     // Consultar tipos de insignias (subcategorías)
-    $sql_subcategorias = "SELECT ti.ID_tipo as id, ti.Nombre_ins as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria 
-                         FROM tipo_insignia ti 
-                         JOIN cat_insignias ci ON ti.Cat_ins = ci.ID_cat 
-                         ORDER BY ci.Nombre_cat, ti.Nombre_ins";
+    // Si tiene Cat_ins, hacer JOIN con cat_insignias, si no, solo obtener tipos
+    if ($tiene_cat_ins) {
+        $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria 
+                             FROM tipo_insignia ti 
+                             LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
+                             ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
+    } else {
+        // Si no tiene Cat_ins, obtener todos los tipos y asignar categoría por defecto
+        $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, 1 as categoria_id, 'Formación Integral' as nombre_categoria 
+                             FROM tipo_insignia ti 
+                             ORDER BY ti.$campo_nombre_tipo";
+    }
+    
     $result_subcategorias = $conexion->query($sql_subcategorias);
     
     if ($result_subcategorias && $result_subcategorias->num_rows > 0) {
@@ -51,8 +78,16 @@ try {
         }
     }
     
-    // Consultar periodos de emisión
-    $sql_periodos = "SELECT DISTINCT ID_periodo as id, periodo FROM periodo_emision ORDER BY periodo DESC";
+    // Consultar periodos de emisión (verificar estructura)
+    $check_periodo = $conexion->query("SHOW COLUMNS FROM periodo_emision LIKE 'id'");
+    $tiene_id_periodo = ($check_periodo && $check_periodo->num_rows > 0);
+    $campo_id_periodo = $tiene_id_periodo ? 'id' : 'ID_periodo';
+    
+    $check_nombre_periodo = $conexion->query("SHOW COLUMNS FROM periodo_emision LIKE 'Nombre_Periodo'");
+    $tiene_nombre_periodo = ($check_nombre_periodo && $check_nombre_periodo->num_rows > 0);
+    $campo_periodo = $tiene_nombre_periodo ? 'Nombre_Periodo' : 'periodo';
+    
+    $sql_periodos = "SELECT DISTINCT $campo_id_periodo as id, $campo_periodo as periodo FROM periodo_emision ORDER BY $campo_periodo DESC";
     $result_periodos = $conexion->query($sql_periodos);
     
     if ($result_periodos && $result_periodos->num_rows > 0) {
@@ -61,8 +96,16 @@ try {
         }
     }
     
-    // Consultar estatus disponibles
-    $sql_estatus = "SELECT DISTINCT ID_estatus as id, Estatus as nombre_estatus FROM estatus ORDER BY Estatus";
+    // Consultar estatus disponibles (verificar estructura)
+    $check_estatus = $conexion->query("SHOW COLUMNS FROM estatus LIKE 'id'");
+    $tiene_id_estatus = ($check_estatus && $check_estatus->num_rows > 0);
+    $campo_id_estatus = $tiene_id_estatus ? 'id' : 'ID_estatus';
+    
+    $check_nombre_estatus = $conexion->query("SHOW COLUMNS FROM estatus LIKE 'Nombre_Estatus'");
+    $tiene_nombre_estatus = ($check_nombre_estatus && $check_nombre_estatus->num_rows > 0);
+    $campo_nombre_estatus = $tiene_nombre_estatus ? 'Nombre_Estatus' : 'Estatus';
+    
+    $sql_estatus = "SELECT DISTINCT $campo_id_estatus as id, $campo_nombre_estatus as nombre_estatus FROM estatus ORDER BY $campo_nombre_estatus";
     $result_estatus = $conexion->query($sql_estatus);
     
     if ($result_estatus && $result_estatus->num_rows > 0) {
@@ -71,8 +114,12 @@ try {
         }
     }
     
-    // Consultar responsables de emisión
-    $sql_responsables = "SELECT DISTINCT ID_responsable as id, Nombre_Completo as nombre_completo, Cargo as cargo FROM responsable_emision ORDER BY Nombre_Completo";
+    // Consultar responsables de emisión (verificar estructura)
+    $check_responsable = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+    $tiene_id_responsable = ($check_responsable && $check_responsable->num_rows > 0);
+    $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+    
+    $sql_responsables = "SELECT DISTINCT $campo_id_responsable as id, Nombre_Completo as nombre_completo, Cargo as cargo FROM responsable_emision ORDER BY Nombre_Completo";
     $result_responsables = $conexion->query($sql_responsables);
     
     if ($result_responsables && $result_responsables->num_rows > 0) {
@@ -168,13 +215,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tipo_insignia_nombre = '';
     
     if (!empty($subcategoria_id)) {
-        $sql_info_completa = "SELECT 
-                                ci.Nombre_cat as nombre_categoria,
-                                ti.Nombre_ins as nombre_insignia
-                             FROM tipo_insignia ti 
-                             JOIN cat_insignias ci ON ti.Cat_ins = ci.ID_cat
-                             WHERE ti.ID_tipo = ? 
-                             LIMIT 1";
+        // Verificar estructura de las tablas dinámicamente
+        $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'id'");
+        $tiene_id_tipo = ($check_tipo && $check_tipo->num_rows > 0);
+        $campo_id_tipo = $tiene_id_tipo ? 'id' : 'ID_tipo';
+        
+        $check_nombre = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+        $tiene_nombre_insignia = ($check_nombre && $check_nombre->num_rows > 0);
+        $campo_nombre_tipo = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
+        
+        $check_cat_ins = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Cat_ins'");
+        $tiene_cat_ins = ($check_cat_ins && $check_cat_ins->num_rows > 0);
+        
+        $check_cat = $conexion->query("SHOW COLUMNS FROM cat_insignias LIKE 'id'");
+        $tiene_id_cat = ($check_cat && $check_cat->num_rows > 0);
+        $campo_id_cat = $tiene_id_cat ? 'id' : 'ID_cat';
+        
+        if ($tiene_cat_ins) {
+            // Si tiene Cat_ins, hacer JOIN con cat_insignias
+            $sql_info_completa = "SELECT 
+                                    ci.Nombre_cat as nombre_categoria,
+                                    ti.$campo_nombre_tipo as nombre_insignia
+                                 FROM tipo_insignia ti 
+                                 LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat
+                                 WHERE ti.$campo_id_tipo = ? 
+                                 LIMIT 1";
+        } else {
+            // Si no tiene Cat_ins, solo obtener el nombre de la insignia
+            $sql_info_completa = "SELECT 
+                                    'Formación Integral' as nombre_categoria,
+                                    ti.$campo_nombre_tipo as nombre_insignia
+                                 FROM tipo_insignia ti 
+                                 WHERE ti.$campo_id_tipo = ? 
+                                 LIMIT 1";
+        }
+        
         $stmt_info = $conexion->prepare($sql_info_completa);
         
         if ($stmt_info) {
@@ -399,7 +474,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             // 3. Obtener responsable_id
-            $sql_resp_emision = "SELECT ID_responsable FROM responsable_emision WHERE Nombre_Completo = ? LIMIT 1";
+            // Verificar estructura de responsable_emision
+            $check_resp = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+            $tiene_id_resp = ($check_resp && $check_resp->num_rows > 0);
+            $campo_id_resp = $tiene_id_resp ? 'id' : 'ID_responsable';
+            
+            $sql_resp_emision = "SELECT $campo_id_resp as id FROM responsable_emision WHERE Nombre_Completo = ? LIMIT 1";
             $stmt_resp = $conexion->prepare($sql_resp_emision);
             $responsable_id = null;
             
@@ -410,10 +490,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($result_resp && $result_resp->num_rows > 0) {
                     $row_resp = $result_resp->fetch_assoc();
-                    $responsable_id = $row_resp['ID_responsable'];
+                    $responsable_id = $row_resp['id'];
                 } else {
                     // Crear responsable si no existe
-                    $sql_insert_resp = "INSERT INTO responsable_emision (Nombre_Completo, Cargo) VALUES (?, 'Responsable')";
+                    $check_adscripcion = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'Adscripcion'");
+                    $tiene_adscripcion = ($check_adscripcion && $check_adscripcion->num_rows > 0);
+                    
+                    if ($tiene_adscripcion) {
+                        $sql_insert_resp = "INSERT INTO responsable_emision (Nombre_Completo, Cargo, Adscripcion) VALUES (?, 'Responsable', 1)";
+                    } else {
+                        $sql_insert_resp = "INSERT INTO responsable_emision (Nombre_Completo, Cargo) VALUES (?, 'Responsable')";
+                    }
                     $stmt_insert_resp = $conexion->prepare($sql_insert_resp);
                     if ($stmt_insert_resp) {
                         $stmt_insert_resp->bind_param("s", $responsable);
@@ -1226,47 +1313,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         function generarClaveUnica(nombreInsignia) {
             const claveInput = document.querySelector('input[name="clave"]');
+            const periodoSelect = document.querySelector('select[name="periodo"]');
             
             // Solo generar si el campo está vacío (no sobrescribir si el usuario ya escribió algo)
             if (!claveInput.value.trim()) {
-                // Obtener año actual
-                const añoActual = new Date().getFullYear();
+                // Obtener período seleccionado o año actual
+                let periodo = '';
+                if (periodoSelect && periodoSelect.value) {
+                    const selectedPeriodo = periodoSelect.options[periodoSelect.selectedIndex];
+                    periodo = selectedPeriodo.textContent || selectedPeriodo.value;
+                } else {
+                    // Si no hay período seleccionado, usar año actual
+                    periodo = new Date().getFullYear().toString();
+                }
                 
                 // Crear código de tipo basado en el nombre de la insignia
                 let tipoCodigo = '';
-                switch(nombreInsignia.toLowerCase()) {
-                    case 'movilidad e intercambio':
-                        tipoCodigo = 'MOV';
-                        break;
-                    case 'embajador del deporte':
-                        tipoCodigo = 'EMB';
-                        break;
-                    case 'embajador del arte':
-                        tipoCodigo = 'ART';
-                        break;
-                    case 'formación y actualización':
-                        tipoCodigo = 'FOR';
-                        break;
-                    case 'talento científico':
-                        tipoCodigo = 'CIE';
-                        break;
-                    case 'talento innovador':
-                        tipoCodigo = 'INN';
-                        break;
-                    case 'responsabilidad social':
-                        tipoCodigo = 'SOC';
-                        break;
-                    default:
-                        // Tomar primeras 3 letras del nombre
-                        tipoCodigo = nombreInsignia.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
-                        if (tipoCodigo.length < 3) tipoCodigo = 'INS';
+                const nombreLower = nombreInsignia.toLowerCase().trim();
+                
+                // Mapeo completo de nombres de insignias a códigos
+                if (nombreLower.includes('movilidad') || nombreLower.includes('intercambio')) {
+                    tipoCodigo = 'MOV';
+                } else if (nombreLower.includes('deporte') || nombreLower.includes('embajador del deporte')) {
+                    tipoCodigo = 'EMB';
+                } else if (nombreLower.includes('arte') || nombreLower.includes('embajador del arte')) {
+                    tipoCodigo = 'ART';
+                } else if (nombreLower.includes('formación') || nombreLower.includes('actualización')) {
+                    tipoCodigo = 'FOR';
+                } else if (nombreLower.includes('científico') || nombreLower.includes('talento científico')) {
+                    tipoCodigo = 'TAL';
+                } else if (nombreLower.includes('innovador') || nombreLower.includes('talento innovador')) {
+                    tipoCodigo = 'INN';
+                } else if (nombreLower.includes('responsabilidad') || nombreLower.includes('social')) {
+                    tipoCodigo = 'SOC';
+                } else if (nombreLower.includes('liderazgo') || nombreLower.includes('estudiantil')) {
+                    tipoCodigo = 'LE';
+                } else if (nombreLower.includes('emprendimiento')) {
+                    tipoCodigo = 'EMP';
+                } else if (nombreLower.includes('sustentabilidad')) {
+                    tipoCodigo = 'SU';
+                } else {
+                    // Tomar primeras 3 letras del nombre (sin espacios ni caracteres especiales)
+                    tipoCodigo = nombreInsignia.replace(/[^A-Za-z]/g, '').substring(0, 3).toUpperCase();
+                    if (tipoCodigo.length < 3) tipoCodigo = 'INS';
                 }
                 
                 // Generar número aleatorio de 3 dígitos
                 const numero = Math.floor(Math.random() * 900) + 100; // 100-999
                 
-                // Crear clave única
-                const claveUnica = `TECNM-OFCM-${añoActual}-${tipoCodigo}-${numero}`;
+                // Crear clave única: TECNM-OFCM-[PERIODO]-[TIPO]-[NUMERO]
+                const claveUnica = `TECNM-OFCM-${periodo}-${tipoCodigo}-${numero}`;
                 
                 // Asignar al campo
                 claveInput.value = claveUnica;
@@ -1276,6 +1372,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Inicializar cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
             updateSubcategorias();
+            
+            // Si hay una subcategoría seleccionada, generar la clave
+            const subcategoriaSelect = document.getElementById('subcategoria');
+            if (subcategoriaSelect && subcategoriaSelect.value) {
+                updateInsigniaInfo();
+            }
+            
+            // Escuchar cambios en el período para regenerar la clave si es necesario
+            const periodoSelect = document.querySelector('select[name="periodo"]');
+            if (periodoSelect) {
+                periodoSelect.addEventListener('change', function() {
+                    const subcategoriaSelect = document.getElementById('subcategoria');
+                    if (subcategoriaSelect && subcategoriaSelect.value) {
+                        const selectedOption = subcategoriaSelect.options[subcategoriaSelect.selectedIndex];
+                        const nombreInsignia = selectedOption.textContent;
+                        generarClaveUnica(nombreInsignia);
+                    }
+                });
+            }
         });
     </script>
 </head>
