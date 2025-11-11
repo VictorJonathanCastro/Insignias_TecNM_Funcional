@@ -267,16 +267,25 @@ class FirmaDigitalReal {
             if (!$clave_privada_pem) {
                 $openssl_ruta = $this->obtenerRutaOpenSSL();
                 $error_detalle = '';
+                $comando_manual = '';
                 
                 if (!$openssl_ruta) {
-                    $error_detalle = ' No se encontró OpenSSL en el sistema. Verifica que XAMPP esté instalado correctamente.';
+                    $error_detalle = ' No se encontró OpenSSL en el sistema. Verifica que OpenSSL esté instalado correctamente.';
+                    $comando_manual = 'openssl pkcs8 -inform DER -in "ruta/archivo.key" -out "ruta/archivo.pem" -passin pass:TU_CONTRASENA';
                 } else {
                     $error_detalle = ' Posibles causas: 1) Contraseña incorrecta, 2) Archivo .key corrupto o en formato no soportado, 3) El archivo no es una clave privada válida de FIEL.';
+                    // Generar comando según el sistema operativo
+                    $es_windows = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
+                    if ($es_windows) {
+                        $comando_manual = $openssl_ruta . ' pkcs8 -inform DER -in "ruta\\archivo.key" -out "ruta\\archivo.pem" -passin pass:TU_CONTRASENA';
+                    } else {
+                        $comando_manual = $openssl_ruta . ' pkcs8 -inform DER -in "ruta/archivo.key" -out "ruta/archivo.pem" -passin pass:TU_CONTRASENA';
+                    }
                 }
                 
                 return [
                     'success' => false, 
-                    'error' => 'No se pudo convertir la clave privada a formato PEM.' . $error_detalle . ' Intenta convertir el archivo manualmente usando: C:\\xampp\\apache\\bin\\openssl.exe pkcs8 -inform DER -in "ruta\\archivo.key" -out "ruta\\archivo.pem" -passin pass:TU_CONTRASENA'
+                    'error' => 'No se pudo convertir la clave privada a formato PEM.' . $error_detalle . ' Intenta convertir el archivo manualmente usando: ' . $comando_manual
                 ];
             }
             
