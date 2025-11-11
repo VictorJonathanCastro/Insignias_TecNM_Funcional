@@ -65,27 +65,29 @@ try {
                              ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
     } else {
         // Si no tiene Cat_ins, asignar categorías basándose en el nombre de la insignia
+        // Estructura correcta:
+        // Formacion Integral (1): Embajador del Deporte, Embajador del Arte, Responsabilidad Social, Movilidad e Intercambio, Talento Innovador
+        // Docencia (2): Formación y Actualización
+        // Academia (3): Talento Científico
         $sql_subcategorias = "SELECT 
                                 ti.$campo_id_tipo as id, 
                                 ti.$campo_nombre_tipo as nombre_insignia,
                                 CASE 
                                     WHEN ti.$campo_nombre_tipo LIKE '%Movilidad%' OR ti.$campo_nombre_tipo LIKE '%Intercambio%' OR 
-                                         ti.$campo_nombre_tipo LIKE '%Arte%' OR ti.$campo_nombre_tipo LIKE '%Deporte%' THEN 1
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Responsabilidad%' OR ti.$campo_nombre_tipo LIKE '%Social%' THEN 2
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Formacion%' OR ti.$campo_nombre_tipo LIKE '%Actualizacion%' OR 
-                                         ti.$campo_nombre_tipo LIKE '%Cientifico%' OR ti.$campo_nombre_tipo LIKE '%Talento%' THEN 3
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Innovacion%' OR ti.$campo_nombre_tipo LIKE '%Emprendimiento%' THEN 4
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Liderazgo%' OR ti.$campo_nombre_tipo LIKE '%Sustentabilidad%' THEN 5
+                                         ti.$campo_nombre_tipo LIKE '%Arte%' OR ti.$campo_nombre_tipo LIKE '%Deporte%' OR
+                                         ti.$campo_nombre_tipo LIKE '%Responsabilidad%' OR ti.$campo_nombre_tipo LIKE '%Social%' OR
+                                         ti.$campo_nombre_tipo LIKE '%Innovacion%' OR ti.$campo_nombre_tipo LIKE '%Talento Innovador%' THEN 1
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Formacion%' OR ti.$campo_nombre_tipo LIKE '%Actualizacion%' THEN 2
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Talento Cientifico%' OR ti.$campo_nombre_tipo LIKE '%Cientifico%' THEN 3
                                     ELSE 1
                                 END as categoria_id,
                                 CASE 
                                     WHEN ti.$campo_nombre_tipo LIKE '%Movilidad%' OR ti.$campo_nombre_tipo LIKE '%Intercambio%' OR 
-                                         ti.$campo_nombre_tipo LIKE '%Arte%' OR ti.$campo_nombre_tipo LIKE '%Deporte%' THEN 'Formacion Integral'
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Responsabilidad%' OR ti.$campo_nombre_tipo LIKE '%Social%' THEN 'Responsabilidad Social'
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Formacion%' OR ti.$campo_nombre_tipo LIKE '%Actualizacion%' OR 
-                                         ti.$campo_nombre_tipo LIKE '%Cientifico%' OR ti.$campo_nombre_tipo LIKE '%Talento%' THEN 'Excelencia Academica'
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Innovacion%' OR ti.$campo_nombre_tipo LIKE '%Emprendimiento%' THEN 'Innovacion Tecnologica'
-                                    WHEN ti.$campo_nombre_tipo LIKE '%Liderazgo%' OR ti.$campo_nombre_tipo LIKE '%Sustentabilidad%' THEN 'Cultura y Deporte'
+                                         ti.$campo_nombre_tipo LIKE '%Arte%' OR ti.$campo_nombre_tipo LIKE '%Deporte%' OR
+                                         ti.$campo_nombre_tipo LIKE '%Responsabilidad%' OR ti.$campo_nombre_tipo LIKE '%Social%' OR
+                                         ti.$campo_nombre_tipo LIKE '%Innovacion%' OR ti.$campo_nombre_tipo LIKE '%Talento Innovador%' THEN 'Formacion Integral'
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Formacion%' OR ti.$campo_nombre_tipo LIKE '%Actualizacion%' THEN 'Docencia'
+                                    WHEN ti.$campo_nombre_tipo LIKE '%Talento Cientifico%' OR ti.$campo_nombre_tipo LIKE '%Cientifico%' THEN 'Academia'
                                     ELSE 'Formacion Integral'
                                 END as nombre_categoria
                              FROM tipo_insignia ti 
@@ -263,9 +265,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                  WHERE ti.$campo_id_tipo = ? 
                                  LIMIT 1";
         } else {
-            // Si no tiene Cat_ins, solo obtener el nombre de la insignia
+            // Si no tiene Cat_ins, determinar categoría basándose en el nombre de la insignia
+            // Estructura correcta:
+            // Formacion Integral (1): Embajador del Deporte, Embajador del Arte, Responsabilidad Social, Movilidad e Intercambio, Talento Innovador
+            // Docencia (2): Formación y Actualización
+            // Academia (3): Talento Científico
             $sql_info_completa = "SELECT 
-                                    'Formación Integral' as nombre_categoria,
+                                    CASE 
+                                        WHEN ti.$campo_nombre_tipo LIKE '%Movilidad%' OR ti.$campo_nombre_tipo LIKE '%Intercambio%' OR 
+                                             ti.$campo_nombre_tipo LIKE '%Arte%' OR ti.$campo_nombre_tipo LIKE '%Deporte%' OR
+                                             ti.$campo_nombre_tipo LIKE '%Responsabilidad%' OR ti.$campo_nombre_tipo LIKE '%Social%' OR
+                                             ti.$campo_nombre_tipo LIKE '%Innovacion%' OR ti.$campo_nombre_tipo LIKE '%Talento Innovador%' THEN 'Formacion Integral'
+                                        WHEN ti.$campo_nombre_tipo LIKE '%Formacion%' OR ti.$campo_nombre_tipo LIKE '%Actualizacion%' THEN 'Docencia'
+                                        WHEN ti.$campo_nombre_tipo LIKE '%Talento Cientifico%' OR ti.$campo_nombre_tipo LIKE '%Cientifico%' THEN 'Academia'
+                                        ELSE 'Formacion Integral'
+                                    END as nombre_categoria,
                                     ti.$campo_nombre_tipo as nombre_insignia
                                  FROM tipo_insignia ti 
                                  WHERE ti.$campo_id_tipo = ? 

@@ -224,13 +224,11 @@ INSERT IGNORE INTO it_centros (id, Nombre_itc, Acron, Estado, Clave_ct, Tipo_itc
 (3, 'Director de San Marcos', 'DIR-SM', 'San Luis Potosi', '24DIT0002C', 'Federal', '2024-10-01'),
 (4, 'Secretaria de Vinculacion y Extension', 'SVE', 'Ciudad de Mexico', '09DIT0002D', 'Federal', '2024-10-01');
 
--- Insertar categorías de insignias
+-- Insertar categorías de insignias (como estaban localmente)
 INSERT IGNORE INTO cat_insignias (id, Nombre_cat, Acron_cat, Fecha_Creacion) VALUES
 (1, 'Formacion Integral', 'FI', '2024-10-01'),
-(2, 'Responsabilidad Social', 'RS', '2024-10-01'),
-(3, 'Excelencia Academica', 'EA', '2024-10-01'),
-(4, 'Innovacion Tecnologica', 'IT', '2024-10-01'),
-(5, 'Cultura y Deporte', 'CD', '2024-10-01');
+(2, 'Docencia', 'DOC', '2024-10-01'),
+(3, 'Academia', 'ACA', '2024-10-01');
 
 -- Insertar estatus
 INSERT IGNORE INTO estatus (id, Nombre_Estatus, Acron_Estatus, Fecha_Creacion) VALUES

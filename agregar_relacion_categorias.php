@@ -129,26 +129,23 @@ header('Content-Type: text/html; charset=UTF-8');
         echo "<h2>Paso 2: Asignar relaciones</h2>";
         
         // Asignar cada tipo de insignia a su categoría correspondiente
+        // Estructura correcta:
+        // Formación Integral (1): Embajador del Deporte, Embajador del Arte, Responsabilidad Social, Movilidad e Intercambio, Talento Innovador
+        // Docencia (2): Formación y Actualización
+        // Academia (3): Talento Científico
         $asignaciones = [
             // Formación Integral (id=1)
-            ['tipo_id' => 6, 'cat_id' => 1, 'nombre' => 'Movilidad e Intercambio'],
-            ['tipo_id' => 8, 'cat_id' => 1, 'nombre' => 'Embajador del Arte'],
             ['tipo_id' => 7, 'cat_id' => 1, 'nombre' => 'Embajador del Deporte'],
+            ['tipo_id' => 8, 'cat_id' => 1, 'nombre' => 'Embajador del Arte'],
+            ['tipo_id' => 1, 'cat_id' => 1, 'nombre' => 'Responsabilidad Social'],
+            ['tipo_id' => 6, 'cat_id' => 1, 'nombre' => 'Movilidad e Intercambio'],
+            ['tipo_id' => 3, 'cat_id' => 1, 'nombre' => 'Innovacion'], // Talento Innovador
             
-            // Responsabilidad Social (id=2)
-            ['tipo_id' => 1, 'cat_id' => 2, 'nombre' => 'Responsabilidad Social'],
+            // Docencia (id=2)
+            ['tipo_id' => 9, 'cat_id' => 2, 'nombre' => 'Formacion y Actualizacion'],
             
-            // Excelencia Académica (id=3)
-            ['tipo_id' => 9, 'cat_id' => 3, 'nombre' => 'Formacion y Actualizacion'],
+            // Academia (id=3)
             ['tipo_id' => 10, 'cat_id' => 3, 'nombre' => 'Talento Cientifico'],
-            
-            // Innovación Tecnológica (id=4)
-            ['tipo_id' => 3, 'cat_id' => 4, 'nombre' => 'Innovacion'],
-            ['tipo_id' => 4, 'cat_id' => 4, 'nombre' => 'Emprendimiento'],
-            
-            // Cultura y Deporte (id=5)
-            ['tipo_id' => 2, 'cat_id' => 5, 'nombre' => 'Liderazgo Estudiantil'],
-            ['tipo_id' => 5, 'cat_id' => 5, 'nombre' => 'Sustentabilidad'],
         ];
         
         $exitosos = 0;
