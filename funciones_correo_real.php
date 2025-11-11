@@ -258,6 +258,20 @@ function generarMensajeCorreo($datos) {
             
             <div class="badge">' . htmlspecialchars($datos['nombre_insignia']) . '</div>
             
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="' . htmlspecialchars($datos['url_verificacion']) . '" 
+                   style="display: inline-block; cursor: pointer; text-decoration: none;"
+                   ondblclick="window.open(this.href, \'_blank\'); return false;">
+                    <img src="' . htmlspecialchars($datos['url_imagen'] ?? '') . '" 
+                         alt="' . htmlspecialchars($datos['nombre_insignia']) . '" 
+                         style="max-width: 300px; height: auto; border: 3px solid #1b396a; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.3s ease; cursor: pointer;"
+                         onmouseover="this.style.transform=\'scale(1.05)\'; this.style.boxShadow=\'0 6px 12px rgba(0,0,0,0.3)\';" 
+                         onmouseout="this.style.transform=\'scale(1)\'; this.style.boxShadow=\'0 4px 8px rgba(0,0,0,0.2)\';"
+                         onclick="event.preventDefault(); window.open(\'' . htmlspecialchars($datos['url_verificacion']) . '\', \'_blank\');">
+                </a>
+                <p style="margin-top: 10px; color: #6c757d; font-size: 14px; font-style: italic;">🖱️ Haz clic o doble clic en la imagen para ver tu certificado</p>
+            </div>
+            
             <div class="info-section">
                 <h3>📋 Información de la Insignia</h3>
                 <div class="info-row">
@@ -378,4 +392,42 @@ function generarUrlVerificacion($codigo_insignia, $base_url = '') {
     }
     
     return $base_url . '/verificar_insignia.php?clave=' . urlencode($codigo_insignia);
+}
+
+/**
+ * Genera URL de la imagen de la insignia basándose en el nombre
+ */
+function generarUrlImagenInsignia($nombre_insignia, $base_url = '') {
+    if (empty($base_url)) {
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'];
+        $base_url = $protocol . '://' . $host . dirname($_SERVER['PHP_SELF']);
+    }
+    
+    // Mapeo de nombres de insignias a archivos de imagen
+    $mapeo_imagenes = [
+        'Embajador del Arte' => 'EmbajadordelArte.png',
+        'Embajador del Deporte' => 'EmbajadordelDeporte.png',
+        'Talento Científico' => 'TalentoCientifico.png',
+        'Talento Innovador' => 'TalentoInnovador.png',
+        'Innovacion' => 'TalentoInnovador.png',
+        'Responsabilidad Social' => 'ResponsabilidadSocial.png',
+        'Formación y Actualización' => 'FormacionyActualizacion.png',
+        'Formacion y Actualizacion' => 'FormacionyActualizacion.png',
+        'Movilidad e Intercambio' => 'MovilidadeIntercambio.png',
+        'Liderazgo Estudiantil' => 'LiderazgoEstudiantil.png',
+        'Emprendimiento' => 'Emprendimiento.png',
+        'Sustentabilidad' => 'Sustentabilidad.png'
+    ];
+    
+    // Buscar el nombre de la insignia en el mapeo
+    $archivo_imagen = 'insignia_default.png'; // Por defecto
+    foreach ($mapeo_imagenes as $nombre => $archivo) {
+        if (stripos($nombre_insignia, $nombre) !== false || stripos($nombre, $nombre_insignia) !== false) {
+            $archivo_imagen = $archivo;
+            break;
+        }
+    }
+    
+    return $base_url . '/imagen/Insignias/' . $archivo_imagen;
 }

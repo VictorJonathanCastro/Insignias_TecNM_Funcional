@@ -590,18 +590,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // ENVIAR NOTIFICACIÓN POR CORREO
                 if (validarCorreo($correo)) {
+                    // Generar URL de la imagen de la insignia
+                    $nombre_insignia_para_imagen = $tipo_insignia_nombre ?: $insignia;
+                    // Verificar si la función existe, si no, usar función local
+                    if (function_exists('generarUrlImagenInsignia')) {
+                        $url_imagen_insignia = generarUrlImagenInsignia($nombre_insignia_para_imagen);
+                    } else {
+                        // Función local si no está disponible
+                        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+                        $host = $_SERVER['HTTP_HOST'];
+                        $base_url = $protocol . '://' . $host . dirname($_SERVER['PHP_SELF']);
+                        $mapeo_imagenes = [
+                            'Embajador del Arte' => 'EmbajadordelArte.png',
+                            'Embajador del Deporte' => 'EmbajadordelDeporte.png',
+                            'Talento Científico' => 'TalentoCientifico.png',
+                            'Talento Innovador' => 'TalentoInnovador.png',
+                            'Innovacion' => 'TalentoInnovador.png',
+                            'Responsabilidad Social' => 'ResponsabilidadSocial.png',
+                            'Formación y Actualización' => 'FormacionyActualizacion.png',
+                            'Formacion y Actualizacion' => 'FormacionyActualizacion.png',
+                            'Movilidad e Intercambio' => 'MovilidadeIntercambio.png'
+                        ];
+                        $archivo_imagen = 'insignia_default.png';
+                        foreach ($mapeo_imagenes as $nombre => $archivo) {
+                            if (stripos($nombre_insignia_para_imagen, $nombre) !== false || stripos($nombre, $nombre_insignia_para_imagen) !== false) {
+                                $archivo_imagen = $archivo;
+                                break;
+                            }
+                        }
+                        $url_imagen_insignia = $base_url . '/imagen/Insignias/' . $archivo_imagen;
+                    }
+                    
                     $datos_correo = [
                         'estudiante' => $estudiante,
                         'matricula' => $matricula,
                         'curp' => $curp,
-                        'nombre_insignia' => $tipo_insignia_nombre ?: $insignia,
+                        'nombre_insignia' => $nombre_insignia_para_imagen,
                         'categoria' => $categoria_nombre ?: 'Formación Integral',
                         'codigo_insignia' => $clave,
                         'periodo' => $periodo,
                         'fecha_otorgamiento' => $fecha_otorgamiento,
                         'responsable' => $responsable,
                         'descripcion' => $descripcion_real,
-                        'url_verificacion' => generarUrlVerificacion($clave)
+                        'url_verificacion' => generarUrlVerificacion($clave),
+                        'url_imagen' => $url_imagen_insignia
                     ];
                     
                     $correo_enviado = enviarNotificacionInsigniaCompleta($correo, $datos_correo);
