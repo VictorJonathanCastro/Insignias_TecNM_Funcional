@@ -25,27 +25,56 @@ class FirmaDigitalReal {
     
     /**
      * Obtener ruta de OpenSSL
-     * @return string|false - Ruta a openssl.exe o false si no se encuentra
+     * @return string|false - Ruta a openssl o false si no se encuentra
      */
     private function obtenerRutaOpenSSL() {
-        // Rutas comunes de OpenSSL en Windows
-        $rutas_posibles = [
-            'C:\\xampp\\apache\\bin\\openssl.exe',
-            'C:\\xampp\\bin\\openssl.exe',
-            'C:\\Program Files\\OpenSSL-Win64\\bin\\openssl.exe',
-            'C:\\Program Files\\OpenSSL-Win32\\bin\\openssl.exe',
-            'openssl.exe' // Intentar en PATH
-        ];
+        // Detectar si estamos en Windows o Linux
+        $es_windows = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
         
-        foreach ($rutas_posibles as $ruta) {
-            if (file_exists($ruta)) {
-                return $ruta;
+        if ($es_windows) {
+            // Rutas comunes de OpenSSL en Windows
+            $rutas_posibles = [
+                'C:\\xampp\\apache\\bin\\openssl.exe',
+                'C:\\xampp\\bin\\openssl.exe',
+                'C:\\Program Files\\OpenSSL-Win64\\bin\\openssl.exe',
+                'C:\\Program Files\\OpenSSL-Win32\\bin\\openssl.exe',
+                'openssl.exe' // Intentar en PATH
+            ];
+            
+            foreach ($rutas_posibles as $ruta) {
+                if (file_exists($ruta)) {
+                    return $ruta;
+                }
             }
-        }
-        
-        // Verificar si está en PATH
-        if (shell_exec('where openssl.exe')) {
-            return 'openssl.exe';
+            
+            // Verificar si está en PATH (Windows)
+            if (shell_exec('where openssl.exe 2>nul')) {
+                return 'openssl.exe';
+            }
+        } else {
+            // Rutas comunes de OpenSSL en Linux/Unix
+            $rutas_posibles = [
+                '/usr/bin/openssl',
+                '/usr/local/bin/openssl',
+                '/bin/openssl',
+                'openssl' // Intentar en PATH
+            ];
+            
+            foreach ($rutas_posibles as $ruta) {
+                if (file_exists($ruta) || $ruta === 'openssl') {
+                    // Verificar si el comando funciona
+                    $test = @shell_exec("$ruta version 2>&1");
+                    if ($test && strpos($test, 'OpenSSL') !== false) {
+                        return $ruta;
+                    }
+                }
+            }
+            
+            // Verificar si está en PATH (Linux)
+            $which_openssl = @shell_exec('which openssl 2>&1');
+            if ($which_openssl && trim($which_openssl) !== '') {
+                return trim($which_openssl);
+            }
         }
         
         return false;
