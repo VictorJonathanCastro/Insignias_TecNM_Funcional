@@ -109,7 +109,25 @@ try {
     $result = $stmt->get_result();
     
     if ($result->num_rows === 0) {
-        echo "Error: No se encontró la insignia con el código proporcionado";
+        // Debug: Mostrar información útil para diagnosticar el problema
+        $debug_info = "Error: No se encontró la insignia con el código proporcionado: " . htmlspecialchars($codigo_insignia);
+        $debug_info .= "<br><br>Tabla usada: " . ($usar_tabla_t ? "T_insignias_otorgadas" : "insigniasotorgadas");
+        
+        // Intentar buscar en ambas tablas para debug
+        $debug_query1 = $conexion->query("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = '" . $conexion->real_escape_string($codigo_insignia) . "'");
+        if ($debug_query1) {
+            $debug_row1 = $debug_query1->fetch_assoc();
+            $debug_info .= "<br>Registros en insigniasotorgadas con este código: " . $debug_row1['total'];
+        }
+        
+        $debug_query2 = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+        if ($debug_query2 && $debug_query2->num_rows > 0) {
+            $debug_info .= "<br>Tabla T_insignias_otorgadas existe";
+        } else {
+            $debug_info .= "<br>Tabla T_insignias_otorgadas NO existe";
+        }
+        
+        echo $debug_info;
         exit();
     }
     

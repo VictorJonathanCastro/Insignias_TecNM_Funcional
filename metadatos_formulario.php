@@ -387,8 +387,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $clave = "TECNM-OFCM-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
                 
-                // Verificar que la clave no exista
-                $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE clave_insignia = ?");
+                // Verificar que la clave no exista (usar Codigo_Insignia, no clave_insignia)
+                $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
                 $stmt_verificar_clave->bind_param("s", $clave);
                 $stmt_verificar_clave->execute();
                 $resultado_clave = $stmt_verificar_clave->get_result();
