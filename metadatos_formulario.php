@@ -586,8 +586,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'periodo' => $periodo
                 ];
                 
-                $mensaje_exito = "Reconocimiento registrado exitosamente en la base de datos. <a href='ver_insignia_completa.php?insignia=" . urlencode($clave) . "' style='color: white; text-decoration: underline;'>Ver insignia completa</a> | <a href='buscar_insignias.php?buscar=" . urlencode($estudiante) . "' style='color: white; text-decoration: underline;'>Buscar insignia</a>";
-                
                 // ENVIAR NOTIFICACIÓN POR CORREO
                 if (validarCorreo($correo)) {
                     // Generar URL de la imagen de la insignia
@@ -638,14 +636,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $correo_enviado = enviarNotificacionInsigniaCompleta($correo, $datos_correo);
                     
-                    if ($correo_enviado) {
-                        $mensaje_exito .= " | ✅ Notificación enviada por correo a: " . $correo;
-                    } else {
-                        $mensaje_exito .= " | ⚠️ Error al enviar correo a: " . $correo;
-                    }
-                } else {
-                    $mensaje_exito .= " | ⚠️ Correo inválido: " . $correo;
+                    // Guardar resultado del correo en sesión para mostrar en la siguiente página
+                    $_SESSION['correo_enviado'] = $correo_enviado;
+                    $_SESSION['correo_destinatario'] = $correo;
                 }
+                
+                // Redirigir automáticamente a ver insignia completa (como funcionaba localmente)
+                header('Location: ver_insignia_completa.php?insignia=' . urlencode($clave) . '&registrado=1');
+                exit();
             } else {
                 $mensaje_error = "Error al guardar en la base de datos: " . $stmt->error;
             }
@@ -1437,6 +1435,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
+        // Validar formulario antes de enviar
+        function validarFormulario() {
+            const categoria = document.getElementById('categoria').value;
+            const subcategoria = document.getElementById('subcategoria').value;
+            const insignia = document.getElementById('insignia-hidden').value;
+            const estudiante = document.querySelector('input[name="estudiante"]').value;
+            const curp = document.querySelector('input[name="curp"]').value;
+            const correo = document.querySelector('input[name="correo"]').value;
+            const matricula = document.querySelector('input[name="matricula"]').value;
+            const periodo = document.querySelector('select[name="periodo"]').value;
+            const responsable = document.querySelector('select[name="responsable"]').value;
+            const estatus = document.querySelector('select[name="estatus"]').value;
+            
+            // Validar campos obligatorios
+            if (!categoria) {
+                alert('⚠️ Por favor selecciona una Categoría');
+                document.getElementById('categoria').focus();
+                return false;
+            }
+            
+            if (!subcategoria) {
+                alert('⚠️ Por favor selecciona una Subcategoría');
+                document.getElementById('subcategoria').focus();
+                return false;
+            }
+            
+            if (!insignia) {
+                alert('⚠️ Por favor selecciona una Subcategoría para que se asigne la insignia');
+                document.getElementById('subcategoria').focus();
+                return false;
+            }
+            
+            if (!estudiante.trim()) {
+                alert('⚠️ Por favor ingresa el nombre del Estudiante Destinatario');
+                document.querySelector('input[name="estudiante"]').focus();
+                return false;
+            }
+            
+            if (!curp.trim()) {
+                alert('⚠️ Por favor ingresa la CURP del estudiante');
+                document.querySelector('input[name="curp"]').focus();
+                return false;
+            }
+            
+            if (!correo.trim()) {
+                alert('⚠️ Por favor ingresa el Correo Electrónico del estudiante');
+                document.querySelector('input[name="correo"]').focus();
+                return false;
+            }
+            
+            if (!matricula.trim()) {
+                alert('⚠️ Por favor ingresa la Matrícula del estudiante');
+                document.querySelector('input[name="matricula"]').focus();
+                return false;
+            }
+            
+            if (!periodo) {
+                alert('⚠️ Por favor selecciona un Periodo de Emisión');
+                document.querySelector('select[name="periodo"]').focus();
+                return false;
+            }
+            
+            if (!responsable) {
+                alert('⚠️ Por favor selecciona un Responsable de Emisión');
+                document.querySelector('select[name="responsable"]').focus();
+                return false;
+            }
+            
+            if (!estatus) {
+                alert('⚠️ Por favor selecciona un Estatus del Reconocimiento');
+                document.querySelector('select[name="estatus"]').focus();
+                return false;
+            }
+            
+            // Si todo está bien, permitir el envío
+            return true;
+        }
+        
         // Inicializar cuando se carga la página
         document.addEventListener('DOMContentLoaded', function() {
             updateSubcategorias();
@@ -1496,7 +1572,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="metadatos-form">
                 <h2><i class="fas fa-medal"></i> Registro de Metadatos de Insignia</h2>
                 
-                <form method="POST" action="" class="form-grid">
+                <form method="POST" action="" class="form-grid" onsubmit="return validarFormulario()">
             <div class="form-group full-width">
                 <label>Insignia Disponible:</label>
                 <div class="select-group">

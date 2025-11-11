@@ -736,6 +736,28 @@ try {
     </header>
         
     <div class="container">
+        <?php if (isset($_GET['registrado']) && $_GET['registrado'] == '1'): ?>
+            <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 40px;">✅</div>
+                <div style="flex: 1;">
+                    <h3 style="margin: 0 0 10px 0; font-size: 20px;">¡Reconocimiento Registrado Exitosamente!</h3>
+                    <p style="margin: 0; font-size: 16px; opacity: 0.95;">
+                        La insignia ha sido registrada en la base de datos y el correo de notificación ha sido enviado.
+                        <?php if (isset($_SESSION['correo_enviado']) && $_SESSION['correo_enviado']): ?>
+                            <br><strong>✅ Correo enviado a: <?php echo htmlspecialchars($_SESSION['correo_destinatario'] ?? ''); ?></strong>
+                        <?php elseif (isset($_SESSION['correo_enviado']) && !$_SESSION['correo_enviado']): ?>
+                            <br><span style="color: #ffc107;">⚠️ El correo no pudo ser enviado, pero la insignia fue registrada correctamente.</span>
+                        <?php endif; ?>
+                    </p>
+                </div>
+                <button onclick="this.parentElement.style.display='none'" style="background: rgba(255,255,255,0.2); border: 2px solid white; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">✕</button>
+            </div>
+            <?php 
+            // Limpiar variables de sesión después de mostrarlas
+            unset($_SESSION['correo_enviado']);
+            unset($_SESSION['correo_destinatario']);
+            ?>
+        <?php endif; ?>
         <div class="content">
             <div class="insignia-section">
                 <div class="insignia-preview">
