@@ -66,6 +66,11 @@ try {
             }
         }
         // Usar insigniasotorgadas cuando el código tiene formato TECNM-OFCM-...
+        // Verificar estructura dinámica de la tabla destinatario
+        $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+        $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
+        $campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
+        
         $query = "SELECT 
             io.ID_otorgada as id,
             io.Codigo_Insignia as codigo,
@@ -100,7 +105,7 @@ try {
             'imagen/Insignias/insignia_default.png' as imagen_path,
             io.Responsable_Emision as responsable_id
         FROM insigniasotorgadas io
-        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+        LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
         LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.id
         WHERE io.Codigo_Insignia = ?";
     } elseif ($usar_tabla_t) {
@@ -139,6 +144,11 @@ try {
         WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?";
     } else {
         // Fallback: usar insigniasotorgadas si existe
+        // Verificar estructura dinámica de la tabla destinatario
+        $check_destinatario_id_fallback = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+        $tiene_id_destinatario_fallback = ($check_destinatario_id_fallback && $check_destinatario_id_fallback->num_rows > 0);
+        $campo_id_destinatario_fallback = $tiene_id_destinatario_fallback ? 'id' : 'ID_destinatario';
+        
         $query = "SELECT 
             io.ID_otorgada as id,
             io.Codigo_Insignia as codigo,
@@ -173,7 +183,7 @@ try {
             'imagen/Insignias/insignia_default.png' as imagen_path,
             io.Responsable_Emision as responsable_id
         FROM insigniasotorgadas io
-        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+        LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario_fallback . "
         LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.id
         WHERE io.Codigo_Insignia = ?";
     }
@@ -182,6 +192,12 @@ try {
     if (!$stmt) {
         throw new Exception("Error al preparar consulta: " . $conexion->error);
     }
+    
+    // Debug: Log del código que se está buscando
+    error_log("DEBUG ver_insignia_completa: Buscando código: " . $codigo_insignia);
+    error_log("DEBUG ver_insignia_completa: Formato TECNM: " . ($codigo_tiene_formato_tecnm ? "SÍ" : "NO"));
+    error_log("DEBUG ver_insignia_completa: Tabla IO existe: " . ($usar_tabla_io ? "SÍ" : "NO"));
+    error_log("DEBUG ver_insignia_completa: Tabla T existe: " . ($usar_tabla_t ? "SÍ" : "NO"));
     
     $stmt->bind_param("s", $codigo_insignia);
     $stmt->execute();
@@ -200,6 +216,7 @@ try {
             $tabla_usada = "insigniasotorgadas (fallback)";
         }
         $debug_info .= "<br>Tabla usada: " . $tabla_usada;
+        $debug_info .= "<br>Campo ID destinatario usado: " . (isset($campo_id_destinatario) ? $campo_id_destinatario : (isset($campo_id_destinatario_fallback) ? $campo_id_destinatario_fallback : "N/A"));
         
         // Intentar buscar en ambas tablas para debug
         if ($usar_tabla_io) {
