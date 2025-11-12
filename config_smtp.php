@@ -30,20 +30,19 @@
 
 // Correo del SISTEMA desde el cual se enviarán las notificaciones
 // ⚠️ IMPORTANTE: Debe ser un correo del SISTEMA, NO personal
-// Ejemplos válidos:
-// - sistema.insignias@smarcos.tecnm.mx (si existe)
-// - noreply@smarcos.tecnm.mx (si existe)
-// - correo.institucional@smarcos.tecnm.mx (con permisos SMTP)
+// 
+// ✅ CORREO DEL SISTEMA: sistema.insignias@smarcos.tecnm.mx
+// (Este correo será creado por TecNM)
 //
 // ❌ NO usar: correos personales de estudiantes o administradores
-define('SMTP_FROM_EMAIL', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ CORREO DEL SISTEMA (no personal)
+define('SMTP_FROM_EMAIL', 'sistema.insignias@smarcos.tecnm.mx'); // ✅ Correo del sistema
 define('SMTP_FROM_NAME', 'Sistema Insignias TecNM');
 
 // Credenciales SMTP del SERVIDOR/SISTEMA
 // ⚠️ Solo se usan si mail() nativo falla
-// ⚠️ Debe ser el mismo correo del sistema y su contraseña REAL
-define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ CORREO DEL SISTEMA
-define('SMTP_PASSWORD', 'CONTRASEÑA_DEL_CORREO_DEL_SISTEMA'); // ⚠️ Contraseña REAL del correo del sistema
+// ⚠️ Cuando te den el correo sistema.insignias@smarcos.tecnm.mx, actualiza la contraseña aquí
+define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ✅ Correo del sistema
+define('SMTP_PASSWORD', 'CONTRASEÑA_QUE_TE_DEN_PARA_ESTE_CORREO'); // ⚠️ Actualiza esto cuando te den el correo
 
 // Servidor SMTP principal (prueba primero este)
 define('SMTP_HOST', 'smtp.office365.com'); // Para Office 365
