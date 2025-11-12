@@ -333,7 +333,31 @@ function generarMensajeCorreo($datos) {
  * Función de simulación interna (sin conflicto con funciones_correo_simulacion.php)
  */
 function enviarCorreoSimuladoInterno($destinatario, $asunto, $mensaje_html, $datos_insignia = []) {
-    $archivo = 'correos_enviados.txt';
+    // Intentar varios directorios con permisos de escritura
+    $directorios_posibles = [
+        __DIR__ . '/correos_enviados.txt',
+        '/tmp/correos_enviados.txt',
+        sys_get_temp_dir() . '/correos_enviados.txt',
+        __DIR__ . '/logs/correos_enviados.txt'
+    ];
+    
+    $archivo = null;
+    foreach ($directorios_posibles as $ruta) {
+        $directorio = dirname($ruta);
+        if (!is_dir($directorio)) {
+            @mkdir($directorio, 0755, true);
+        }
+        if (is_writable($directorio) || @file_put_contents($ruta, '', FILE_APPEND) !== false) {
+            $archivo = $ruta;
+            break;
+        }
+    }
+    
+    // Si no se puede escribir en ningún lado, solo loguear
+    if (!$archivo) {
+        error_log("CORREO SIMULADO - " . date('Y-m-d H:i:s') . " - PARA: " . $destinatario . " - ASUNTO: " . $asunto);
+        return true; // Retornar true para que no se considere un error total
+    }
     
     $contenido = "\n" . str_repeat("=", 80) . "\n";
     $contenido .= "CORREO SIMULADO - " . date('Y-m-d H:i:s') . "\n";
@@ -362,15 +386,16 @@ function enviarCorreoSimuladoInterno($destinatario, $asunto, $mensaje_html, $dat
     $contenido .= $mensaje_html . "\n";
     $contenido .= str_repeat("=", 80) . "\n";
     
-    // Guardar en archivo
-    $resultado = file_put_contents($archivo, $contenido, FILE_APPEND | LOCK_EX);
+    // Guardar en archivo con manejo de errores
+    $resultado = @file_put_contents($archivo, $contenido, FILE_APPEND | LOCK_EX);
     
     if ($resultado !== false) {
-        error_log("Correo simulado guardado exitosamente para: " . $destinatario);
+        error_log("Correo simulado guardado exitosamente en: " . $archivo . " para: " . $destinatario);
         return true;
     } else {
-        error_log("Error al guardar correo simulado para: " . $destinatario);
-        return false;
+        // Si falla, al menos loguear en error_log
+        error_log("CORREO SIMULADO (no se pudo guardar en archivo) - " . date('Y-m-d H:i:s') . " - PARA: " . $destinatario . " - ASUNTO: " . $asunto);
+        return true; // Retornar true para que no se considere un error total
     }
 }
 
