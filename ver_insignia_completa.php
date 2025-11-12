@@ -32,7 +32,13 @@ try {
     $usar_tabla_io = ($tabla_existe_io && $tabla_existe_io->num_rows > 0);
     
     // Decidir qué tabla usar basándose en el formato del código
-    if ($codigo_tiene_formato_tecnm && $usar_tabla_io) {
+    // PRIORIDAD: El formato del código determina la tabla, no solo su existencia
+    if ($codigo_tiene_formato_tecnm) {
+        // Si el código tiene formato TECNM-OFCM-..., buscar SIEMPRE en insigniasotorgadas
+        if (!$usar_tabla_io) {
+            // Si la tabla no existe, mostrar error más claro
+            throw new Exception("El código tiene formato TECNM-OFCM-... pero la tabla 'insigniasotorgadas' no existe en la base de datos.");
+        }
         // Usar insigniasotorgadas cuando el código tiene formato TECNM-OFCM-...
         $query = "SELECT 
             io.ID_otorgada as id,
@@ -159,7 +165,15 @@ try {
         // Debug: Mostrar información útil para diagnosticar el problema
         $debug_info = "Error: No se encontró la insignia con el código proporcionado: " . htmlspecialchars($codigo_insignia);
         $debug_info .= "<br><br>Formato detectado: " . ($codigo_tiene_formato_tecnm ? "TECNM-OFCM-..." : "ID-Periodo");
-        $debug_info .= "<br>Tabla usada: " . (($codigo_tiene_formato_tecnm && $usar_tabla_io) ? "insigniasotorgadas" : ($usar_tabla_t ? "T_insignias_otorgadas" : "insigniasotorgadas (fallback)"));
+        $tabla_usada = "desconocida";
+        if ($codigo_tiene_formato_tecnm) {
+            $tabla_usada = "insigniasotorgadas";
+        } elseif ($usar_tabla_t) {
+            $tabla_usada = "T_insignias_otorgadas";
+        } else {
+            $tabla_usada = "insigniasotorgadas (fallback)";
+        }
+        $debug_info .= "<br>Tabla usada: " . $tabla_usada;
         
         // Intentar buscar en ambas tablas para debug
         if ($usar_tabla_io) {
@@ -168,6 +182,16 @@ try {
                 $debug_row1 = $debug_query1->fetch_assoc();
                 $debug_info .= "<br>Registros en insigniasotorgadas con este código: " . $debug_row1['total'];
             }
+            // Mostrar algunos códigos similares para debug
+            $debug_query2 = $conexion->query("SELECT Codigo_Insignia FROM insigniasotorgadas WHERE Codigo_Insignia LIKE 'TECNM-OFCM-%' ORDER BY ID_otorgada DESC LIMIT 5");
+            if ($debug_query2 && $debug_query2->num_rows > 0) {
+                $debug_info .= "<br><br>Últimos 5 códigos TECNM-OFCM encontrados en insigniasotorgadas:";
+                while ($row_debug = $debug_query2->fetch_assoc()) {
+                    $debug_info .= "<br>- " . htmlspecialchars($row_debug['Codigo_Insignia']);
+                }
+            }
+        } else {
+            $debug_info .= "<br>⚠️ Tabla insigniasotorgadas NO existe";
         }
         
         if ($usar_tabla_t) {
@@ -175,6 +199,9 @@ try {
         } else {
             $debug_info .= "<br>Tabla T_insignias_otorgadas NO existe";
         }
+        
+        $debug_info .= "<br><br>Código buscado (exacto): <code>" . htmlspecialchars($codigo_insignia) . "</code>";
+        $debug_info .= "<br>Longitud del código: " . strlen($codigo_insignia) . " caracteres";
         
         echo $debug_info;
         exit();
