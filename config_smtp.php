@@ -17,13 +17,16 @@
 
 // Correo del SISTEMA desde el cual se enviarán las notificaciones
 // Este es el correo del servidor/sistema, NO del estudiante
-define('SMTP_FROM_EMAIL', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ Correo del sistema
+// ⚠️ IMPORTANTE: Usa un correo institucional de TecNM que tenga permisos para enviar correos
+// Ejemplos: sistema.insignias@smarcos.tecnm.mx, noreply@smarcos.tecnm.mx, o tu correo institucional
+define('SMTP_FROM_EMAIL', '211230001@smarcos.tecnm.mx'); // ⚠️ CAMBIA ESTO por tu correo del sistema
 define('SMTP_FROM_NAME', 'Sistema Insignias TecNM');
 
 // Credenciales SMTP del SERVIDOR/SISTEMA (para autenticarse con el servidor de correo)
 // Estas son las credenciales del correo del sistema, NO de los estudiantes
-define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ Correo del sistema
-define('SMTP_PASSWORD', 'CONTRASEÑA_DEL_CORREO_DEL_SISTEMA'); // ⚠️ Contraseña del correo del sistema
+// ⚠️ IMPORTANTE: Usa el mismo correo y su contraseña REAL
+define('SMTP_USERNAME', '211230001@smarcos.tecnm.mx'); // ⚠️ CAMBIA ESTO por tu correo del sistema
+define('SMTP_PASSWORD', 'cas29ye02vi20'); // ⚠️ CAMBIA ESTO por la contraseña REAL del correo del sistema
 
 // Servidor SMTP principal (prueba primero este)
 define('SMTP_HOST', 'smtp.office365.com'); // Para Office 365
