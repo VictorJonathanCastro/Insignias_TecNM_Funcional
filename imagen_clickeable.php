@@ -214,31 +214,42 @@ if (!empty($codigo_insignia)) {
     
     <!-- Meta tags para redes sociales -->
     <?php
-    // Generar URLs públicas para Facebook de manera robusta
+    // Generar URLs públicas para Facebook usando la URL actual de la página
+    // Esto funciona tanto en local como en servidor
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
     
-    // Obtener la ruta base del script actual
-    $script_path = dirname($_SERVER['SCRIPT_NAME']);
-    // Normalizar la ruta (eliminar barras al inicio y final)
-    $script_path = trim($script_path, '/\\');
+    // Obtener la ruta base desde la URL actual
+    // Si estamos en imagen_clickeable.php, obtener el directorio base
+    $current_script = $_SERVER['SCRIPT_NAME'];
+    $script_dir = dirname($current_script);
     
-    // Si el script está en la raíz del servidor, $script_path estará vacío
-    // Si está en un subdirectorio, incluir ese subdirectorio
-    if (!empty($script_path)) {
-        $base_url = $protocol . '://' . $host . '/' . $script_path;
-    } else {
+    // Construir URL base: protocolo + host + directorio del script
+    // Si el script está en la raíz, $script_dir será '/' o '.', así que lo normalizamos
+    if ($script_dir === '/' || $script_dir === '.' || $script_dir === '\\') {
         $base_url = $protocol . '://' . $host;
+    } else {
+        // Normalizar: eliminar punto inicial y barras duplicadas
+        $script_dir = trim($script_dir, '/\\');
+        $base_url = $protocol . '://' . $host . '/' . $script_dir;
     }
     
-    // Si es localhost o IP local, usar configuración especial
+    // Si es localhost o IP local, usar configuración especial (como funcionaba localmente)
     if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || strpos($host, '192.168.') !== false) {
         // Verificar si hay una URL de ngrok configurada
         if (isset($_SESSION['ngrok_url']) && !empty($_SESSION['ngrok_url'])) {
-            $base_url = rtrim($_SESSION['ngrok_url'], '/') . $script_path;
+            $base_url = rtrim($_SESSION['ngrok_url'], '/');
+            if ($script_dir !== '/' && $script_dir !== '.' && $script_dir !== '\\') {
+                $script_dir = trim($script_dir, '/\\');
+                $base_url .= '/' . $script_dir;
+            }
         } else {
-            // Fallback a localtunnel si no hay ngrok configurado
-            $base_url = 'https://bad-elephant-84.loca.lt' . $script_path;
+            // Fallback a localtunnel si no hay ngrok configurado (como funcionaba localmente)
+            $base_url = 'https://bad-elephant-84.loca.lt';
+            if ($script_dir !== '/' && $script_dir !== '.' && $script_dir !== '\\') {
+                $script_dir = trim($script_dir, '/\\');
+                $base_url .= '/' . $script_dir;
+            }
         }
     }
     
@@ -256,6 +267,8 @@ if (!empty($codigo_insignia)) {
     $validation_url = $base_url . '/validacion.php?insignia=' . urlencode($codigo_insignia);
     
     // Debug: Log de las URLs generadas
+    error_log("DEBUG imagen_clickeable.php - host: $host");
+    error_log("DEBUG imagen_clickeable.php - script_dir: $script_dir");
     error_log("DEBUG imagen_clickeable.php - base_url: $base_url");
     error_log("DEBUG imagen_clickeable.php - image_url: $image_url");
     error_log("DEBUG imagen_clickeable.php - share_url: $share_url");
