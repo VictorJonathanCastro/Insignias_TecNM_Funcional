@@ -730,6 +730,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log("DEBUG: Insignia insertada correctamente con ID: " . $insignia_insertada_id);
                 error_log("DEBUG: Código guardado en BD: " . $clave);
                 
+                // VERIFICACIÓN FINAL: Confirmar que el código realmente existe en la BD antes de redirigir
+                $verificacion_final = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
+                $verificacion_final->bind_param("s", $clave);
+                $verificacion_final->execute();
+                $resultado_final = $verificacion_final->get_result();
+                $verificacion_final->close();
+                
+                if ($resultado_final && $resultado_final->num_rows > 0) {
+                    $row_final = $resultado_final->fetch_assoc();
+                    if ($row_final['total'] == 0) {
+                        throw new Exception("Error crítico: La insignia se insertó (ID: $insignia_insertada_id) pero no se encuentra en la base de datos con el código: $clave");
+                    }
+                } else {
+                    throw new Exception("Error crítico: No se pudo verificar que la insignia se guardó correctamente.");
+                }
+                
                 // Guardar datos en sesión para mostrar la vista completa
                 $_SESSION['insignia_data'] = [
                     'codigo' => $clave,
@@ -803,7 +819,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['correo_destinatario'] = $correo;
                 }
                 
-                // Redirigir automáticamente a ver insignia completa (como funcionaba localmente)
+                // SOLO redirigir si TODO salió bien y el código está confirmado en la BD
                 header('Location: ver_insignia_completa.php?insignia=' . urlencode($clave) . '&registrado=1');
                 exit();
             } else {
