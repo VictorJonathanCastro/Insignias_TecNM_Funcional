@@ -101,7 +101,7 @@ try {
             io.Responsable_Emision as responsable_id
         FROM insigniasotorgadas io
         LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-        LEFT JOIN responsable_emision re ON (io.Responsable_Emision = re.id OR io.Responsable_Emision = re.ID_responsable)
+        LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.id
         WHERE io.Codigo_Insignia = ?";
     } elseif ($usar_tabla_t) {
         // Usar T_insignias_otorgadas con JOIN a T_insignias (código formato ID-Periodo)
@@ -174,7 +174,7 @@ try {
             io.Responsable_Emision as responsable_id
         FROM insigniasotorgadas io
         LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-        LEFT JOIN responsable_emision re ON (io.Responsable_Emision = re.id OR io.Responsable_Emision = re.ID_responsable)
+        LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.id
         WHERE io.Codigo_Insignia = ?";
     }
     
@@ -243,7 +243,7 @@ try {
             // Verificar si el campo existe primero
             $check_field = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'firma_digital_base64'");
             if ($check_field && $check_field->num_rows > 0) {
-                $sql_firma = "SELECT firma_digital_base64 FROM responsable_emision WHERE ID_responsable = ? LIMIT 1";
+                $sql_firma = "SELECT firma_digital_base64 FROM responsable_emision WHERE id = ? LIMIT 1";
                 $stmt_firma = $conexion->prepare($sql_firma);
                 if ($stmt_firma) {
                     $stmt_firma->bind_param("i", $insignia_data['responsable_id']);
