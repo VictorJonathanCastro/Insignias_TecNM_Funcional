@@ -34,7 +34,7 @@ if (!empty($codigo_insignia)) {
         // Intentar primero en insigniasotorgadas si el código tiene formato TECNM- o si no tiene formato ID-Periodo
         if ($codigo_tiene_formato_tecnm || (!$codigo_tiene_formato_tecnm && $usar_tabla_io && !$usar_tabla_t)) {
             if ($usar_tabla_io) {
-                $stmt = $conexion->prepare("
+                $sql = "
                     SELECT 
                         io.Codigo_Insignia as codigo_insignia,
                         d.Nombre_Completo as destinatario,
@@ -62,20 +62,27 @@ if (!empty($codigo_insignia)) {
                     LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
                     LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
                     WHERE io.Codigo_Insignia = ?
-                ");
+                ";
                 
-                if ($stmt) {
-                    $stmt->bind_param("s", $codigo_insignia);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
-                    $row = $result->fetch_assoc();
+                $stmt = $conexion->prepare($sql);
+                if ($stmt === false) {
+                    throw new Exception("Error al preparar consulta insigniasotorgadas: " . $conexion->error);
                 }
+                
+                $stmt->bind_param("s", $codigo_insignia);
+                if (!$stmt->execute()) {
+                    throw new Exception("Error al ejecutar consulta insigniasotorgadas: " . $stmt->error);
+                }
+                
+                $result = $stmt->get_result();
+                $row = $result->fetch_assoc();
+                $stmt->close();
             }
         }
         
         // Si no se encontró y el código tiene formato ID-Periodo, buscar en T_insignias_otorgadas
         if (!$row && $usar_tabla_t && !$codigo_tiene_formato_tecnm) {
-            $stmt = $conexion->prepare("
+            $sql = "
                 SELECT 
                     CONCAT(ti.id, '-', pe.Nombre_Periodo) as codigo_insignia,
                     d.Nombre_Completo as destinatario,
@@ -98,72 +105,72 @@ if (!empty($codigo_insignia)) {
                 LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
                 LEFT JOIN responsable_emision re ON itc.id = re.Adscripcion
                 WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?
-            ");
+            ";
             
-            if ($stmt) {
-                $stmt->bind_param("s", $codigo_insignia);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                $row = $result->fetch_assoc();
+            $stmt = $conexion->prepare($sql);
+            if ($stmt === false) {
+                throw new Exception("Error al preparar consulta T_insignias_otorgadas: " . $conexion->error);
             }
+            
+            $stmt->bind_param("s", $codigo_insignia);
+            if (!$stmt->execute()) {
+                throw new Exception("Error al ejecutar consulta T_insignias_otorgadas: " . $stmt->error);
+            }
+            
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $stmt->close();
         }
         
-        if ($row) {
-                // Usar los datos dinámicos obtenidos de la consulta
-                $codigo_insignia = $row['codigo_insignia'];
-                $nombre_insignia = $row['nombre_insignia'];
-                $categoria = $row['categoria'];
-                
-                echo "<!-- DEBUG: codigo_insignia = '$codigo_insignia' -->";
-                echo "<!-- DEBUG: nombre_insignia = '$nombre_insignia' -->";
-                echo "<!-- DEBUG: categoria = '$categoria' -->";
-                
-                // Mapeo directo de nombres de insignias a archivos PNG
-                $mapeo_imagenes = [
-                    'Movilidad e Intercambio' => 'MovilidadeIntercambio.png',
-                    'Embajador del Deporte' => 'EmbajadordelDeporte.png',
-                    'Embajador del Arte' => 'EmbajadordelArte.png',
-                    'Formación y Actualización' => 'FormacionyActualizacion.png',
-                    'Talento Científico' => 'TalentoCientifico.png',
-                    'Talento Innovador' => 'TalentoInnovador.png',
-                    'Responsabilidad Social' => 'ResponsabilidadSocial.png'
-                ];
-                
-                $imagen_path = 'imagen/Insignias/ResponsabilidadSocial.png'; // Por defecto
-                if (isset($mapeo_imagenes[$nombre_insignia])) {
-                    $imagen_path = 'imagen/Insignias/' . $mapeo_imagenes[$nombre_insignia];
-                }
-                
-                echo "<!-- DEBUG: imagen_path final = '$imagen_path' -->";
-                
-                $insignia_data = [
-                    'codigo' => $row['codigo_insignia'],
-                    'nombre' => $row['nombre_insignia'],
-                    'categoria' => $row['categoria'],
-                    'destinatario' => $row['destinatario'],
-                    'descripcion' => $row['descripcion'] ?? "Esta insignia reconoce la participación destacada en actividades de " . $row['nombre_insignia'] . " por parte del estudiante.",
-                    'criterios' => "Para obtener esta insignia de " . $row['nombre_insignia'] . ", el estudiante debe haber demostrado competencias específicas.",
-                    'fecha_emision' => $row['fecha_emision'],
-                    'emisor' => 'TecNM / ' . ($row['institucion'] ?: 'Instituto Tecnológico'),
-                    'evidencia' => $row['evidencia'] ?? 'Sin evidencia registrada',
-                    'archivo_visual' => "Insig_" . $row['codigo_insignia'] . ".jpg",
-                    'imagen_path' => $imagen_path,
-                    'responsable' => $row['responsable_nombre'] ?: 'Sistema TecNM',
-                    'codigo_responsable' => 'TecNM-ITSM-2025-Resp001',
-                    'estatus' => 'Activo',
-                    'periodo' => '2025'
-                ];
-                
-                echo "<!-- DEBUG: insignia_data creado correctamente -->";
-                echo "<!-- DEBUG: imagen_path = " . $imagen_path . " -->";
-            } else {
-                die('Insignia no encontrada');
-            }
-        } else {
-            die('Error en la consulta');
+        if (!$row) {
+            // Si no se encontró la insignia, mostrar error
+            http_response_code(404);
+            die('Insignia no encontrada con el código: ' . htmlspecialchars($codigo_insignia));
         }
+        
+        // Usar los datos dinámicos obtenidos de la consulta
+        $codigo_insignia = $row['codigo_insignia'];
+        $nombre_insignia = $row['nombre_insignia'];
+        $categoria = $row['categoria'];
+        
+        // Mapeo directo de nombres de insignias a archivos PNG
+        $mapeo_imagenes = [
+            'Movilidad e Intercambio' => 'MovilidadeIntercambio.png',
+            'Embajador del Deporte' => 'EmbajadordelDeporte.png',
+            'Embajador del Arte' => 'EmbajadordelArte.png',
+            'Formación y Actualización' => 'FormacionyActualizacion.png',
+            'Talento Científico' => 'TalentoCientifico.png',
+            'Talento Innovador' => 'TalentoInnovador.png',
+            'Responsabilidad Social' => 'ResponsabilidadSocial.png'
+        ];
+        
+        $imagen_path = 'imagen/Insignias/ResponsabilidadSocial.png'; // Por defecto
+        if (isset($mapeo_imagenes[$nombre_insignia])) {
+            $imagen_path = 'imagen/Insignias/' . $mapeo_imagenes[$nombre_insignia];
+        }
+        
+        $insignia_data = [
+            'codigo' => $row['codigo_insignia'],
+            'nombre' => $row['nombre_insignia'],
+            'categoria' => $row['categoria'],
+            'destinatario' => $row['destinatario'] ?? 'Estudiante',
+            'descripcion' => $row['descripcion'] ?? "Esta insignia reconoce la participación destacada en actividades de " . $row['nombre_insignia'] . " por parte del estudiante.",
+            'criterios' => "Para obtener esta insignia de " . $row['nombre_insignia'] . ", el estudiante debe haber demostrado competencias específicas.",
+            'fecha_emision' => $row['fecha_emision'] ?? date('Y-m-d'),
+            'emisor' => 'TecNM / ' . ($row['institucion'] ?? 'Instituto Tecnológico'),
+            'evidencia' => $row['evidencia'] ?? 'Sin evidencia registrada',
+            'archivo_visual' => "Insig_" . $row['codigo_insignia'] . ".jpg",
+            'imagen_path' => $imagen_path,
+            'responsable' => $row['responsable_nombre'] ?? 'Sistema TecNM',
+            'codigo_responsable' => 'TecNM-ITSM-2025-Resp001',
+            'estatus' => 'Activo',
+            'periodo' => '2025'
+        ];
     } catch (Exception $e) {
-        die('Error: ' . $e->getMessage());
+        error_log("Error en imagen_clickeable.php: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        http_response_code(500);
+        die('Error al procesar la solicitud. Por favor, intente más tarde.');
     }
 } else {
     // Modo con sesión: verificar sesión y datos de insignia
