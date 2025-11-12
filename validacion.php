@@ -179,8 +179,9 @@ try {
                 ELSE 'Insignia TecNM'
             END as nombre_insignia,
             CASE 
-                WHEN io.Codigo_Insignia LIKE '%MOV%' OR io.Codigo_Insignia LIKE '%EMB%' OR io.Codigo_Insignia LIKE '%ART%' THEN 'Desarrollo Personal'
-                WHEN io.Codigo_Insignia LIKE '%FOR%' OR io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' OR io.Codigo_Insignia LIKE '%INN%' THEN 'Desarrollo Académico'
+                WHEN io.Codigo_Insignia LIKE '%MOV%' OR io.Codigo_Insignia LIKE '%EMB%' OR io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%INN%' THEN 'Formación Integral'
+                WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Docencia'
+                WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' THEN 'Academia'
                 WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Formación Integral'
                 ELSE 'Formación Integral'
             END as nombre_categoria,
