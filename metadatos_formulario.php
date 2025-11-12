@@ -693,6 +693,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Debug: Mostrar valores que se van a insertar
             error_log("DEBUG INSERT insigniasotorgadas: clave=$clave, destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id, fecha_otorgamiento=$fecha_otorgamiento, fecha_autorizacion=$fecha_autorizacion");
             
+            // Verificar que el statement se preparó correctamente
+            if (!$stmt) {
+                throw new Exception("Error crítico: No se pudo preparar el statement. Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")");
+            }
+            
             $stmt->bind_param("siiiiss", 
                 $clave,
                 $destinatario_id, 
@@ -703,7 +708,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fecha_autorizacion
             );
             
-            if ($stmt->execute()) {
+            // Intentar ejecutar el INSERT
+            $resultado_insert = $stmt->execute();
+            
+            if ($resultado_insert) {
                 $insignia_insertada_id = $conexion->insert_id;
                 
                 // Verificar que realmente se insertó (insert_id debe ser > 0)
@@ -824,12 +832,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ver_insignia_completa.php?insignia=' . urlencode($clave) . '&registrado=1');
                 exit();
             } else {
-                $error_detalle = "Error al ejecutar INSERT: " . $stmt->error . " (Código MySQL: " . $stmt->errno . ")";
+                // El INSERT falló - obtener el error detallado
+                $error_mysql = $stmt->error;
+                $codigo_error = $stmt->errno;
+                $error_detalle = "Error al ejecutar INSERT en insigniasotorgadas: " . $error_mysql . " (Código MySQL: " . $codigo_error . ")";
+                
                 error_log("ERROR INSERT insigniasotorgadas: " . $error_detalle);
                 error_log("SQL: " . $sql);
-                error_log("Valores: clave=$clave, destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id");
-                $mensaje_error = "Error al guardar en la base de datos: " . $error_detalle . "<br><br>SQL ejecutado: " . htmlspecialchars($sql) . "<br>Valores: clave=" . htmlspecialchars($clave) . ", destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id";
-                // NO hacer redirect - mostrar error en la página
+                error_log("Valores: clave=$clave, destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id, fecha_otorgamiento=$fecha_otorgamiento, fecha_autorizacion=$fecha_autorizacion");
+                
+                // Construir mensaje de error detallado
+                $mensaje_error = "<strong>ERROR AL GUARDAR EN LA BASE DE DATOS</strong><br><br>";
+                $mensaje_error .= "Error MySQL: " . htmlspecialchars($error_mysql) . " (Código: $codigo_error)<br><br>";
+                $mensaje_error .= "<strong>SQL ejecutado:</strong><br><code>" . htmlspecialchars($sql) . "</code><br><br>";
+                $mensaje_error .= "<strong>Valores intentados:</strong><br>";
+                $mensaje_error .= "Código: " . htmlspecialchars($clave) . "<br>";
+                $mensaje_error .= "Destinatario ID: $destinatario_id<br>";
+                $mensaje_error .= "Periodo ID: $periodo_id<br>";
+                $mensaje_error .= "Responsable ID: $responsable_id<br>";
+                $mensaje_error .= "Estatus ID: $estatus_id<br>";
+                $mensaje_error .= "Fecha Otorgamiento: " . htmlspecialchars($fecha_otorgamiento) . "<br>";
+                $mensaje_error .= "Fecha Autorización: " . htmlspecialchars($fecha_autorizacion) . "<br><br>";
+                $mensaje_error .= "<small>Por favor, verifica estos valores y contacta al administrador si el problema persiste.</small>";
+                
+                // NO hacer redirect - el error se mostrará en la página
             }
             
             $stmt->close();
