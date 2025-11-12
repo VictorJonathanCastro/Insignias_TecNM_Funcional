@@ -18,6 +18,7 @@ if ($_SESSION['rol'] !== 'Admin' && $_SESSION['rol'] !== 'SuperUsuario') {
 
 // Incluir conexión a la base de datos
 require_once 'conexion.php';
+require_once 'verificar_sesion.php';
 require_once 'funciones_correo_real.php';
 
 // Consultar categorías e insignias disponibles
@@ -1799,6 +1800,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="main-container">
         <div class="card">
             <div class="card-title">🎖️ Metadatos</div>
+            
+            <?php
+            // Obtener información del usuario actual
+            $usuario_actual = obtenerUsuarioActual();
+            $nombre_completo_usuario = '';
+            if ($usuario_actual) {
+                $nombre_completo_usuario = trim($usuario_actual['Nombre'] . ' ' . $usuario_actual['Apellido_Paterno'] . ' ' . $usuario_actual['Apellido_Materno']);
+            }
+            ?>
+            
+            <?php if (!empty($nombre_completo_usuario)): ?>
+                <div style="background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #28a745;">
+                    <strong>Bienvenido, <?php echo htmlspecialchars($nombre_completo_usuario); ?></strong>
+                </div>
+            <?php endif; ?>
             
             <a href="modulo_de_administracion.php" class="btn btn-secondary" style="margin-bottom: 30px;">
                 <i class="fas fa-arrow-left"></i>
