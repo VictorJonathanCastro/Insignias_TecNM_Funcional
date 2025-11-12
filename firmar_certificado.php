@@ -8,39 +8,17 @@ require_once 'firma_digital_real.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-function responder($ok, $msg, $conexion = null) {
+function responder($ok, $msg, $conexion = null, $datos_firma = null) {
     if ($ok) {
-        // Intentar obtener código de insignia desde POST o desde sesión
-        $codigo_insignia = $_POST['codigo_insignia'] ?? '';
-        
-        // Si no viene en POST, intentar desde la sesión
-        if (empty($codigo_insignia) && isset($_SESSION['insignia_data']['codigo'])) {
-            $codigo_insignia = $_SESSION['insignia_data']['codigo'];
+        // Si hay datos de firma, guardarlos en sesión
+        if ($datos_firma) {
+            $_SESSION['firma_digital_base64'] = $datos_firma['firma_base64'] ?? '';
+            $_SESSION['certificado_info'] = $datos_firma['certificado_info'] ?? '';
+            $_SESSION['hash_verificacion'] = $datos_firma['hash_verificacion'] ?? '';
         }
         
-        $url_redirect = '';
-        
-        // Si tenemos código de insignia, redirigir a ver la insignia completa
-        if (!empty($codigo_insignia)) {
-            $url_redirect = 'ver_insignia_completa.php?insignia=' . urlencode($codigo_insignia);
-        } else {
-            // Si no hay código, intentar buscar la última insignia registrada
-            if ($conexion) {
-                $conexion->select_db("insignia");
-                $result = $conexion->query("SELECT Codigo_Insignia FROM insigniasotorgadas ORDER BY Fecha_Creacion DESC LIMIT 1");
-                if ($result && $result->num_rows > 0) {
-                    $row = $result->fetch_assoc();
-                    $codigo_insignia = $row['Codigo_Insignia'];
-                    $url_redirect = 'ver_insignia_completa.php?insignia=' . urlencode($codigo_insignia);
-                } else {
-                    // Si no hay código, redirigir al módulo de administración
-                    $url_redirect = 'modulo_de_administracion.php';
-                }
-            } else {
-                // Si no hay conexión, redirigir al módulo de administración
-                $url_redirect = 'modulo_de_administracion.php';
-            }
-        }
+        // Siempre redirigir al formulario para que el usuario pueda registrar
+        $url_redirect = 'metadatos_formulario.php?firma_guardada=1';
         
         echo "<script>
             alert('" . addslashes($msg) . "');
@@ -219,12 +197,28 @@ try {
         }
     }
 
-    // Mostrar resultado exitoso
-    $mensaje_exito = '✅ Firma generada y guardada correctamente\n\n';
-    $mensaje_exito .= 'Sello digital (Base64):\n' . substr($resultado['firma_base64'], 0, 100) . '...\n\n';
-    $mensaje_exito .= 'La firma se ha asociado al responsable: ' . $responsable;
+    // Preparar datos de firma para guardar en sesión y base de datos
+    $certificado_info_text = null;
+    if ($certInfo && isset($certInfo['subject'])) {
+        $certificado_info_text = json_encode([
+            'subject' => $certInfo['subject'] ?? [],
+            'serial_number' => $certInfo['serial_number'] ?? '',
+            'valid_to' => $certInfo['valid_to'] ?? ''
+        ]);
+    }
     
-    responder(true, $mensaje_exito, $conexion);
+    $hash_verificacion = hash('sha256', $resultado['firma_base64']);
+    
+    $datos_firma = [
+        'firma_base64' => $resultado['firma_base64'],
+        'certificado_info' => $certificado_info_text,
+        'hash_verificacion' => $hash_verificacion
+    ];
+    
+    // Mostrar resultado exitoso
+    $mensaje_exito = '✅ Firma generada correctamente. Ahora puedes registrar el reconocimiento.';
+    
+    responder(true, $mensaje_exito, $conexion, $datos_firma);
 } catch (Throwable $e) {
     // Asegurar que los archivos temporales se eliminen incluso si hay excepción
     if (isset($cerPath) && file_exists($cerPath)) {

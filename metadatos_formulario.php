@@ -478,6 +478,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    firma_digital_base64 LONGTEXT NULL,
+                    certificado_info TEXT NULL,
+                    hash_verificacion VARCHAR(255) NULL,
+                    fecha_firma DATETIME NULL,
                     INDEX idx_codigo (Codigo_Insignia),
                     INDEX idx_destinatario (Destinatario)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
@@ -499,6 +503,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insertar datos en la base de datos
             if ($usar_tabla_io) {
                 // Usar insigniasotorgadas (tabla con Codigo_Insignia)
+                // Obtener datos de firma desde POST o sesión
+                $firma_digital_base64 = $_POST['firma_digital_base64'] ?? $_SESSION['firma_digital_base64'] ?? null;
+                $certificado_info = $_POST['certificado_info'] ?? $_SESSION['certificado_info'] ?? null;
+                $hash_verificacion = $_POST['hash_verificacion'] ?? $_SESSION['hash_verificacion'] ?? null;
+                $fecha_firma = !empty($firma_digital_base64) ? date('Y-m-d H:i:s') : null;
+                
                 $sql = "INSERT INTO insigniasotorgadas (
                     Codigo_Insignia, 
                     Destinatario, 
@@ -506,8 +516,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Responsable_Emision,
                     Estatus, 
                     Fecha_Emision, 
-                    Fecha_Vencimiento
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    Fecha_Vencimiento,
+                    firma_digital_base64,
+                    certificado_info,
+                    hash_verificacion,
+                    fecha_firma
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             } else {
                 // Si solo existe T_insignias_otorgadas, crear insigniasotorgadas de todas formas
                 $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
@@ -520,6 +534,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    firma_digital_base64 LONGTEXT NULL,
+                    certificado_info TEXT NULL,
+                    hash_verificacion VARCHAR(255) NULL,
+                    fecha_firma DATETIME NULL,
                     INDEX idx_codigo (Codigo_Insignia),
                     INDEX idx_destinatario (Destinatario)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
@@ -710,15 +728,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Error crítico: No se pudo preparar el statement. Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")");
             }
             
-            $stmt->bind_param("siiiiss", 
-                $clave,
-                $destinatario_id, 
-                $periodo_id, 
-                $responsable_id,
-                $estatus_id, 
-                $fecha_otorgamiento, 
-                $fecha_autorizacion
-            );
+            // Preparar parámetros para el INSERT (con o sin firma)
+            if (!empty($firma_digital_base64)) {
+                $stmt->bind_param("siiiissssss", 
+                    $clave,
+                    $destinatario_id, 
+                    $periodo_id, 
+                    $responsable_id,
+                    $estatus_id, 
+                    $fecha_otorgamiento, 
+                    $fecha_autorizacion,
+                    $firma_digital_base64,
+                    $certificado_info,
+                    $hash_verificacion,
+                    $fecha_firma
+                );
+            } else {
+                $stmt->bind_param("siiiiss", 
+                    $clave,
+                    $destinatario_id, 
+                    $periodo_id, 
+                    $responsable_id,
+                    $estatus_id, 
+                    $fecha_otorgamiento, 
+                    $fecha_autorizacion
+                );
+            }
             
             // Ejecutar el INSERT directamente (como funcionaba localmente)
             if ($stmt->execute()) {
@@ -726,6 +761,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Debug: Verificar que se insertó
                 error_log("DEBUG: Insignia insertada con ID: " . $insignia_insertada_id . " - Código: " . $clave);
+                
+                // Limpiar datos de firma de la sesión después de registrar
+                unset($_SESSION['firma_digital_base64']);
+                unset($_SESSION['certificado_info']);
+                unset($_SESSION['hash_verificacion']);
                 
                 // Cerrar el statement inmediatamente después del INSERT
                 $stmt->close();
@@ -1936,15 +1976,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button type="submit" class="btn-primary">
-                <i class="fas fa-medal"></i>
-                Registrar Reconocimiento
-            </button>
             <button type="button" class="btn-primary" style="background:#0d6efd; border:none;" onclick="abrirModalFirmaSAT()">
                 <i class="fas fa-file-signature"></i>
                 Firma electrónica (SAT)
             </button>
+            <button type="submit" class="btn-primary" id="btnRegistrar" disabled style="opacity:0.6; cursor:not-allowed;">
+                <i class="fas fa-medal"></i>
+                Registrar Reconocimiento
+            </button>
             </div>
+            <!-- Campo oculto para guardar la firma -->
+            <input type="hidden" name="firma_digital_base64" id="firma_digital_base64" value="">
+            <input type="hidden" name="certificado_info" id="certificado_info" value="">
+            <input type="hidden" name="hash_verificacion" id="hash_verificacion" value="">
         </form>
     </div>
     
@@ -2089,15 +2133,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('modalFirmaSAT').style.display = 'none';
       }
 
-      // Si se registró correctamente (mensaje_exito existe), sugerir firmar
-      <?php if (isset($mensaje_exito)): ?>
-      setTimeout(() => {
-        // Ofrecer abrir el modal automáticamente
-        if (confirm('Registro exitoso. ¿Deseas firmar electrónicamente este certificado ahora?')) {
-            abrirModalFirmaSAT();
+      // Verificar si hay firma guardada en sesión al cargar la página
+      <?php if (isset($_SESSION['firma_digital_base64']) && !empty($_SESSION['firma_digital_base64'])): ?>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Habilitar botón de registrar si hay firma
+        const btnRegistrar = document.getElementById('btnRegistrar');
+        const firmaInput = document.getElementById('firma_digital_base64');
+        const certificadoInput = document.getElementById('certificado_info');
+        const hashInput = document.getElementById('hash_verificacion');
+        
+        if (btnRegistrar && firmaInput) {
+          firmaInput.value = '<?php echo addslashes($_SESSION['firma_digital_base64']); ?>';
+          <?php if (isset($_SESSION['certificado_info'])): ?>
+          certificadoInput.value = '<?php echo addslashes($_SESSION['certificado_info']); ?>';
+          <?php endif; ?>
+          <?php if (isset($_SESSION['hash_verificacion'])): ?>
+          hashInput.value = '<?php echo addslashes($_SESSION['hash_verificacion']); ?>';
+          <?php endif; ?>
+          
+          btnRegistrar.disabled = false;
+          btnRegistrar.style.opacity = '1';
+          btnRegistrar.style.cursor = 'pointer';
+          
+          // Mostrar mensaje de que la firma está lista
+          const mensajeFirma = document.createElement('div');
+          mensajeFirma.style.cssText = 'background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c3e6cb;';
+          mensajeFirma.innerHTML = '<i class="fas fa-check-circle"></i> Firma electrónica lista. Ya puedes registrar el reconocimiento.';
+          const form = document.querySelector('.metadatos-form form');
+          if (form) {
+            form.insertBefore(mensajeFirma, form.firstChild);
+          }
         }
-      }, 300);
+      });
       <?php endif; ?>
+      
+      // Función para habilitar botón después de firmar (se llamará desde firmar_certificado.php)
+      function habilitarRegistroConFirma(firmaBase64, certificadoInfo, hashVerificacion) {
+        const btnRegistrar = document.getElementById('btnRegistrar');
+        const firmaInput = document.getElementById('firma_digital_base64');
+        const certificadoInput = document.getElementById('certificado_info');
+        const hashInput = document.getElementById('hash_verificacion');
+        
+        if (btnRegistrar && firmaInput) {
+          firmaInput.value = firmaBase64 || '';
+          certificadoInput.value = certificadoInfo || '';
+          hashInput.value = hashVerificacion || '';
+          
+          btnRegistrar.disabled = false;
+          btnRegistrar.style.opacity = '1';
+          btnRegistrar.style.cursor = 'pointer';
+          
+          // Mostrar mensaje
+          const mensajeFirma = document.createElement('div');
+          mensajeFirma.style.cssText = 'background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c3e6cb;';
+          mensajeFirma.innerHTML = '<i class="fas fa-check-circle"></i> Firma electrónica guardada. Ya puedes registrar el reconocimiento.';
+          const form = document.querySelector('.metadatos-form form');
+          if (form) {
+            form.insertBefore(mensajeFirma, form.firstChild);
+          }
+        }
+      }
     </script>
 
   <!-- FOOTER AZUL PROFESIONAL -->
