@@ -36,8 +36,25 @@ try {
     if ($codigo_tiene_formato_tecnm) {
         // Si el código tiene formato TECNM-OFCM-..., buscar SIEMPRE en insigniasotorgadas
         if (!$usar_tabla_io) {
-            // Si la tabla no existe, mostrar error más claro
-            throw new Exception("El código tiene formato TECNM-OFCM-... pero la tabla 'insigniasotorgadas' no existe en la base de datos.");
+            // Si la tabla no existe, intentar crearla
+            $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
+                ID_otorgada INT AUTO_INCREMENT PRIMARY KEY,
+                Codigo_Insignia VARCHAR(255) NOT NULL UNIQUE,
+                Destinatario INT NOT NULL,
+                Periodo_Emision INT,
+                Responsable_Emision INT,
+                Estatus INT,
+                Fecha_Emision DATE,
+                Fecha_Vencimiento DATE,
+                Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (Destinatario) REFERENCES destinatario(ID_destinatario),
+                INDEX idx_codigo (Codigo_Insignia)
+            )";
+            if ($conexion->query($sql_crear_tabla)) {
+                $usar_tabla_io = true;
+            } else {
+                throw new Exception("El código tiene formato TECNM-OFCM-... pero la tabla 'insigniasotorgadas' no existe y no se pudo crear: " . $conexion->error);
+            }
         }
         // Usar insigniasotorgadas cuando el código tiene formato TECNM-OFCM-...
         $query = "SELECT 

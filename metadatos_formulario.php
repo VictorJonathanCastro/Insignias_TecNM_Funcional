@@ -347,32 +347,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $codigo_tipo = 'MOV';
         }
         
-        $sql_verificar_duplicado = "
-            SELECT COUNT(*) as total, io.Codigo_Insignia, io.Fecha_Emision
-            FROM insigniasotorgadas io
-            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-            WHERE d.Nombre_Completo = ? 
-            AND io.Codigo_Insignia LIKE ?
-        ";
+        // Verificar si la tabla existe antes de verificar duplicados
+        $tabla_existe_io_check = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        $tabla_io_existe = ($tabla_existe_io_check && $tabla_existe_io_check->num_rows > 0);
         
-        $patron_codigo = '%' . $codigo_tipo . '%';
-        $stmt_verificar = $conexion->prepare($sql_verificar_duplicado);
-        if ($stmt_verificar) {
-            $stmt_verificar->bind_param("ss", $estudiante, $patron_codigo);
-            $stmt_verificar->execute();
-            $resultado_verificar = $stmt_verificar->get_result();
-            $data_verificar = $resultado_verificar->fetch_assoc();
-            $ya_tiene_insignia = $data_verificar['total'] > 0;
-            $stmt_verificar->close();
+        if ($tabla_io_existe) {
+            $sql_verificar_duplicado = "
+                SELECT COUNT(*) as total, io.Codigo_Insignia, io.Fecha_Emision
+                FROM insigniasotorgadas io
+                LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+                WHERE d.Nombre_Completo = ? 
+                AND io.Codigo_Insignia LIKE ?
+            ";
             
-            if ($ya_tiene_insignia) {
-                $mensaje_error_modal = [
-                    'estudiante' => $estudiante,
-                    'tipo_insignia' => $tipo_insignia_nombre,
-                    'codigo_existente' => $data_verificar['Codigo_Insignia'],
-                    'fecha_existente' => $data_verificar['Fecha_Emision'],
-                    'mensaje' => "El estudiante '$estudiante' ya tiene una insignia de '$tipo_insignia_nombre' (Código: " . $data_verificar['Codigo_Insignia'] . "). No se puede otorgar la misma insignia dos veces."
-                ];
+            $patron_codigo = '%' . $codigo_tipo . '%';
+            $stmt_verificar = $conexion->prepare($sql_verificar_duplicado);
+            if ($stmt_verificar) {
+                $stmt_verificar->bind_param("ss", $estudiante, $patron_codigo);
+                $stmt_verificar->execute();
+                $resultado_verificar = $stmt_verificar->get_result();
+                if ($resultado_verificar) {
+                    $data_verificar = $resultado_verificar->fetch_assoc();
+                    $ya_tiene_insignia = $data_verificar['total'] > 0;
+                    $stmt_verificar->close();
+                    
+                    if ($ya_tiene_insignia) {
+                        $mensaje_error_modal = [
+                            'estudiante' => $estudiante,
+                            'tipo_insignia' => $tipo_insignia_nombre,
+                            'codigo_existente' => $data_verificar['Codigo_Insignia'],
+                            'fecha_existente' => $data_verificar['Fecha_Emision'],
+                            'mensaje' => "El estudiante '$estudiante' ya tiene una insignia de '$tipo_insignia_nombre' (Código: " . $data_verificar['Codigo_Insignia'] . "). No se puede otorgar la misma insignia dos veces."
+                        ];
+                    }
+                }
             }
         }
         
@@ -388,23 +396,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $clave = "TECNM-OFCM-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
                 
                 // Verificar que la clave no exista (usar Codigo_Insignia, no clave_insignia)
-                $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
-                $stmt_verificar_clave->bind_param("s", $clave);
-                $stmt_verificar_clave->execute();
-                $resultado_clave = $stmt_verificar_clave->get_result();
-                $clave_existe = $resultado_clave->fetch_assoc()['total'] > 0;
-                $stmt_verificar_clave->close();
+                // Primero verificar si la tabla existe
+                $tabla_existe_io_check = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+                $tabla_io_existe = ($tabla_existe_io_check && $tabla_existe_io_check->num_rows > 0);
+                
+                $clave_existe = false;
+                if ($tabla_io_existe) {
+                    $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
+                    if ($stmt_verificar_clave) {
+                        $stmt_verificar_clave->bind_param("s", $clave);
+                        $stmt_verificar_clave->execute();
+                        $resultado_clave = $stmt_verificar_clave->get_result();
+                        if ($resultado_clave) {
+                            $clave_existe = $resultado_clave->fetch_assoc()['total'] > 0;
+                        }
+                        $stmt_verificar_clave->close();
+                    }
+                }
                 
                 // Si la clave existe, generar una nueva
                 $intentos = 0;
                 while ($clave_existe && $intentos < 10) {
                     $clave = "TECNM-OFCM-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
-                    $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE clave_insignia = ?");
-                    $stmt_verificar_clave->bind_param("s", $clave);
-                    $stmt_verificar_clave->execute();
-                    $resultado_clave = $stmt_verificar_clave->get_result();
-                    $clave_existe = $resultado_clave->fetch_assoc()['total'] > 0;
-                    $stmt_verificar_clave->close();
+                    if ($tabla_io_existe) {
+                        $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
+                        if ($stmt_verificar_clave) {
+                            $stmt_verificar_clave->bind_param("s", $clave);
+                            $stmt_verificar_clave->execute();
+                            $resultado_clave = $stmt_verificar_clave->get_result();
+                            if ($resultado_clave) {
+                                $clave_existe = $resultado_clave->fetch_assoc()['total'] > 0;
+                            } else {
+                                $clave_existe = false;
+                            }
+                            $stmt_verificar_clave->close();
+                        } else {
+                            $clave_existe = false;
+                        }
+                    } else {
+                        $clave_existe = false;
+                    }
                     $intentos++;
                 }
             }
@@ -415,16 +446,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("No hay conexión a la base de datos");
             }
             
+            // Verificar qué tabla existe para guardar
+            $tabla_existe_io = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+            $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+            $usar_tabla_io = ($tabla_existe_io && $tabla_existe_io->num_rows > 0);
+            $usar_tabla_t = ($tabla_existe_t && $tabla_existe_t->num_rows > 0);
+            
+            // Si no existe ninguna tabla, crear insigniasotorgadas
+            if (!$usar_tabla_io && !$usar_tabla_t) {
+                // Crear tabla insigniasotorgadas si no existe
+                $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
+                    ID_otorgada INT AUTO_INCREMENT PRIMARY KEY,
+                    Codigo_Insignia VARCHAR(255) NOT NULL UNIQUE,
+                    Destinatario INT NOT NULL,
+                    Periodo_Emision INT,
+                    Responsable_Emision INT,
+                    Estatus INT,
+                    Fecha_Emision DATE,
+                    Fecha_Vencimiento DATE,
+                    Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (Destinatario) REFERENCES destinatario(ID_destinatario),
+                    INDEX idx_codigo (Codigo_Insignia)
+                )";
+                if ($conexion->query($sql_crear_tabla)) {
+                    $usar_tabla_io = true;
+                } else {
+                    throw new Exception("Error al crear tabla insigniasotorgadas: " . $conexion->error);
+                }
+            }
+            
             // Insertar datos en la base de datos
-            $sql = "INSERT INTO insigniasotorgadas (
-                Codigo_Insignia, 
-                Destinatario, 
-                Periodo_Emision, 
-                Responsable_Emision,
-                Estatus, 
-                Fecha_Emision, 
-                Fecha_Vencimiento
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            if ($usar_tabla_io) {
+                // Usar insigniasotorgadas (tabla con Codigo_Insignia)
+                $sql = "INSERT INTO insigniasotorgadas (
+                    Codigo_Insignia, 
+                    Destinatario, 
+                    Periodo_Emision, 
+                    Responsable_Emision,
+                    Estatus, 
+                    Fecha_Emision, 
+                    Fecha_Vencimiento
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            } else {
+                // Si solo existe T_insignias_otorgadas, necesitamos crear primero la insignia en T_insignias
+                // y luego guardar en T_insignias_otorgadas
+                // Por ahora, crear insigniasotorgadas de todas formas
+                $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
+                    ID_otorgada INT AUTO_INCREMENT PRIMARY KEY,
+                    Codigo_Insignia VARCHAR(255) NOT NULL UNIQUE,
+                    Destinatario INT NOT NULL,
+                    Periodo_Emision INT,
+                    Responsable_Emision INT,
+                    Estatus INT,
+                    Fecha_Emision DATE,
+                    Fecha_Vencimiento DATE,
+                    Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (Destinatario) REFERENCES destinatario(ID_destinatario),
+                    INDEX idx_codigo (Codigo_Insignia)
+                )";
+                if ($conexion->query($sql_crear_tabla)) {
+                    $usar_tabla_io = true;
+                    $sql = "INSERT INTO insigniasotorgadas (
+                        Codigo_Insignia, 
+                        Destinatario, 
+                        Periodo_Emision, 
+                        Responsable_Emision,
+                        Estatus, 
+                        Fecha_Emision, 
+                        Fecha_Vencimiento
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                } else {
+                    throw new Exception("Error al crear tabla insigniasotorgadas: " . $conexion->error);
+                }
+            }
             
             $stmt = $conexion->prepare($sql);
             
