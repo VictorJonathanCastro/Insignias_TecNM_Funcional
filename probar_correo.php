@@ -42,19 +42,49 @@ echo "<br><br>";
 
 echo "<h2>3. Probando función completa...</h2>";
 $resultado_completo = enviarNotificacionInsigniaCompleta($correo_destino, $datos_prueba);
-echo $resultado_completo ? "✅ Función completa funcionó" : "❌ Función completa falló";
+
+// Verificar si realmente se envió o solo se simuló
+$usando_simulacion = !$resultado_nativo && !$resultado_phpmailer && $resultado_completo;
+
+if ($usando_simulacion) {
+    echo "⚠️ <strong style='color: orange;'>FUNCIÓN COMPLETA USÓ SIMULACIÓN</strong><br>";
+    echo "<small style='color: #666;'>El correo NO se envió realmente. Se guardó en un archivo local.</small><br>";
+    echo "<small style='color: #666;'>Para enviar correos reales, necesitas:</small><br>";
+    echo "<ul style='color: #666; font-size: 14px;'>";
+    echo "<li>Instalar sendmail en el servidor, O</li>";
+    echo "<li>Configurar el correo sistema.insignias@smarcos.tecnm.mx en config_smtp.php</li>";
+    echo "</ul>";
+} else {
+    echo $resultado_completo ? "✅ Función completa funcionó (ENVÍO REAL)" : "❌ Función completa falló";
+}
 echo "<br><br>";
 
 echo "<hr>";
 echo "<h2>📋 Resumen</h2>";
 echo "<ul>";
-echo "<li>mail() nativo: " . ($resultado_nativo ? "✅ OK" : "❌ FALLÓ") . "</li>";
-echo "<li>PHPMailer SMTP: " . ($resultado_phpmailer ? "✅ OK" : "❌ FALLÓ") . "</li>";
-echo "<li>Función completa: " . ($resultado_completo ? "✅ OK" : "❌ FALLÓ") . "</li>";
+echo "<li>mail() nativo: " . ($resultado_nativo ? "✅ OK (ENVÍO REAL)" : "❌ FALLÓ") . "</li>";
+echo "<li>PHPMailer SMTP: " . ($resultado_phpmailer ? "✅ OK (ENVÍO REAL)" : "❌ FALLÓ") . "</li>";
+if ($usando_simulacion) {
+    echo "<li>Función completa: ⚠️ SIMULACIÓN (NO se envió realmente)</li>";
+} else {
+    echo "<li>Función completa: " . ($resultado_completo ? "✅ OK (ENVÍO REAL)" : "❌ FALLÓ") . "</li>";
+}
 echo "</ul>";
 
-if ($resultado_completo) {
+if ($resultado_completo && !$usando_simulacion) {
     echo "<p style='color: green; font-weight: bold;'>✅ ¡El correo se envió exitosamente! Revisa tu bandeja de entrada.</p>";
+} elseif ($usando_simulacion) {
+    echo "<p style='color: orange; font-weight: bold; padding: 15px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 5px;'>";
+    echo "⚠️ <strong>ATENCIÓN: El correo NO se envió realmente</strong><br><br>";
+    echo "El sistema usó simulación porque ambos métodos de envío real fallaron:<br>";
+    echo "• mail() nativo no está disponible (sendmail no instalado)<br>";
+    echo "• PHPMailer SMTP falló (falta configurar sistema.insignias@smarcos.tecnm.mx)<br><br>";
+    echo "<strong>SOLUCIÓN:</strong> Cuando tengas el correo sistema.insignias@smarcos.tecnm.mx:<br>";
+    echo "1. Edita config_smtp.php en el servidor<br>";
+    echo "2. Actualiza SMTP_PASSWORD con la contraseña real<br>";
+    echo "3. Vuelve a probar este script<br><br>";
+    echo "O instala sendmail: <code>sudo apt-get install sendmail</code>";
+    echo "</p>";
 } else {
     echo "<p style='color: red; font-weight: bold;'>❌ El correo no se pudo enviar. Revisa los logs de error.</p>";
     echo "<p><strong>Comandos para ver logs:</strong></p>";
