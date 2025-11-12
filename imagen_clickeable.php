@@ -214,24 +214,36 @@ if (!empty($codigo_insignia)) {
     
     <!-- Meta tags para redes sociales -->
     <?php
-    // Generar URLs públicas para Facebook
+    // Generar URLs públicas para Facebook de manera robusta
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
     
-    // Si es localhost o IP local, usar ngrok para compartir
+    // Obtener la ruta base del script actual
+    $script_path = dirname($_SERVER['SCRIPT_NAME']);
+    // Si estamos en la raíz, $script_path será '/' o vacío, así que lo normalizamos
+    if ($script_path === '/' || $script_path === '\\') {
+        $script_path = '';
+    }
+    
+    // Construir la URL base completa
+    $base_url = $protocol . '://' . $host . $script_path;
+    
+    // Si es localhost o IP local, usar configuración especial
     if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || strpos($host, '192.168.') !== false) {
         // Verificar si hay una URL de ngrok configurada
         if (isset($_SESSION['ngrok_url']) && !empty($_SESSION['ngrok_url'])) {
-            $base_url = rtrim($_SESSION['ngrok_url'], '/') . '/Insignias_TecNM_Funcional';
+            $base_url = rtrim($_SESSION['ngrok_url'], '/') . $script_path;
         } else {
             // Fallback a localtunnel si no hay ngrok configurado
-            $base_url = 'https://bad-elephant-84.loca.lt/Insignias_TecNM_Funcional';
+            $base_url = 'https://bad-elephant-84.loca.lt' . $script_path;
         }
-    } else {
-        $base_url = 'http://' . $host . '/Insignias_TecNM_Funcional';
     }
     
     // URL de la imagen de la insignia para compartir en Facebook
-    $image_url = $base_url . '/' . (isset($insignia_data['imagen_path']) ? $insignia_data['imagen_path'] : 'imagen/Insignias/ResponsabilidadSocial.png');
+    $image_path = isset($insignia_data['imagen_path']) ? $insignia_data['imagen_path'] : 'imagen/Insignias/ResponsabilidadSocial.png';
+    // Asegurar que la ruta de la imagen sea relativa desde la raíz del proyecto
+    $image_path = ltrim($image_path, '/');
+    $image_url = $base_url . '/' . $image_path;
     
     // URL de esta página (imagen_clickeable.php) para que Facebook redirija aquí
     // Cuando alguien haga clic en el enlace compartido, llegará aquí y podrá hacer clic en la imagen para ver el certificado completo
@@ -239,6 +251,11 @@ if (!empty($codigo_insignia)) {
     
     // URL de validación pública (para el QR code)
     $validation_url = $base_url . '/validacion.php?insignia=' . urlencode($codigo_insignia);
+    
+    // Debug: Log de las URLs generadas
+    error_log("DEBUG imagen_clickeable.php - base_url: $base_url");
+    error_log("DEBUG imagen_clickeable.php - image_url: $image_url");
+    error_log("DEBUG imagen_clickeable.php - share_url: $share_url");
     ?>
     
     <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
