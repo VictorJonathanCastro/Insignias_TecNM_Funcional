@@ -705,6 +705,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->execute()) {
                 $insignia_insertada_id = $conexion->insert_id;
                 
+                // Verificar que realmente se insertó (insert_id debe ser > 0)
+                if ($insignia_insertada_id <= 0) {
+                    throw new Exception("Error: El INSERT se ejecutó pero no se obtuvo un ID válido. Verifica que la tabla tenga AUTO_INCREMENT configurado.");
+                }
+                
                 // Verificar que el código se guardó correctamente
                 $verificar_codigo = $conexion->prepare("SELECT Codigo_Insignia FROM insigniasotorgadas WHERE ID_otorgada = ?");
                 $verificar_codigo->bind_param("i", $insignia_insertada_id);
@@ -716,12 +721,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $clave_guardada = $row_verificar['Codigo_Insignia'];
                     // Usar el código que realmente se guardó en la BD
                     $clave = $clave_guardada;
+                } else {
+                    throw new Exception("Error: La insignia se insertó (ID: $insignia_insertada_id) pero no se pudo verificar el código guardado.");
                 }
                 $verificar_codigo->close();
                 
                 // Debug: Verificar que se insertó correctamente
-                echo "<!-- DEBUG: Insignia insertada correctamente con ID: " . $insignia_insertada_id . " -->";
-                echo "<!-- DEBUG: Código guardado en BD: " . htmlspecialchars($clave) . " -->";
+                error_log("DEBUG: Insignia insertada correctamente con ID: " . $insignia_insertada_id);
+                error_log("DEBUG: Código guardado en BD: " . $clave);
                 
                 // Guardar datos en sesión para mostrar la vista completa
                 $_SESSION['insignia_data'] = [
@@ -811,6 +818,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         } catch (Exception $e) {
             $mensaje_error = "Error: " . $e->getMessage();
+            error_log("EXCEPCIÓN en metadatos_formulario: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            // NO hacer redirect si hay error
         }
         } // Cerrar el bloque de validación de duplicados
     } else {
