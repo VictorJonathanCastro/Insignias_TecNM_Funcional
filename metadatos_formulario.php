@@ -478,10 +478,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    firma_digital_base64 LONGTEXT NULL COMMENT 'SELLO DIGITAL (Base64) - NO archivos .cer/.key',
-                    certificado_info TEXT NULL COMMENT 'Metadatos del certificado (subject, serial, valid_to) - NO archivo',
-                    hash_verificacion VARCHAR(255) NULL COMMENT 'Hash SHA256 del sello para verificación',
-                    fecha_firma DATETIME NULL COMMENT 'Fecha en que se generó el sello digital',
                     INDEX idx_codigo (Codigo_Insignia),
                     INDEX idx_destinatario (Destinatario)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
@@ -503,12 +499,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Insertar datos en la base de datos
             if ($usar_tabla_io) {
                 // Usar insigniasotorgadas (tabla con Codigo_Insignia)
-                // Obtener datos de firma desde POST o sesión
-                $firma_digital_base64 = $_POST['firma_digital_base64'] ?? $_SESSION['firma_digital_base64'] ?? null;
-                $certificado_info = $_POST['certificado_info'] ?? $_SESSION['certificado_info'] ?? null;
-                $hash_verificacion = $_POST['hash_verificacion'] ?? $_SESSION['hash_verificacion'] ?? null;
-                $fecha_firma = !empty($firma_digital_base64) ? date('Y-m-d H:i:s') : null;
-                
+                // NOTA: La firma digital NO se guarda aquí, solo se usa para firmar el certificado visual
                 $sql = "INSERT INTO insigniasotorgadas (
                     Codigo_Insignia, 
                     Destinatario, 
@@ -516,12 +507,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Responsable_Emision,
                     Estatus, 
                     Fecha_Emision, 
-                    Fecha_Vencimiento,
-                    firma_digital_base64,
-                    certificado_info,
-                    hash_verificacion,
-                    fecha_firma
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    Fecha_Vencimiento
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)";
             } else {
                 // Si solo existe T_insignias_otorgadas, crear insigniasotorgadas de todas formas
                 $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
@@ -534,10 +521,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    firma_digital_base64 LONGTEXT NULL COMMENT 'SELLO DIGITAL (Base64) - NO archivos .cer/.key',
-                    certificado_info TEXT NULL COMMENT 'Metadatos del certificado (subject, serial, valid_to) - NO archivo',
-                    hash_verificacion VARCHAR(255) NULL COMMENT 'Hash SHA256 del sello para verificación',
-                    fecha_firma DATETIME NULL COMMENT 'Fecha en que se generó el sello digital',
                     INDEX idx_codigo (Codigo_Insignia),
                     INDEX idx_destinatario (Destinatario)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
@@ -728,32 +711,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Error crítico: No se pudo preparar el statement. Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")");
             }
             
-            // Preparar parámetros para el INSERT (con o sin firma)
-            if (!empty($firma_digital_base64)) {
-                $stmt->bind_param("siiiissssss", 
-                    $clave,
-                    $destinatario_id, 
-                    $periodo_id, 
-                    $responsable_id,
-                    $estatus_id, 
-                    $fecha_otorgamiento, 
-                    $fecha_autorizacion,
-                    $firma_digital_base64,
-                    $certificado_info,
-                    $hash_verificacion,
-                    $fecha_firma
-                );
-            } else {
-                $stmt->bind_param("siiiiss", 
-                    $clave,
-                    $destinatario_id, 
-                    $periodo_id, 
-                    $responsable_id,
-                    $estatus_id, 
-                    $fecha_otorgamiento, 
-                    $fecha_autorizacion
-                );
-            }
+            // Preparar parámetros para el INSERT (sin campos de firma - la firma solo se usa para el certificado visual)
+            $stmt->bind_param("siiiiss", 
+                $clave,
+                $destinatario_id, 
+                $periodo_id, 
+                $responsable_id,
+                $estatus_id, 
+                $fecha_otorgamiento, 
+                $fecha_autorizacion
+            );
             
             // Ejecutar el INSERT directamente (como funcionaba localmente)
             if ($stmt->execute()) {
@@ -762,11 +729,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Debug: Verificar que se insertó
                 error_log("DEBUG: Insignia insertada con ID: " . $insignia_insertada_id . " - Código: " . $clave);
                 
-                // Limpiar datos de firma y formulario de la sesión después de registrar
-                unset($_SESSION['firma_digital_base64']);
-                unset($_SESSION['certificado_info']);
-                unset($_SESSION['hash_verificacion']);
-                unset($_SESSION['formulario_datos']); // Limpiar también los datos del formulario
+                // Limpiar datos de formulario de la sesión después de registrar
+                unset($_SESSION['formulario_datos']); // Limpiar los datos del formulario
                 
                 // Cerrar el statement inmediatamente después del INSERT
                 $stmt->close();
@@ -1981,15 +1945,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <i class="fas fa-file-signature"></i>
                 Firma electrónica (SAT)
             </button>
-            <button type="submit" class="btn-primary" id="btnRegistrar" disabled style="opacity:0.6; cursor:not-allowed;">
+            <button type="submit" class="btn-primary" id="btnRegistrar">
                 <i class="fas fa-medal"></i>
                 Registrar Reconocimiento
             </button>
             </div>
-            <!-- Campo oculto para guardar la firma -->
-            <input type="hidden" name="firma_digital_base64" id="firma_digital_base64" value="">
-            <input type="hidden" name="certificado_info" id="certificado_info" value="">
-            <input type="hidden" name="hash_verificacion" id="hash_verificacion" value="">
         </form>
     </div>
     
@@ -2167,86 +2127,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         document.getElementById('modalFirmaSAT').style.display = 'none';
       }
 
-      // Verificar si hay firma guardada en sesión al cargar la página
-      <?php if (isset($_SESSION['firma_digital_base64']) && !empty($_SESSION['firma_digital_base64'])): ?>
+      // Restaurar campos del formulario desde sesión después de firmar
+      <?php if (isset($_SESSION['formulario_datos']) && !empty($_SESSION['formulario_datos'])): ?>
       document.addEventListener('DOMContentLoaded', function() {
-        // Habilitar botón de registrar si hay firma
+        // Habilitar botón de registrar (ya no depende de la firma)
         const btnRegistrar = document.getElementById('btnRegistrar');
-        const firmaInput = document.getElementById('firma_digital_base64');
-        const certificadoInput = document.getElementById('certificado_info');
-        const hashInput = document.getElementById('hash_verificacion');
-        
-        if (btnRegistrar && firmaInput) {
-          firmaInput.value = '<?php echo addslashes($_SESSION['firma_digital_base64']); ?>';
-          <?php if (isset($_SESSION['certificado_info'])): ?>
-          certificadoInput.value = '<?php echo addslashes($_SESSION['certificado_info']); ?>';
-          <?php endif; ?>
-          <?php if (isset($_SESSION['hash_verificacion'])): ?>
-          hashInput.value = '<?php echo addslashes($_SESSION['hash_verificacion']); ?>';
-          <?php endif; ?>
-          
+        if (btnRegistrar) {
           btnRegistrar.disabled = false;
           btnRegistrar.style.opacity = '1';
           btnRegistrar.style.cursor = 'pointer';
-          
-          // Restaurar categoría y subcategoría si están en sesión
-          <?php if (isset($_SESSION['formulario_datos']['categoria']) && !empty($_SESSION['formulario_datos']['categoria'])): ?>
-          const categoriaSelect = document.getElementById('categoria');
-          if (categoriaSelect) {
-            categoriaSelect.value = '<?php echo htmlspecialchars($_SESSION['formulario_datos']['categoria']); ?>';
-            updateSubcategorias();
-            
-            // Después de actualizar subcategorías, seleccionar la subcategoría guardada
-            setTimeout(function() {
-              <?php if (isset($_SESSION['formulario_datos']['subcategoria']) && !empty($_SESSION['formulario_datos']['subcategoria'])): ?>
-              const subcategoriaSelect = document.getElementById('subcategoria');
-              if (subcategoriaSelect) {
-                subcategoriaSelect.value = '<?php echo htmlspecialchars($_SESSION['formulario_datos']['subcategoria']); ?>';
-                updateInsigniaInfo();
-              }
-              <?php endif; ?>
-            }, 100);
-          }
-          <?php endif; ?>
-          
-          // Mostrar mensaje de que la firma está lista
-          const mensajeFirma = document.createElement('div');
-          mensajeFirma.style.cssText = 'background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c3e6cb;';
-          mensajeFirma.innerHTML = '<i class="fas fa-check-circle"></i> Firma electrónica lista. Ya puedes registrar el reconocimiento.';
-          const form = document.querySelector('.metadatos-form form');
-          if (form) {
-            form.insertBefore(mensajeFirma, form.firstChild);
-          }
         }
+        
+        // Restaurar categoría y subcategoría si están en sesión
+        <?php if (isset($_SESSION['formulario_datos']['categoria']) && !empty($_SESSION['formulario_datos']['categoria'])): ?>
+        const categoriaSelect = document.getElementById('categoria');
+        if (categoriaSelect) {
+          categoriaSelect.value = '<?php echo htmlspecialchars($_SESSION['formulario_datos']['categoria']); ?>';
+          updateSubcategorias();
+          
+          // Después de actualizar subcategorías, seleccionar la subcategoría guardada
+          setTimeout(function() {
+            <?php if (isset($_SESSION['formulario_datos']['subcategoria']) && !empty($_SESSION['formulario_datos']['subcategoria'])): ?>
+            const subcategoriaSelect = document.getElementById('subcategoria');
+            if (subcategoriaSelect) {
+              subcategoriaSelect.value = '<?php echo htmlspecialchars($_SESSION['formulario_datos']['subcategoria']); ?>';
+              updateInsigniaInfo();
+            }
+            <?php endif; ?>
+          }, 100);
+        }
+        <?php endif; ?>
       });
       <?php endif; ?>
-      
-      // Función para habilitar botón después de firmar (se llamará desde firmar_certificado.php)
-      function habilitarRegistroConFirma(firmaBase64, certificadoInfo, hashVerificacion) {
-        const btnRegistrar = document.getElementById('btnRegistrar');
-        const firmaInput = document.getElementById('firma_digital_base64');
-        const certificadoInput = document.getElementById('certificado_info');
-        const hashInput = document.getElementById('hash_verificacion');
-        
-        if (btnRegistrar && firmaInput) {
-          firmaInput.value = firmaBase64 || '';
-          certificadoInput.value = certificadoInfo || '';
-          hashInput.value = hashVerificacion || '';
-          
-          btnRegistrar.disabled = false;
-          btnRegistrar.style.opacity = '1';
-          btnRegistrar.style.cursor = 'pointer';
-          
-          // Mostrar mensaje
-          const mensajeFirma = document.createElement('div');
-          mensajeFirma.style.cssText = 'background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #c3e6cb;';
-          mensajeFirma.innerHTML = '<i class="fas fa-check-circle"></i> Firma electrónica guardada. Ya puedes registrar el reconocimiento.';
-          const form = document.querySelector('.metadatos-form form');
-          if (form) {
-            form.insertBefore(mensajeFirma, form.firstChild);
-          }
-        }
-      }
     </script>
 
   <!-- FOOTER AZUL PROFESIONAL -->

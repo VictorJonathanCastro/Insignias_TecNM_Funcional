@@ -8,16 +8,10 @@ require_once 'firma_digital_real.php';
 
 header('Content-Type: text/html; charset=utf-8');
 
-function responder($ok, $msg, $conexion = null, $datos_firma = null) {
+function responder($ok, $msg, $conexion = null) {
     if ($ok) {
-        // Si hay datos de firma, guardarlos en sesión
-        if ($datos_firma) {
-            $_SESSION['firma_digital_base64'] = $datos_firma['firma_base64'] ?? '';
-            $_SESSION['certificado_info'] = $datos_firma['certificado_info'] ?? '';
-            $_SESSION['hash_verificacion'] = $datos_firma['hash_verificacion'] ?? '';
-        }
-        
-        // Siempre redirigir al formulario para que el usuario pueda registrar
+        // Redirigir al formulario para que el usuario pueda registrar
+        // La firma NO se guarda en BD, solo se usa para firmar el certificado visual
         $url_redirect = 'metadatos_formulario.php?firma_guardada=1';
         
         echo "<script>
@@ -221,37 +215,14 @@ try {
         }
     }
 
-    // Preparar datos de firma para guardar en sesión y base de datos
-    // IMPORTANTE: NO se guardan los archivos .cer y .key (se eliminan después de generar la firma)
-    // Solo se guarda:
-    // 1. El SELLO DIGITAL (Base64 del resultado de openssl_sign) - para verificación con SAT
-    // 2. Metadatos del certificado (subject, serial_number, valid_to) - solo información, NO el archivo
-    // 3. Hash SHA256 del sello - para verificación rápida
-    
-    $certificado_info_text = null;
-    if ($certInfo && isset($certInfo['subject'])) {
-        // Solo guardar METADATOS del certificado (NO el archivo .cer)
-        $certificado_info_text = json_encode([
-            'subject' => $certInfo['subject'] ?? [],
-            'serial_number' => $certInfo['serial_number'] ?? '',
-            'valid_to' => $certInfo['valid_to'] ?? ''
-        ]);
-    }
-    
-    // Hash SHA256 del sello digital para verificación rápida
-    $hash_verificacion = hash('sha256', $resultado['firma_base64']);
-    
-    // Datos que se guardarán (NO incluyen archivos .cer/.key)
-    $datos_firma = [
-        'firma_base64' => $resultado['firma_base64'], // SELLO DIGITAL (no archivo)
-        'certificado_info' => $certificado_info_text, // Solo metadatos (no archivo)
-        'hash_verificacion' => $hash_verificacion // Hash para verificación
-    ];
+    // IMPORTANTE: La firma NO se guarda en la base de datos
+    // Solo se usa para firmar el certificado visual cuando se muestra en ver_insignia_completa.php
+    // La firma se guarda en responsable_emision para uso futuro, pero NO en insigniasotorgadas
     
     // Mostrar resultado exitoso
     $mensaje_exito = '✅ Firma generada correctamente. Ahora puedes registrar el reconocimiento.';
     
-    responder(true, $mensaje_exito, $conexion, $datos_firma);
+    responder(true, $mensaje_exito, $conexion);
 } catch (Throwable $e) {
     // Asegurar que los archivos temporales se eliminen incluso si hay excepción
     if (isset($cerPath) && file_exists($cerPath)) {
