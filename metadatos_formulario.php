@@ -802,20 +802,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         
                         // Log del resultado del correo
                         if ($correo_enviado) {
-                            error_log("Correo enviado exitosamente a: " . $correo);
+                            error_log("✅ Correo enviado exitosamente a: " . $correo);
                         } else {
-                            error_log("Error: No se pudo enviar el correo a: " . $correo);
+                            error_log("❌ Error: No se pudo enviar el correo a: " . $correo);
+                            error_log("   Revisa config_smtp.php y los logs de error para más detalles");
                         }
                     } catch (Exception $e) {
-                        error_log("Excepción al enviar correo: " . $e->getMessage());
+                        error_log("❌ Excepción al enviar correo: " . $e->getMessage());
+                        error_log("   Stack trace: " . $e->getTraceAsString());
                         $correo_enviado = false;
                     }
                     
                     // Guardar resultado del correo en sesión para mostrar en la siguiente página
                     $_SESSION['correo_enviado'] = $correo_enviado;
                     $_SESSION['correo_destinatario'] = $correo;
+                    $_SESSION['correo_error'] = $correo_enviado ? null : "No se pudo enviar el correo. Verifica config_smtp.php y los logs.";
                 } else {
-                    error_log("Correo no válido: " . $correo);
+                    error_log("⚠️ Correo no válido: " . $correo);
+                    $_SESSION['correo_enviado'] = false;
+                    $_SESSION['correo_destinatario'] = $correo;
+                    $_SESSION['correo_error'] = "Correo electrónico no válido: " . $correo;
                 }
                 
                 // Redirigir inmediatamente después del INSERT exitoso (como funcionaba localmente)

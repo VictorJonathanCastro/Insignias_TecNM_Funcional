@@ -879,11 +879,17 @@ try {
                 <div style="flex: 1;">
                     <h3 style="margin: 0 0 10px 0; font-size: 20px;">¡Reconocimiento Registrado Exitosamente!</h3>
                     <p style="margin: 0; font-size: 16px; opacity: 0.95;">
-                        La insignia ha sido registrada en la base de datos y el correo de notificación ha sido enviado.
+                        La insignia ha sido registrada en la base de datos.
                         <?php if (isset($_SESSION['correo_enviado']) && $_SESSION['correo_enviado']): ?>
-                            <br><strong>✅ Correo enviado a: <?php echo htmlspecialchars($_SESSION['correo_destinatario'] ?? ''); ?></strong>
+                            <br><strong style="color: #28a745;">✅ Correo de notificación enviado exitosamente a: <?php echo htmlspecialchars($_SESSION['correo_destinatario'] ?? ''); ?></strong>
                         <?php elseif (isset($_SESSION['correo_enviado']) && !$_SESSION['correo_enviado']): ?>
-                            <br><span style="color: #ffc107;">⚠️ El correo no pudo ser enviado, pero la insignia fue registrada correctamente.</span>
+                            <br><span style="color: #ffc107; font-weight: bold;">⚠️ El correo no pudo ser enviado, pero la insignia fue registrada correctamente.</span>
+                            <?php if (isset($_SESSION['correo_error'])): ?>
+                                <br><small style="color: #dc3545;">Error: <?php echo htmlspecialchars($_SESSION['correo_error']); ?></small>
+                                <br><small style="color: #6c757d;">Solución: Edita config_smtp.php con tus credenciales correctas y prueba con probar_correo.php</small>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <br><span style="color: #6c757d;">ℹ️ El correo no se intentó enviar (correo no válido o no configurado).</span>
                         <?php endif; ?>
                     </p>
                 </div>
@@ -893,6 +899,7 @@ try {
             // Limpiar variables de sesión después de mostrarlas
             unset($_SESSION['correo_enviado']);
             unset($_SESSION['correo_destinatario']);
+            unset($_SESSION['correo_error']);
             ?>
         <?php endif; ?>
         <div class="content">
