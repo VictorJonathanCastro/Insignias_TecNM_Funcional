@@ -233,6 +233,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo "<!-- DEBUG: estatus = '$estatus' -->";
     echo "<!-- DEBUG: fecha_otorgamiento = '$fecha_otorgamiento' -->";
     echo "<!-- DEBUG: fecha_autorizacion = '$fecha_autorizacion' -->";
+    echo "<!-- DEBUG: clave recibida del POST = '" . htmlspecialchars($clave) . "' -->";
     
     // Obtener información de las tablas para nombres dinámicos
     $categoria_nombre = '';
@@ -827,7 +828,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log("ERROR INSERT insigniasotorgadas: " . $error_detalle);
                 error_log("SQL: " . $sql);
                 error_log("Valores: clave=$clave, destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id");
-                $mensaje_error = "Error al guardar en la base de datos: " . $error_detalle;
+                $mensaje_error = "Error al guardar en la base de datos: " . $error_detalle . "<br><br>SQL ejecutado: " . htmlspecialchars($sql) . "<br>Valores: clave=" . htmlspecialchars($clave) . ", destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id";
+                // NO hacer redirect - mostrar error en la página
             }
             
             $stmt->close();
@@ -836,7 +838,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensaje_error = "Error: " . $e->getMessage();
             error_log("EXCEPCIÓN en metadatos_formulario: " . $e->getMessage());
             error_log("Stack trace: " . $e->getTraceAsString());
-            // NO hacer redirect si hay error
+            // NO hacer redirect si hay error - el error se mostrará en la página
+            // Asegurarse de que no se haya enviado ningún header de redirect
+            if (!headers_sent()) {
+                // No hacer nada, dejar que la página muestre el error
+            }
         }
         } // Cerrar el bloque de validación de duplicados
     } else {
@@ -1748,9 +1754,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <?php if (isset($mensaje_error)): ?>
-                <div class="alert alert-danger">
+                <div class="alert alert-danger" style="background: #f8d7da; color: #721c24; padding: 20px; border: 2px solid #f5c6cb; border-radius: 8px; margin: 20px 0; font-size: 16px;">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <?php echo $mensaje_error; ?>
+                    <strong>ERROR AL REGISTRAR LA INSIGNIA:</strong><br><br>
+                    <?php echo nl2br(htmlspecialchars($mensaje_error)); ?>
+                    <br><br>
+                    <small style="color: #856404;">Por favor, verifica los datos e intenta nuevamente. Si el problema persiste, contacta al administrador del sistema.</small>
                 </div>
             <?php endif; ?>
             
