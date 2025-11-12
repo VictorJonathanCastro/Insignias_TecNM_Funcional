@@ -1545,8 +1545,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Obtener período seleccionado o año actual
                 let periodo = '';
                 if (periodoSelect && periodoSelect.value) {
-                    const selectedPeriodo = periodoSelect.options[periodoSelect.selectedIndex];
-                    periodo = selectedPeriodo.textContent || selectedPeriodo.value;
+                    // Usar el value directamente y limpiar espacios
+                    periodo = periodoSelect.value.trim();
                 } else {
                     // Si no hay período seleccionado, usar año actual
                     periodo = new Date().getFullYear().toString();
