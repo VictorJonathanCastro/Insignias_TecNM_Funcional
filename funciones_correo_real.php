@@ -76,32 +76,52 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
     $mail = new PHPMailer(true);
 
     try {
-        // Cargar configuración exitosa si existe
-        if (file_exists('config_smtp_exitosa.php')) {
-            require_once 'config_smtp_exitosa.php';
-            $tu_correo = SMTP_USERNAME;
-            $tu_contraseña = SMTP_PASSWORD;
-            $servidores = [SMTP_HOST => SMTP_PORT];
-        } else {
-            // CONFIGURACIÓN POR DEFECTO
-            $tu_correo = "211230001@smarcos.tecnm.mx";
-            $tu_contraseña = "cas29ye02vi20";
-
-            // Servidores SMTP más comunes para TecNM
+        // Cargar configuración SMTP
+        $tu_correo = "211230001@smarcos.tecnm.mx";
+        $tu_contraseña = "cas29ye02vi20";
+        $servidores = [];
+        
+        if (file_exists('config_smtp.php')) {
+            require_once 'config_smtp.php';
+            $tu_correo = defined('SMTP_USERNAME') ? SMTP_USERNAME : $tu_correo;
+            $tu_contraseña = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : $tu_contraseña;
+            
+            // Agregar servidor principal
+            if (defined('SMTP_HOST') && defined('SMTP_PORT')) {
+                $encryption = defined('SMTP_ENCRYPTION') ? SMTP_ENCRYPTION : 'tls';
+                $servidores[SMTP_HOST] = [
+                    'port' => SMTP_PORT,
+                    'encryption' => $encryption
+                ];
+            }
+            
+            // Agregar servidores alternativos
+            if (defined('SMTP_SERVERS_ALTERNATIVOS')) {
+                foreach (SMTP_SERVERS_ALTERNATIVOS as $host => $config) {
+                    if (!isset($servidores[$host])) {
+                        $servidores[$host] = $config;
+                    }
+                }
+            }
+        }
+        
+        // Si no hay configuración, usar valores por defecto
+        if (empty($servidores)) {
             $servidores = [
-                'smtp-mail.outlook.com' => 587,  // Office 365
-                'smtp.gmail.com' => 587,         // Gmail
-                'smtp.tecnm.mx' => 587,         // TecNM directo
-                'mail.tecnm.mx' => 587,         // TecNM mail
-                'smtp.smarcos.tecnm.mx' => 587, // TecNM específico
+                'smtp.office365.com' => ['port' => 587, 'encryption' => 'tls'],
+                'smtp-mail.outlook.com' => ['port' => 587, 'encryption' => 'tls'],
+                'smtp.gmail.com' => ['port' => 587, 'encryption' => 'tls'],
+                'mail.tecnm.mx' => ['port' => 587, 'encryption' => 'tls'],
             ];
         }
 
         $funciono = false;
         $servidor_exitoso = '';
+        $ultimo_error = '';
 
-        foreach ($servidores as $servidor => $puerto) {
+        foreach ($servidores as $servidor => $config) {
             try {
+                $mail = new PHPMailer(true);
                 $mail->clearAddresses();
                 
                 // Configuración SMTP
@@ -110,46 +130,66 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
                 $mail->SMTPAuth = true;
                 $mail->Username = $tu_correo;
                 $mail->Password = $tu_contraseña;
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                
+                // Configurar encriptación
+                $puerto = $config['port'] ?? 587;
+                $encryption = $config['encryption'] ?? 'tls';
+                
+                if ($encryption === 'ssl') {
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                } else {
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                }
+                
                 $mail->Port = $puerto;
                 $mail->CharSet = 'UTF-8';
+                $mail->SMTPDebug = defined('SMTP_DEBUG') && SMTP_DEBUG ? 2 : 0;
+                $mail->Timeout = defined('SMTP_TIMEOUT') ? SMTP_TIMEOUT : 30;
                 
-                // SSL para XAMPP
+                // SSL options
+                $verify_ssl = defined('SMTP_VERIFY_SSL') ? SMTP_VERIFY_SSL : false;
                 $mail->SMTPOptions = array(
                     'ssl' => array(
-                        'verify_peer' => false,
-                        'verify_peer_name' => false,
-                        'allow_self_signed' => true
+                        'verify_peer' => $verify_ssl,
+                        'verify_peer_name' => $verify_ssl,
+                        'allow_self_signed' => !$verify_ssl
                     )
                 );
 
                 // Configurar correo
-                $mail->setFrom($tu_correo, 'Sistema Insignias TecNM');
-                $mail->addAddress($destinatario_email, $datos_insignia['estudiante']);
+                $from_name = defined('SMTP_FROM_NAME') ? SMTP_FROM_NAME : 'Sistema Insignias TecNM';
+                $mail->setFrom($tu_correo, $from_name);
+                $mail->addAddress($destinatario_email, $datos_insignia['estudiante'] ?? '');
 
                 // Contenido del correo
                 $mail->isHTML(true);
                 $mail->Subject = $asunto;
                 $mail->Body = $mensaje_html;
+                $mail->AltBody = strip_tags($mensaje_html);
 
                 // Enviar
                 $mail->send();
                 
-                error_log("Correo enviado exitosamente usando servidor: $servidor:$puerto");
+                error_log("✅ Correo enviado exitosamente usando servidor: $servidor:$puerto ($encryption)");
                 $funciono = true;
                 $servidor_exitoso = $servidor;
                 break;
                 
             } catch (Exception $e) {
-                error_log("Error con servidor $servidor:$puerto - " . $e->getMessage());
+                $ultimo_error = "Error con servidor $servidor:$puerto ($encryption) - " . $e->getMessage();
+                error_log("❌ $ultimo_error");
                 continue;
             }
+        }
+
+        if (!$funciono) {
+            error_log("❌ Todos los servidores SMTP fallaron. Último error: $ultimo_error");
         }
 
         return $funciono;
         
     } catch (Exception $e) {
-        error_log("Error general PHPMailer: " . $e->getMessage());
+        error_log("❌ Error general PHPMailer: " . $e->getMessage());
         return false;
     }
 }
