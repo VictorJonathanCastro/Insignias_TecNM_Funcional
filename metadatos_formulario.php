@@ -310,10 +310,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $descripcion_real = "Esta insignia reconoce la participación destacada en actividades de " . ($tipo_insignia_nombre ?: $insignia) . " desarrollando competencias de " . ($categoria_nombre ?: 'Formación Integral') . ", por parte de " . $estudiante . ".";
     }
     
-    // Validar que el estatus existe en la base de datos
+    // Validar que el estatus existe en la base de datos (usar campo dinámico detectado)
     $estatus_valido = false;
     if (!empty($estatus)) {
-        $sql_verificar_estatus = "SELECT ID_estatus FROM estatus WHERE ID_estatus = ?";
+        // Usar el campo dinámico detectado al inicio
+        $check_estatus_val = $conexion->query("SHOW COLUMNS FROM estatus LIKE 'id'");
+        $tiene_id_estatus_val = ($check_estatus_val && $check_estatus_val->num_rows > 0);
+        $campo_id_estatus_val = $tiene_id_estatus_val ? 'id' : 'ID_estatus';
+        
+        $sql_verificar_estatus = "SELECT $campo_id_estatus_val as id FROM estatus WHERE $campo_id_estatus_val = ?";
         $stmt_estatus = $conexion->prepare($sql_verificar_estatus);
         if ($stmt_estatus) {
             $stmt_estatus->bind_param("i", $estatus);
@@ -324,7 +329,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    if (!empty($categoria_id) && !empty($subcategoria_id) && !empty($insignia) && !empty($estudiante) && !empty($curp) && !empty($correo) && !empty($matricula) && !empty($periodo) && !empty($responsable) && !empty($estatus) && !empty($fecha_otorgamiento) && !empty($fecha_autorizacion) && $estatus_valido) {
+    // Validar campos obligatorios (insignia puede estar vacío si tenemos subcategoria_id)
+    $campos_validos = !empty($categoria_id) && !empty($subcategoria_id) && !empty($estudiante) && 
+                      !empty($curp) && !empty($correo) && !empty($matricula) && 
+                      !empty($periodo) && !empty($responsable) && !empty($estatus) && 
+                      !empty($fecha_otorgamiento) && !empty($fecha_autorizacion) && $estatus_valido;
+    
+    if ($campos_validos) {
         echo "<!-- DEBUG: Validación pasada, procesando insignia -->";
         echo "<!-- DEBUG: Estatus seleccionado: " . $estatus . " -->";
         echo "<!-- DEBUG: Estatus válido: " . ($estatus_valido ? 'SÍ' : 'NO') . " -->";
@@ -883,7 +894,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo "<!-- DEBUG: fecha_otorgamiento: " . ($fecha_otorgamiento ?: 'VACÍO') . " -->";
         echo "<!-- DEBUG: fecha_autorizacion: " . ($fecha_autorizacion ?: 'VACÍO') . " -->";
         echo "<!-- DEBUG: estatus_valido: " . ($estatus_valido ? 'SÍ' : 'NO') . " -->";
-        $mensaje_error = "Por favor, completa todos los campos obligatorios, incluyendo la selección de categoría, subcategoría y estatus válido";
+        
+        // Construir mensaje de error detallado indicando qué campos faltan
+        $campos_faltantes = [];
+        if (empty($categoria_id)) $campos_faltantes[] = "Categoría";
+        if (empty($subcategoria_id)) $campos_faltantes[] = "Subcategoría";
+        if (empty($estudiante)) $campos_faltantes[] = "Estudiante";
+        if (empty($curp)) $campos_faltantes[] = "CURP";
+        if (empty($correo)) $campos_faltantes[] = "Correo";
+        if (empty($matricula)) $campos_faltantes[] = "Matrícula";
+        if (empty($periodo)) $campos_faltantes[] = "Periodo";
+        if (empty($responsable)) $campos_faltantes[] = "Responsable";
+        if (empty($estatus)) $campos_faltantes[] = "Estatus";
+        if (!$estatus_valido) $campos_faltantes[] = "Estatus válido (no existe en BD)";
+        if (empty($fecha_otorgamiento)) $campos_faltantes[] = "Fecha de Otorgamiento";
+        if (empty($fecha_autorizacion)) $campos_faltantes[] = "Fecha de Autorización";
+        
+        $mensaje_error = "Por favor, completa todos los campos obligatorios.<br><br>";
+        if (!empty($campos_faltantes)) {
+            $mensaje_error .= "<strong>Campos faltantes o inválidos:</strong><br>";
+            $mensaje_error .= "• " . implode("<br>• ", $campos_faltantes);
+        } else {
+            $mensaje_error .= "Verifica que todos los campos estén completos, incluyendo la selección de categoría, subcategoría y estatus válido.";
+        }
     }
 }
 ?>
