@@ -807,11 +807,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ver_insignia_completa.php?insignia=' . urlencode($clave) . '&registrado=1');
                 exit();
             } else {
-                // Cerrar statement si falló
-                $stmt->close();
-                // El INSERT falló - obtener el error detallado
+                // El INSERT falló - obtener el error detallado ANTES de cerrar
                 $error_mysql = $stmt->error;
                 $codigo_error = $stmt->errno;
+                $stmt->close();
                 $error_detalle = "Error al ejecutar INSERT en insigniasotorgadas: " . $error_mysql . " (Código MySQL: " . $codigo_error . ")";
                 
                 error_log("ERROR INSERT insigniasotorgadas: " . $error_detalle);
