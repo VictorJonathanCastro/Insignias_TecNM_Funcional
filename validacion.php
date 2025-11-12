@@ -205,6 +205,12 @@ try {
         // Usar valor por defecto
     }
     
+    // Verificar que la tabla insigniasotorgadas existe
+    $tabla_existe = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+    if (!$tabla_existe || $tabla_existe->num_rows == 0) {
+        throw new Exception("La tabla 'insigniasotorgadas' no existe en la base de datos");
+    }
+    
     // Obtener datos de la insignia con categoría dinámica desde la base de datos
     // Primero obtener los datos básicos, luego buscar la categoría en una consulta separada si es necesario
     $sql = "
@@ -234,11 +240,14 @@ try {
     
     $stmt = $conexion->prepare($sql);
     if ($stmt === false) {
+        error_log("Error al preparar consulta en validacion.php: " . $conexion->error);
+        error_log("SQL: " . $sql);
         throw new Exception("Error al preparar consulta: " . $conexion->error);
     }
     
     $stmt->bind_param("s", $codigo_insignia);
     if (!$stmt->execute()) {
+        error_log("Error al ejecutar consulta en validacion.php: " . $stmt->error);
         throw new Exception("Error al ejecutar consulta: " . $stmt->error);
     }
     
