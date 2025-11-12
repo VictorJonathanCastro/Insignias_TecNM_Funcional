@@ -15,18 +15,35 @@
 // CONFIGURACIÓN SMTP PRINCIPAL
 // ============================================
 
+// ============================================
+// ⚠️ IMPORTANTE: LEE ESTO PRIMERO
+// ============================================
+// Este archivo SOLO se usa si mail() nativo falla
+// El sistema primero intenta mail() nativo (NO requiere credenciales)
+// Solo si mail() falla, se usa PHPMailer con estas credenciales
+//
+// OPCIONES:
+// 1. Instalar sendmail en el servidor (recomendado) - NO necesita este archivo
+// 2. Usar un correo del SISTEMA (no personal) con permisos SMTP
+// 3. Dejar este archivo vacío y solo usar mail() nativo
+// ============================================
+
 // Correo del SISTEMA desde el cual se enviarán las notificaciones
-// Este es el correo del servidor/sistema, NO del estudiante
-// ⚠️ IMPORTANTE: Usa un correo institucional de TecNM que tenga permisos para enviar correos
-// Ejemplos: sistema.insignias@smarcos.tecnm.mx, noreply@smarcos.tecnm.mx, o tu correo institucional
-define('SMTP_FROM_EMAIL', '211230001@smarcos.tecnm.mx'); // ⚠️ CAMBIA ESTO por tu correo del sistema
+// ⚠️ IMPORTANTE: Debe ser un correo del SISTEMA, NO personal
+// Ejemplos válidos:
+// - sistema.insignias@smarcos.tecnm.mx (si existe)
+// - noreply@smarcos.tecnm.mx (si existe)
+// - correo.institucional@smarcos.tecnm.mx (con permisos SMTP)
+//
+// ❌ NO usar: correos personales de estudiantes o administradores
+define('SMTP_FROM_EMAIL', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ CORREO DEL SISTEMA (no personal)
 define('SMTP_FROM_NAME', 'Sistema Insignias TecNM');
 
-// Credenciales SMTP del SERVIDOR/SISTEMA (para autenticarse con el servidor de correo)
-// Estas son las credenciales del correo del sistema, NO de los estudiantes
-// ⚠️ IMPORTANTE: Usa el mismo correo y su contraseña REAL
-define('SMTP_USERNAME', '211230001@smarcos.tecnm.mx'); // ⚠️ CAMBIA ESTO por tu correo del sistema
-define('SMTP_PASSWORD', 'cas29ye02vi20'); // ⚠️ CAMBIA ESTO por la contraseña REAL del correo del sistema
+// Credenciales SMTP del SERVIDOR/SISTEMA
+// ⚠️ Solo se usan si mail() nativo falla
+// ⚠️ Debe ser el mismo correo del sistema y su contraseña REAL
+define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ CORREO DEL SISTEMA
+define('SMTP_PASSWORD', 'CONTRASEÑA_DEL_CORREO_DEL_SISTEMA'); // ⚠️ Contraseña REAL del correo del sistema
 
 // Servidor SMTP principal (prueba primero este)
 define('SMTP_HOST', 'smtp.office365.com'); // Para Office 365

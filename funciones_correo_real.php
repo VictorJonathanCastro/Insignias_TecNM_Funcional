@@ -27,24 +27,31 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
     $asunto = "🎖️ Insignia Otorgada - " . $datos_insignia['nombre_insignia'];
     $mensaje_html = generarMensajeCorreo($datos_insignia);
     
-    // 1. Intentar envío con mail() nativo (más simple)
+    // 1. PRIMERO: Intentar envío con mail() nativo (NO requiere credenciales SMTP)
+    // Solo necesita que sendmail esté instalado en el servidor
     $enviado_nativo = enviarConMailNativo($destinatario_email, $asunto, $mensaje_html);
     
     if ($enviado_nativo) {
-        error_log("Correo NATIVO enviado exitosamente a: " . $destinatario_email);
+        error_log("✅ Correo NATIVO enviado exitosamente a: " . $destinatario_email);
         return true;
     }
     
-    // 2. Si falla mail() nativo, intentar PHPMailer
-    $enviado_real = enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
-    
-    if ($enviado_real) {
-        error_log("Correo PHPMailer enviado exitosamente a: " . $destinatario_email);
-        return true;
+    // 2. Si falla mail() nativo, intentar PHPMailer con SMTP (requiere credenciales del sistema)
+    // Solo si config_smtp.php tiene credenciales válidas del sistema
+    if (file_exists('config_smtp.php')) {
+        $enviado_real = enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
+        
+        if ($enviado_real) {
+            error_log("✅ Correo PHPMailer enviado exitosamente a: " . $destinatario_email);
+            return true;
+        }
+    } else {
+        error_log("⚠️ config_smtp.php no existe. Solo se intentó mail() nativo.");
     }
     
-    // 3. Si todo falla, usar simulación como respaldo
-    error_log("Todos los métodos fallaron, usando simulación para: " . $destinatario_email);
+    // 3. Si todo falla, usar simulación como respaldo (guarda en archivo)
+    error_log("⚠️ Todos los métodos fallaron, usando simulación para: " . $destinatario_email);
+    error_log("   SOLUCIÓN: Instala sendmail o configura un correo del sistema en config_smtp.php");
     return enviarCorreoSimuladoInterno($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
 }
 
