@@ -220,13 +220,16 @@ if (!empty($codigo_insignia)) {
     
     // Obtener la ruta base del script actual
     $script_path = dirname($_SERVER['SCRIPT_NAME']);
-    // Si estamos en la raíz, $script_path será '/' o vacío, así que lo normalizamos
-    if ($script_path === '/' || $script_path === '\\') {
-        $script_path = '';
-    }
+    // Normalizar la ruta (eliminar barras al inicio y final)
+    $script_path = trim($script_path, '/\\');
     
-    // Construir la URL base completa
-    $base_url = $protocol . '://' . $host . $script_path;
+    // Si el script está en la raíz del servidor, $script_path estará vacío
+    // Si está en un subdirectorio, incluir ese subdirectorio
+    if (!empty($script_path)) {
+        $base_url = $protocol . '://' . $host . '/' . $script_path;
+    } else {
+        $base_url = $protocol . '://' . $host;
+    }
     
     // Si es localhost o IP local, usar configuración especial
     if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || strpos($host, '192.168.') !== false) {
