@@ -47,13 +47,17 @@ try {
         responder(false, 'Debes proporcionar la contraseña de la e.firma', $conexion);
     }
 
+    // IMPORTANTE: Los archivos .cer y .key se usan SOLO para generar el sello digital
+    // NO se guardan permanentemente - se eliminan inmediatamente después de generar la firma
+    // Solo se guarda el SELLO DIGITAL generado (Base64) para verificación con SAT
+    
     // Usar archivos temporales del sistema (NO guardar permanentemente)
     // Crear archivos temporales únicos para procesar
     $tempDir = sys_get_temp_dir();
     $cerPath = tempnam($tempDir, 'cert_') . '.cer';
     $keyPath = tempnam($tempDir, 'key_') . '.key';
     
-    // Copiar archivos subidos a ubicaciones temporales
+    // Copiar archivos subidos a ubicaciones temporales (solo para procesamiento)
     if (!copy($_FILES['certificado']['tmp_name'], $cerPath)) {
         responder(false, 'No se pudo procesar el archivo .cer', $conexion);
     }
@@ -198,8 +202,15 @@ try {
     }
 
     // Preparar datos de firma para guardar en sesión y base de datos
+    // IMPORTANTE: NO se guardan los archivos .cer y .key (se eliminan después de generar la firma)
+    // Solo se guarda:
+    // 1. El SELLO DIGITAL (Base64 del resultado de openssl_sign) - para verificación con SAT
+    // 2. Metadatos del certificado (subject, serial_number, valid_to) - solo información, NO el archivo
+    // 3. Hash SHA256 del sello - para verificación rápida
+    
     $certificado_info_text = null;
     if ($certInfo && isset($certInfo['subject'])) {
+        // Solo guardar METADATOS del certificado (NO el archivo .cer)
         $certificado_info_text = json_encode([
             'subject' => $certInfo['subject'] ?? [],
             'serial_number' => $certInfo['serial_number'] ?? '',
@@ -207,12 +218,14 @@ try {
         ]);
     }
     
+    // Hash SHA256 del sello digital para verificación rápida
     $hash_verificacion = hash('sha256', $resultado['firma_base64']);
     
+    // Datos que se guardarán (NO incluyen archivos .cer/.key)
     $datos_firma = [
-        'firma_base64' => $resultado['firma_base64'],
-        'certificado_info' => $certificado_info_text,
-        'hash_verificacion' => $hash_verificacion
+        'firma_base64' => $resultado['firma_base64'], // SELLO DIGITAL (no archivo)
+        'certificado_info' => $certificado_info_text, // Solo metadatos (no archivo)
+        'hash_verificacion' => $hash_verificacion // Hash para verificación
     ];
     
     // Mostrar resultado exitoso

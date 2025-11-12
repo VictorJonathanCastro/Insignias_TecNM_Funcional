@@ -478,10 +478,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    firma_digital_base64 LONGTEXT NULL,
-                    certificado_info TEXT NULL,
-                    hash_verificacion VARCHAR(255) NULL,
-                    fecha_firma DATETIME NULL,
+                    firma_digital_base64 LONGTEXT NULL COMMENT 'SELLO DIGITAL (Base64) - NO archivos .cer/.key',
+                    certificado_info TEXT NULL COMMENT 'Metadatos del certificado (subject, serial, valid_to) - NO archivo',
+                    hash_verificacion VARCHAR(255) NULL COMMENT 'Hash SHA256 del sello para verificación',
+                    fecha_firma DATETIME NULL COMMENT 'Fecha en que se generó el sello digital',
                     INDEX idx_codigo (Codigo_Insignia),
                     INDEX idx_destinatario (Destinatario)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
@@ -534,10 +534,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    firma_digital_base64 LONGTEXT NULL,
-                    certificado_info TEXT NULL,
-                    hash_verificacion VARCHAR(255) NULL,
-                    fecha_firma DATETIME NULL,
+                    firma_digital_base64 LONGTEXT NULL COMMENT 'SELLO DIGITAL (Base64) - NO archivos .cer/.key',
+                    certificado_info TEXT NULL COMMENT 'Metadatos del certificado (subject, serial, valid_to) - NO archivo',
+                    hash_verificacion VARCHAR(255) NULL COMMENT 'Hash SHA256 del sello para verificación',
+                    fecha_firma DATETIME NULL COMMENT 'Fecha en que se generó el sello digital',
                     INDEX idx_codigo (Codigo_Insignia),
                     INDEX idx_destinatario (Destinatario)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
