@@ -152,30 +152,58 @@ require_once 'conexion.php';
 $insignia_data = null;
 
 try {
-    // Detectar estructura dinámica de las tablas
-    $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
-    $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
-    $campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
+    // Detectar estructura dinámica de las tablas con manejo de errores
+    $campo_id_destinatario = 'ID_destinatario'; // Valor por defecto
+    $campo_id_responsable = 'ID_responsable'; // Valor por defecto
+    $campo_nombre_tipo = 'Nombre_ins'; // Valor por defecto
+    $tiene_cat_ins = false; // Valor por defecto
+    $campo_id_cat = 'ID_cat'; // Valor por defecto
     
-    $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
-    $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
-    $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+    // Intentar detectar estructura, pero no fallar si hay error
+    try {
+        $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+        if ($check_destinatario_id && $check_destinatario_id->num_rows > 0) {
+            $campo_id_destinatario = 'id';
+        }
+    } catch (Exception $e) {
+        // Usar valor por defecto
+    }
     
-    // Detectar estructura dinámica de tipo_insignia y cat_insignias
-    $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'id'");
-    $tiene_id_tipo = ($check_tipo && $check_tipo->num_rows > 0);
-    $campo_id_tipo = $tiene_id_tipo ? 'id' : 'ID_tipo';
+    try {
+        $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+        if ($check_responsable_id && $check_responsable_id->num_rows > 0) {
+            $campo_id_responsable = 'id';
+        }
+    } catch (Exception $e) {
+        // Usar valor por defecto
+    }
     
-    $check_nombre_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
-    $tiene_nombre_insignia = ($check_nombre_tipo && $check_nombre_tipo->num_rows > 0);
-    $campo_nombre_tipo = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
+    try {
+        $check_nombre_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+        if ($check_nombre_tipo && $check_nombre_tipo->num_rows > 0) {
+            $campo_nombre_tipo = 'Nombre_Insignia';
+        }
+    } catch (Exception $e) {
+        // Usar valor por defecto
+    }
     
-    $check_cat_ins = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Cat_ins'");
-    $tiene_cat_ins = ($check_cat_ins && $check_cat_ins->num_rows > 0);
+    try {
+        $check_cat_ins = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Cat_ins'");
+        if ($check_cat_ins && $check_cat_ins->num_rows > 0) {
+            $tiene_cat_ins = true;
+        }
+    } catch (Exception $e) {
+        // Usar valor por defecto
+    }
     
-    $check_cat = $conexion->query("SHOW COLUMNS FROM cat_insignias LIKE 'id'");
-    $tiene_id_cat = ($check_cat && $check_cat->num_rows > 0);
-    $campo_id_cat = $tiene_id_cat ? 'id' : 'ID_cat';
+    try {
+        $check_cat = $conexion->query("SHOW COLUMNS FROM cat_insignias LIKE 'id'");
+        if ($check_cat && $check_cat->num_rows > 0) {
+            $campo_id_cat = 'id';
+        }
+    } catch (Exception $e) {
+        // Usar valor por defecto
+    }
     
     // Obtener datos de la insignia con categoría dinámica desde la base de datos
     // Primero obtener los datos básicos, luego buscar la categoría en una consulta separada si es necesario
@@ -381,8 +409,16 @@ try {
         }
     }
 } catch (Exception $e) {
+    // Log del error para debugging
+    error_log("Error en validacion.php: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+    
     // En caso de error, no mostrar datos por defecto
     $insignia_data = null;
+    
+    // Mostrar mensaje de error amigable
+    http_response_code(500);
+    die("Error al procesar la solicitud. Por favor, intente más tarde.");
 }
 
 // Si no se encontraron datos, mostrar página de error
