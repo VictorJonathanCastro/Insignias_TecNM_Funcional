@@ -28,6 +28,22 @@ if (!empty($codigo_insignia)) {
         $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
         $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
         
+        // Detectar estructura dinámica de tipo_insignia y cat_insignias
+        $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'id'");
+        $tiene_id_tipo = ($check_tipo && $check_tipo->num_rows > 0);
+        $campo_id_tipo = $tiene_id_tipo ? 'id' : 'ID_tipo';
+        
+        $check_nombre_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+        $tiene_nombre_insignia = ($check_nombre_tipo && $check_nombre_tipo->num_rows > 0);
+        $campo_nombre_tipo = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
+        
+        $check_cat_ins = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Cat_ins'");
+        $tiene_cat_ins = ($check_cat_ins && $check_cat_ins->num_rows > 0);
+        
+        $check_cat = $conexion->query("SHOW COLUMNS FROM cat_insignias LIKE 'id'");
+        $tiene_id_cat = ($check_cat && $check_cat->num_rows > 0);
+        $campo_id_cat = $tiene_id_cat ? 'id' : 'ID_cat';
+        
         $row = null;
         $stmt = null;
         
@@ -49,19 +65,24 @@ if (!empty($codigo_insignia)) {
                             WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
                             ELSE 'Insignia TecNM'
                         END as nombre_insignia,
-                        CASE 
-                            WHEN io.Codigo_Insignia LIKE '%MOV%' OR io.Codigo_Insignia LIKE '%EMB%' OR io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%INN%' THEN 'Formación Integral'
-                            WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Docencia'
-                            WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' THEN 'Academia'
-                            WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Formación Integral'
-                            ELSE 'Formación Integral'
-                        END as categoria,
+                        COALESCE(cat.Nombre_cat, 'Formación Integral') as categoria,
                         re.Nombre_Completo as responsable_nombre,
                         re.Cargo as responsable_cargo,
                         'Instituto Tecnológico de San Marcos' as institucion
                     FROM insigniasotorgadas io
                     LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
                     LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
+                    LEFT JOIN tipo_insignia ti ON (
+                        (io.Codigo_Insignia LIKE '%MOV%' AND (ti." . $campo_nombre_tipo . " LIKE '%Movilidad%' OR ti." . $campo_nombre_tipo . " LIKE '%Intercambio%'))
+                        OR (io.Codigo_Insignia LIKE '%EMB%' AND (ti." . $campo_nombre_tipo . " LIKE '%Deporte%' OR ti." . $campo_nombre_tipo . " LIKE '%Embajador%'))
+                        OR (io.Codigo_Insignia LIKE '%ART%' AND (ti." . $campo_nombre_tipo . " LIKE '%Arte%' OR ti." . $campo_nombre_tipo . " LIKE '%Embajador%'))
+                        OR (io.Codigo_Insignia LIKE '%FOR%' AND (ti." . $campo_nombre_tipo . " LIKE '%Formación%' OR ti." . $campo_nombre_tipo . " LIKE '%Actualización%'))
+                        OR (io.Codigo_Insignia LIKE '%TAL%' AND ti." . $campo_nombre_tipo . " LIKE '%Científico%')
+                        OR (io.Codigo_Insignia LIKE '%CIE%' AND ti." . $campo_nombre_tipo . " LIKE '%Científico%')
+                        OR (io.Codigo_Insignia LIKE '%INN%' AND (ti." . $campo_nombre_tipo . " LIKE '%Innovador%' OR ti." . $campo_nombre_tipo . " LIKE '%Innovación%'))
+                        OR (io.Codigo_Insignia LIKE '%SOC%' AND (ti." . $campo_nombre_tipo . " LIKE '%Social%' OR ti." . $campo_nombre_tipo . " LIKE '%Responsabilidad%'))
+                    )
+                    " . ($tiene_cat_ins ? "LEFT JOIN cat_insignias cat ON ti.Cat_ins = cat." . $campo_id_cat : "") . "
                     WHERE io.Codigo_Insignia = ?
                 ";
                 
