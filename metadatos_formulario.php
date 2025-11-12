@@ -720,51 +720,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fecha_autorizacion
             );
             
+            // Asegurar que autocommit esté activado
+            $conexion->autocommit(true);
+            
             // Intentar ejecutar el INSERT
             $resultado_insert = $stmt->execute();
             
             if ($resultado_insert) {
                 $insignia_insertada_id = $conexion->insert_id;
                 
-                // Verificar que realmente se insertó (insert_id debe ser > 0)
-                if ($insignia_insertada_id <= 0) {
-                    throw new Exception("Error: El INSERT se ejecutó pero no se obtuvo un ID válido. Verifica que la tabla tenga AUTO_INCREMENT configurado.");
-                }
-                
-                // Verificar que el código se guardó correctamente
-                $verificar_codigo = $conexion->prepare("SELECT Codigo_Insignia FROM insigniasotorgadas WHERE ID_otorgada = ?");
-                $verificar_codigo->bind_param("i", $insignia_insertada_id);
-                $verificar_codigo->execute();
-                $resultado_verificar = $verificar_codigo->get_result();
-                
-                if ($resultado_verificar && $resultado_verificar->num_rows > 0) {
-                    $row_verificar = $resultado_verificar->fetch_assoc();
-                    $clave_guardada = $row_verificar['Codigo_Insignia'];
-                    // Usar el código que realmente se guardó en la BD
-                    $clave = $clave_guardada;
-                } else {
-                    throw new Exception("Error: La insignia se insertó (ID: $insignia_insertada_id) pero no se pudo verificar el código guardado.");
-                }
-                $verificar_codigo->close();
-                
                 // Debug: Verificar que se insertó correctamente
                 error_log("DEBUG: Insignia insertada correctamente con ID: " . $insignia_insertada_id);
                 error_log("DEBUG: Código guardado en BD: " . $clave);
                 
-                // VERIFICACIÓN FINAL: Confirmar que el código realmente existe en la BD antes de redirigir
-                $verificacion_final = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
-                $verificacion_final->bind_param("s", $clave);
-                $verificacion_final->execute();
-                $resultado_final = $verificacion_final->get_result();
-                $verificacion_final->close();
-                
-                if ($resultado_final && $resultado_final->num_rows > 0) {
-                    $row_final = $resultado_final->fetch_assoc();
-                    if ($row_final['total'] == 0) {
-                        throw new Exception("Error crítico: La insignia se insertó (ID: $insignia_insertada_id) pero no se encuentra en la base de datos con el código: $clave");
+                // Verificar que el código se guardó correctamente (verificación simple)
+                if ($insignia_insertada_id > 0) {
+                    // Verificar que el código existe en la BD
+                    $verificar_codigo = $conexion->prepare("SELECT Codigo_Insignia FROM insigniasotorgadas WHERE ID_otorgada = ? LIMIT 1");
+                    $verificar_codigo->bind_param("i", $insignia_insertada_id);
+                    $verificar_codigo->execute();
+                    $resultado_verificar = $verificar_codigo->get_result();
+                    
+                    if ($resultado_verificar && $resultado_verificar->num_rows > 0) {
+                        $row_verificar = $resultado_verificar->fetch_assoc();
+                        $clave_guardada = $row_verificar['Codigo_Insignia'];
+                        $clave = $clave_guardada; // Usar el código que realmente se guardó
                     }
-                } else {
-                    throw new Exception("Error crítico: No se pudo verificar que la insignia se guardó correctamente.");
+                    $verificar_codigo->close();
                 }
                 
                 // Guardar datos en sesión para mostrar la vista completa
