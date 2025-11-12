@@ -10,6 +10,15 @@ if (!empty($codigo_insignia)) {
     require_once 'conexion.php';
     
     try {
+        // Detectar estructura dinámica de las tablas
+        $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+        $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
+        $campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
+        
+        $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+        $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
+        $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+        
         $stmt = $conexion->prepare("
             SELECT 
                 io.Codigo_Insignia as codigo_insignia,
@@ -20,14 +29,14 @@ if (!empty($codigo_insignia)) {
                     WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                     WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
                     WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-                    WHEN io.Codigo_Insignia LIKE '%CIE%' THEN 'Talento Científico'
+                    WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' THEN 'Talento Científico'
                     WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
                     WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
                     ELSE 'Insignia TecNM'
                 END as nombre_insignia,
                 CASE 
                     WHEN io.Codigo_Insignia LIKE '%MOV%' OR io.Codigo_Insignia LIKE '%EMB%' OR io.Codigo_Insignia LIKE '%ART%' THEN 'Desarrollo Personal'
-                    WHEN io.Codigo_Insignia LIKE '%FOR%' OR io.Codigo_Insignia LIKE '%CIE%' OR io.Codigo_Insignia LIKE '%INN%' THEN 'Desarrollo Académico'
+                    WHEN io.Codigo_Insignia LIKE '%FOR%' OR io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' OR io.Codigo_Insignia LIKE '%INN%' THEN 'Desarrollo Académico'
                     WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Formación Integral'
                     ELSE 'Formación Integral'
                 END as categoria,
@@ -35,8 +44,8 @@ if (!empty($codigo_insignia)) {
                 re.Cargo as responsable_cargo,
                 'Instituto Tecnológico de San Marcos' as institucion
             FROM insigniasotorgadas io
-            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-            LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.ID_responsable
+            LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+            LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
             WHERE io.Codigo_Insignia = ?
         ");
         

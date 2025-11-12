@@ -1059,7 +1059,7 @@ try {
             <button onclick="window.print()" class="btn">
                 <i class="fas fa-print"></i> Imprimir
             </button>
-            <a href="ver_insignia_publica.php?insignia=<?php echo isset($codigo_insignia) ? urlencode($codigo_insignia) : ''; ?>" class="btn" style="text-decoration: none; display: inline-block;">
+            <a href="imagen_clickeable.php?codigo=<?php echo isset($codigo_insignia) ? urlencode($codigo_insignia) : ''; ?>" class="btn" style="text-decoration: none; display: inline-block;">
                 <i class="fas fa-share-alt"></i> Compartir Públicamente
             </a>
             <a href="historial_insignias.php" class="btn" style="text-decoration: none; display: inline-block;">
