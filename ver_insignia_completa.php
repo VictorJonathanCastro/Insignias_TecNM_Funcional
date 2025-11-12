@@ -10,8 +10,8 @@ if (!isset($_SESSION['usuario_id'])) {
 // Incluir archivo de conexión
 require_once 'conexion.php';
 
-// Obtener el código de la insignia desde la URL
-$codigo_insignia = isset($_GET['insignia']) ? $_GET['insignia'] : '';
+// Obtener el código de la insignia desde la URL (acepta 'insignia' o 'codigo')
+$codigo_insignia = isset($_GET['insignia']) ? $_GET['insignia'] : (isset($_GET['codigo']) ? $_GET['codigo'] : '');
 $solo_certificado = isset($_GET['solo']) && $_GET['solo'] == '1';
 
 if (empty($codigo_insignia)) {
