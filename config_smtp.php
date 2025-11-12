@@ -2,7 +2,8 @@
 /**
  * CONFIGURACIÓN SMTP PARA ENVÍO DE CORREOS
  * 
- * IMPORTANTE: Edita estos valores con tus credenciales reales de correo
+ * IMPORTANTE: Estas son las credenciales del SERVIDOR/SISTEMA que ENVÍA los correos
+ * NO son las credenciales de los estudiantes (ellos solo reciben las notificaciones)
  * 
  * Para TecNM, normalmente usan:
  * - Office 365 (Outlook)
@@ -14,13 +15,15 @@
 // CONFIGURACIÓN SMTP PRINCIPAL
 // ============================================
 
-// Correo desde el cual se enviarán las notificaciones
-define('SMTP_FROM_EMAIL', '211230001@smarcos.tecnm.mx');
+// Correo del SISTEMA desde el cual se enviarán las notificaciones
+// Este es el correo del servidor/sistema, NO del estudiante
+define('SMTP_FROM_EMAIL', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ Correo del sistema
 define('SMTP_FROM_NAME', 'Sistema Insignias TecNM');
 
-// Credenciales SMTP
-define('SMTP_USERNAME', '211230001@smarcos.tecnm.mx');
-define('SMTP_PASSWORD', 'cas29ye02vi20'); // ⚠️ CAMBIA ESTA CONTRASEÑA
+// Credenciales SMTP del SERVIDOR/SISTEMA (para autenticarse con el servidor de correo)
+// Estas son las credenciales del correo del sistema, NO de los estudiantes
+define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ Correo del sistema
+define('SMTP_PASSWORD', 'CONTRASEÑA_DEL_CORREO_DEL_SISTEMA'); // ⚠️ Contraseña del correo del sistema
 
 // Servidor SMTP principal (prueba primero este)
 define('SMTP_HOST', 'smtp.office365.com'); // Para Office 365

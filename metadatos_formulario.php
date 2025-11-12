@@ -794,7 +794,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'fecha_otorgamiento' => $fecha_otorgamiento,
                             'responsable' => $responsable,
                             'descripcion' => $descripcion_real,
-                            'url_verificacion' => generarUrlVerificacion($clave),
+                            'url_verificacion' => generarUrlVerificacion($clave), // URL a ver_insignia_publica.php
                             'url_imagen' => $url_imagen_insignia
                         ];
                         

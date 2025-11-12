@@ -300,16 +300,17 @@ function generarMensajeCorreo($datos) {
             
             <div style="text-align: center; margin: 30px 0;">
                 <a href="' . htmlspecialchars($datos['url_verificacion']) . '" 
-                   style="display: inline-block; cursor: pointer; text-decoration: none;"
-                   ondblclick="window.open(this.href, \'_blank\'); return false;">
+                   target="_blank"
+                   style="display: inline-block; cursor: pointer; text-decoration: none;">
                     <img src="' . htmlspecialchars($datos['url_imagen'] ?? '') . '" 
                          alt="' . htmlspecialchars($datos['nombre_insignia']) . '" 
                          style="max-width: 300px; height: auto; border: 3px solid #1b396a; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: transform 0.3s ease; cursor: pointer;"
                          onmouseover="this.style.transform=\'scale(1.05)\'; this.style.boxShadow=\'0 6px 12px rgba(0,0,0,0.3)\';" 
                          onmouseout="this.style.transform=\'scale(1)\'; this.style.boxShadow=\'0 4px 8px rgba(0,0,0,0.2)\';"
-                         onclick="event.preventDefault(); window.open(\'' . htmlspecialchars($datos['url_verificacion']) . '\', \'_blank\');">
+                         onclick="window.open(\'' . htmlspecialchars($datos['url_verificacion']) . '\', \'_blank\'); return false;"
+                         ondblclick="window.open(\'' . htmlspecialchars($datos['url_verificacion']) . '\', \'_blank\'); return false;">
                 </a>
-                <p style="margin-top: 10px; color: #6c757d; font-size: 14px; font-style: italic;">🖱️ Haz clic o doble clic en la imagen para ver tu certificado</p>
+                <p style="margin-top: 10px; color: #6c757d; font-size: 14px; font-style: italic;">🖱️ Haz clic o doble clic en la imagen para ver tu certificado completo</p>
             </div>
             
             <div class="info-section">
@@ -447,7 +448,8 @@ function validarCorreo($correo) {
 }
 
 /**
- * Genera URL de verificación de insignia
+ * Genera URL de verificación pública de insignia
+ * Esta URL lleva a ver_insignia_publica.php donde se puede ver el certificado completo
  */
 function generarUrlVerificacion($codigo_insignia, $base_url = '') {
     if (empty($base_url)) {
@@ -456,7 +458,8 @@ function generarUrlVerificacion($codigo_insignia, $base_url = '') {
         $base_url = $protocol . '://' . $host . dirname($_SERVER['PHP_SELF']);
     }
     
-    return $base_url . '/verificar_insignia.php?clave=' . urlencode($codigo_insignia);
+    // Usar ver_insignia_publica.php para que el estudiante vea su certificado completo
+    return $base_url . '/ver_insignia_publica.php?insignia=' . urlencode($codigo_insignia);
 }
 
 /**
