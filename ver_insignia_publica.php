@@ -41,7 +41,11 @@ try {
             WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?
         ";
     } else {
-        // Usar insigniasotorgadas (estructura antigua)
+        // Usar insigniasotorgadas - verificar estructura dinámica de destinatario
+        $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+        $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
+        $campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
+        
         $sql = "
             SELECT 
                 io.ID_otorgada as id,
@@ -67,7 +71,7 @@ try {
                     ELSE 'Formación Integral'
                 END as categoria
             FROM insigniasotorgadas io
-            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             WHERE io.Codigo_Insignia = ?
         ";
     }
