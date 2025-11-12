@@ -46,6 +46,15 @@ if (!$usar_tabla_t) {
     }
 }
 
+// Detectar estructura dinámica de las tablas para JOINs correctos
+$check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+$tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
+$campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
+
+$check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+$tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
+$campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+
 // Consulta básica para obtener las insignias otorgadas usando la estructura actual
 if (!empty($busqueda)) {
     // Modo búsqueda: mostrar solo lo que se busque
@@ -116,14 +125,15 @@ if (!empty($busqueda)) {
                 'TecNM' as institucion,
                 '2025-1' as periodo,
                 'Activo' as estatus,
-                'Sistema' as responsable,
-                'Administrador' as cargo,
+                COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
+                COALESCE(re.Cargo, 'Administrador') as cargo,
                 io.firma_digital_base64,
                 io.hash_verificacion,
                 io.certificado_info,
                 io.fecha_firma
             FROM insigniasotorgadas io
-            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+            LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
             WHERE d.Nombre_Completo LIKE ?
             ORDER BY io.Fecha_Emision DESC
         ";
@@ -197,14 +207,15 @@ if (!empty($busqueda)) {
                 'TecNM' as institucion,
                 '2025-1' as periodo,
                 'Activo' as estatus,
-                'Sistema' as responsable,
-                'Administrador' as cargo,
+                COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
+                COALESCE(re.Cargo, 'Administrador') as cargo,
                 io.firma_digital_base64,
                 io.hash_verificacion,
                 io.certificado_info,
                 io.fecha_firma
             FROM insigniasotorgadas io
-            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+            LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
             ORDER BY io.Fecha_Emision DESC
         ";
     }
@@ -279,14 +290,15 @@ if (!empty($busqueda)) {
                 'TecNM' as institucion,
                 '2025-1' as periodo,
                 'Activo' as estatus,
-                'Sistema' as responsable,
-                'Administrador' as cargo,
+                COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
+                COALESCE(re.Cargo, 'Administrador') as cargo,
                 io.firma_digital_base64,
                 io.hash_verificacion,
                 io.certificado_info,
                 io.fecha_firma
             FROM insigniasotorgadas io
-            LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
+            LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+            LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
             WHERE d.Nombre_Completo LIKE ?
             ORDER BY io.Fecha_Emision DESC
         ";
