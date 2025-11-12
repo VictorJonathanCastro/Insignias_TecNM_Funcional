@@ -274,10 +274,15 @@ if (!empty($codigo_insignia)) {
     error_log("DEBUG imagen_clickeable.php - share_url: $share_url");
     ?>
     
+    <!-- DEBUG: URLs generadas para compartir -->
+    <!-- base_url: <?php echo htmlspecialchars($base_url); ?> -->
+    <!-- image_url: <?php echo htmlspecialchars($image_url); ?> -->
+    <!-- share_url: <?php echo htmlspecialchars($share_url); ?> -->
+    
     <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
     <meta property="og:description" content="Insignia de <?php echo htmlspecialchars($insignia_data['nombre']); ?> otorgada a <?php echo htmlspecialchars($insignia_data['destinatario']); ?>. Haz clic en la imagen para ver el certificado completo.">
-    <meta property="og:image" content="<?php echo $image_url; ?>">
-    <meta property="og:url" content="<?php echo $share_url; ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars($image_url); ?>">
+    <meta property="og:url" content="<?php echo htmlspecialchars($share_url); ?>">
     <meta property="og:type" content="website">
     <meta property="og:image:width" content="500">
     <meta property="og:image:height" content="500">
