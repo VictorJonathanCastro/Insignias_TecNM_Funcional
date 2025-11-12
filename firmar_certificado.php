@@ -73,6 +73,26 @@ try {
     $fechaEmision = $_POST['fecha_emision'] ?? '';
     $responsable = $_POST['responsable'] ?? 'Responsable de Emisión';
     $cargo = $_POST['cargo'] ?? 'RESPONSABLE DE EMISIÓN';
+    
+    // Guardar datos del formulario en sesión para mantenerlos después de firmar
+    // Los datos vienen con prefijo "form_" desde el modal de firma
+    $_SESSION['formulario_datos'] = [
+        'categoria' => $_POST['form_categoria'] ?? $_POST['categoria'] ?? '',
+        'subcategoria' => $_POST['form_subcategoria'] ?? $_POST['subcategoria'] ?? '',
+        'estudiante' => $_POST['form_estudiante'] ?? $destinatario,
+        'curp' => $_POST['form_curp'] ?? $_POST['curp'] ?? '',
+        'correo' => $_POST['form_correo'] ?? $_POST['correo'] ?? '',
+        'matricula' => $_POST['form_matricula'] ?? $_POST['matricula'] ?? '',
+        'periodo' => $_POST['form_periodo'] ?? $_POST['periodo'] ?? '',
+        'responsable' => $_POST['form_responsable'] ?? $responsable,
+        'estatus' => $_POST['form_estatus'] ?? $_POST['estatus'] ?? '',
+        'clave' => $_POST['form_clave'] ?? $codigo,
+        'fecha_otorgamiento' => $_POST['form_fecha_otorgamiento'] ?? $fechaEmision,
+        'fecha_autorizacion' => $_POST['form_fecha_autorizacion'] ?? $_POST['fecha_autorizacion'] ?? '',
+        'evidencia' => $_POST['form_evidencia'] ?? $_POST['evidencia'] ?? '',
+        'descripcion' => $_POST['form_descripcion'] ?? $_POST['descripcion'] ?? '',
+        'insignia' => $_POST['form_insignia'] ?? $nombreInsignia
+    ];
 
     $texto = "Certificado de Insignia Digital - TecNM\n" .
              "Código: $codigo\n" .

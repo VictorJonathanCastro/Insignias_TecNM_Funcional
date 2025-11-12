@@ -762,10 +762,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Debug: Verificar que se insertó
                 error_log("DEBUG: Insignia insertada con ID: " . $insignia_insertada_id . " - Código: " . $clave);
                 
-                // Limpiar datos de firma de la sesión después de registrar
+                // Limpiar datos de firma y formulario de la sesión después de registrar
                 unset($_SESSION['firma_digital_base64']);
                 unset($_SESSION['certificado_info']);
                 unset($_SESSION['hash_verificacion']);
+                unset($_SESSION['formulario_datos']); // Limpiar también los datos del formulario
                 
                 // Cerrar el statement inmediatamente después del INSERT
                 $stmt->close();
@@ -1873,7 +1874,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <select id="categoria" name="categoria" onchange="updateSubcategorias()" required>
                             <option value="">Selecciona una categoría...</option>
                             <?php foreach ($categorias_insignias as $categoria): ?>
-                                <option value="<?php echo $categoria['id']; ?>">
+                                <option value="<?php echo $categoria['id']; ?>" <?php echo (isset($_SESSION['formulario_datos']['categoria']) && $_SESSION['formulario_datos']['categoria'] == $categoria['id']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($categoria['nombre_categoria']); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -1896,22 +1897,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group">
                 <label>Estudiante Destinatario:</label>
-                <input type="text" name="estudiante" placeholder="Ej: Juan Pérez, Ana López" required>
+                <input type="text" name="estudiante" placeholder="Ej: Juan Pérez, Ana López" value="<?php echo isset($_SESSION['formulario_datos']['estudiante']) ? htmlspecialchars($_SESSION['formulario_datos']['estudiante']) : ''; ?>" required>
             </div>
 
             <div class="form-group">
                 <label>CURP:</label>
-                <input type="text" name="curp" placeholder="Ej: PERJ800101HDFRGN01" maxlength="18" required>
+                <input type="text" name="curp" placeholder="Ej: PERJ800101HDFRGN01" maxlength="18" value="<?php echo isset($_SESSION['formulario_datos']['curp']) ? htmlspecialchars($_SESSION['formulario_datos']['curp']) : ''; ?>" required>
             </div>
 
             <div class="form-group">
                 <label>Correo Electrónico:</label>
-                <input type="email" name="correo" placeholder="Ej: estudiante@tecnm.mx" required>
+                <input type="email" name="correo" placeholder="Ej: estudiante@tecnm.mx" value="<?php echo isset($_SESSION['formulario_datos']['correo']) ? htmlspecialchars($_SESSION['formulario_datos']['correo']) : ''; ?>" required>
             </div>
 
             <div class="form-group">
                 <label>Matrícula:</label>
-                <input type="text" name="matricula" placeholder="Ej: 2024001" required>
+                <input type="text" name="matricula" placeholder="Ej: 2024001" value="<?php echo isset($_SESSION['formulario_datos']['matricula']) ? htmlspecialchars($_SESSION['formulario_datos']['matricula']) : ''; ?>" required>
             </div>
 
             <div class="form-group">
@@ -1919,7 +1920,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <select name="periodo" required>
                     <option value="">Selecciona un periodo...</option>
                     <?php foreach ($periodos_emision as $periodo): ?>
-                        <option value="<?php echo htmlspecialchars($periodo['periodo']); ?>">
+                        <option value="<?php echo htmlspecialchars($periodo['periodo']); ?>" <?php echo (isset($_SESSION['formulario_datos']['periodo']) && $_SESSION['formulario_datos']['periodo'] == $periodo['periodo']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($periodo['periodo']); ?>
                         </option>
                     <?php endforeach; ?>
@@ -1931,7 +1932,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <select name="responsable" required>
                     <option value="">Selecciona un responsable...</option>
                     <?php foreach ($responsables_emision as $responsable): ?>
-                        <option value="<?php echo htmlspecialchars($responsable['nombre_completo']); ?>">
+                        <option value="<?php echo htmlspecialchars($responsable['nombre_completo']); ?>" <?php echo (isset($_SESSION['formulario_datos']['responsable']) && $_SESSION['formulario_datos']['responsable'] == $responsable['nombre_completo']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($responsable['nombre_completo']); ?> - <?php echo htmlspecialchars($responsable['cargo']); ?>
                         </option>
                     <?php endforeach; ?>
@@ -1943,7 +1944,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <select name="estatus" required>
                     <option value="">Selecciona un estatus...</option>
                     <?php foreach ($estatus_disponibles as $estatus): ?>
-                        <option value="<?php echo htmlspecialchars($estatus['id']); ?>">
+                        <option value="<?php echo htmlspecialchars($estatus['id']); ?>" <?php echo (isset($_SESSION['formulario_datos']['estatus']) && $_SESSION['formulario_datos']['estatus'] == $estatus['id']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($estatus['nombre_estatus']); ?>
                         </option>
                     <?php endforeach; ?>
@@ -1952,27 +1953,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group">
                 <label>Clave Única de Insignia:</label>
-                <input type="text" name="clave" placeholder="Ej: TECNM-OFCM-2025-001">
+                <input type="text" name="clave" placeholder="Ej: TECNM-OFCM-2025-001" value="<?php echo isset($_SESSION['formulario_datos']['clave']) ? htmlspecialchars($_SESSION['formulario_datos']['clave']) : ''; ?>">
             </div>
 
             <div class="form-group">
                 <label>Fecha de Otorgamiento:</label>
-                <input type="date" name="fecha_otorgamiento" value="<?php echo date('Y-m-d'); ?>" required>
+                <input type="date" name="fecha_otorgamiento" value="<?php echo isset($_SESSION['formulario_datos']['fecha_otorgamiento']) ? htmlspecialchars($_SESSION['formulario_datos']['fecha_otorgamiento']) : date('Y-m-d'); ?>" required>
             </div>
 
             <div class="form-group">
                 <label>Fecha de Autorización:</label>
-                <input type="date" name="fecha_autorizacion" value="<?php echo date('Y-m-d'); ?>" required>
+                <input type="date" name="fecha_autorizacion" value="<?php echo isset($_SESSION['formulario_datos']['fecha_autorizacion']) ? htmlspecialchars($_SESSION['formulario_datos']['fecha_autorizacion']) : date('Y-m-d'); ?>" required>
             </div>
 
             <div class="form-group full-width">
                 <label>Descripción del Reconocimiento:</label>
-                <textarea name="descripcion" rows="4" placeholder="  "></textarea>
+                <textarea name="descripcion" rows="4" placeholder="  "><?php echo isset($_SESSION['formulario_datos']['descripcion']) ? htmlspecialchars($_SESSION['formulario_datos']['descripcion']) : ''; ?></textarea>
             </div>
 
             <div class="form-group full-width">
                 <label>Evidencia/Referencia:</label>
-                <input type="text" name="evidencia" placeholder="/evidencias/certificado.pdf">
+                <input type="text" name="evidencia" placeholder="/evidencias/certificado.pdf" value="<?php echo isset($_SESSION['formulario_datos']['evidencia']) ? htmlspecialchars($_SESSION['formulario_datos']['evidencia']) : ''; ?>">
             </div>
 
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -2114,6 +2115,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const form = document.querySelector('.metadatos-form form');
         const getVal = (name) => (form.querySelector(`[name="${name}"]`)||{}).value || '';
         
+        // Guardar datos del formulario en campos ocultos para enviarlos al firmar
+        // Estos datos se usarán para restaurar el formulario después de firmar
+        const formData = {
+          categoria: getVal('categoria'),
+          subcategoria: getVal('subcategoria'),
+          estudiante: getVal('estudiante'),
+          curp: getVal('curp'),
+          correo: getVal('correo'),
+          matricula: getVal('matricula'),
+          periodo: getVal('periodo'),
+          responsable: getVal('responsable'),
+          estatus: getVal('estatus'),
+          clave: getVal('clave'),
+          fecha_otorgamiento: getVal('fecha_otorgamiento'),
+          fecha_autorizacion: getVal('fecha_autorizacion'),
+          evidencia: getVal('evidencia'),
+          descripcion: getVal('descripcion'),
+          insignia: document.getElementById('insignia-hidden').value || ''
+        };
+        
+        // Agregar campos ocultos al formulario de firma para enviar todos los datos
+        const formFirma = document.getElementById('formEFirmaSat');
+        Object.keys(formData).forEach(key => {
+          let hiddenInput = formFirma.querySelector(`input[name="form_${key}"]`);
+          if (!hiddenInput) {
+            hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = `form_${key}`;
+            formFirma.appendChild(hiddenInput);
+          }
+          hiddenInput.value = formData[key];
+        });
+        
         // Obtener código de insignia desde el campo hidden (ya tiene valor de sesión) o del formulario
         const codigoHidden = document.getElementById('ef_codigo').value;
         const codigoForm = getVal('clave');
@@ -2121,7 +2155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             document.getElementById('ef_codigo').value = codigoForm;
         }
         
-        // Llenar campos ocultos
+        // Llenar campos ocultos del modal de firma
         document.getElementById('ef_destinatario').value = getVal('estudiante');
         // Nombre de la insignia desde el hidden que se actualiza al elegir subcategoría
         document.getElementById('ef_nombre_insignia').value = document.getElementById('insignia-hidden').value || 'Insignia TecNM';
@@ -2154,6 +2188,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           btnRegistrar.disabled = false;
           btnRegistrar.style.opacity = '1';
           btnRegistrar.style.cursor = 'pointer';
+          
+          // Restaurar categoría y subcategoría si están en sesión
+          <?php if (isset($_SESSION['formulario_datos']['categoria']) && !empty($_SESSION['formulario_datos']['categoria'])): ?>
+          const categoriaSelect = document.getElementById('categoria');
+          if (categoriaSelect) {
+            categoriaSelect.value = '<?php echo htmlspecialchars($_SESSION['formulario_datos']['categoria']); ?>';
+            updateSubcategorias();
+            
+            // Después de actualizar subcategorías, seleccionar la subcategoría guardada
+            setTimeout(function() {
+              <?php if (isset($_SESSION['formulario_datos']['subcategoria']) && !empty($_SESSION['formulario_datos']['subcategoria'])): ?>
+              const subcategoriaSelect = document.getElementById('subcategoria');
+              if (subcategoriaSelect) {
+                subcategoriaSelect.value = '<?php echo htmlspecialchars($_SESSION['formulario_datos']['subcategoria']); ?>';
+                updateInsigniaInfo();
+              }
+              <?php endif; ?>
+            }, 100);
+          }
+          <?php endif; ?>
           
           // Mostrar mensaje de que la firma está lista
           const mensajeFirma = document.createElement('div');
