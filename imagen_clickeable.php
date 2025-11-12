@@ -10,6 +10,15 @@ if (!empty($codigo_insignia)) {
     require_once 'conexion.php';
     
     try {
+        // Detectar formato del código para saber qué tabla usar
+        $codigo_tiene_formato_tecnm = (strpos($codigo_insignia, 'TECNM-') === 0);
+        
+        // Verificar qué tablas existen
+        $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+        $tabla_existe_io = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        $usar_tabla_t = ($tabla_existe_t && $tabla_existe_t->num_rows > 0);
+        $usar_tabla_io = ($tabla_existe_io && $tabla_existe_io->num_rows > 0);
+        
         // Detectar estructura dinámica de las tablas
         $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
         $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
@@ -19,42 +28,87 @@ if (!empty($codigo_insignia)) {
         $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
         $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
         
-        $stmt = $conexion->prepare("
-            SELECT 
-                io.Codigo_Insignia as codigo_insignia,
-                d.Nombre_Completo as destinatario,
-                io.Fecha_Emision as fecha_emision,
-                CASE 
-                    WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
-                    WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
-                    WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
-                    WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-                    WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' THEN 'Talento Científico'
-                    WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
-                    WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
-                    ELSE 'Insignia TecNM'
-                END as nombre_insignia,
-                CASE 
-                    WHEN io.Codigo_Insignia LIKE '%MOV%' OR io.Codigo_Insignia LIKE '%EMB%' OR io.Codigo_Insignia LIKE '%ART%' THEN 'Desarrollo Personal'
-                    WHEN io.Codigo_Insignia LIKE '%FOR%' OR io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' OR io.Codigo_Insignia LIKE '%INN%' THEN 'Desarrollo Académico'
-                    WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Formación Integral'
-                    ELSE 'Formación Integral'
-                END as categoria,
-                re.Nombre_Completo as responsable_nombre,
-                re.Cargo as responsable_cargo,
-                'Instituto Tecnológico de San Marcos' as institucion
-            FROM insigniasotorgadas io
-            LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
-            LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
-            WHERE io.Codigo_Insignia = ?
-        ");
+        $row = null;
+        $stmt = null;
         
-        if ($stmt) {
-            $stmt->bind_param("s", $codigo_insignia);
-            $stmt->execute();
-            $result = $stmt->get_result();
+        // Intentar primero en insigniasotorgadas si el código tiene formato TECNM- o si no tiene formato ID-Periodo
+        if ($codigo_tiene_formato_tecnm || (!$codigo_tiene_formato_tecnm && $usar_tabla_io && !$usar_tabla_t)) {
+            if ($usar_tabla_io) {
+                $stmt = $conexion->prepare("
+                    SELECT 
+                        io.Codigo_Insignia as codigo_insignia,
+                        d.Nombre_Completo as destinatario,
+                        io.Fecha_Emision as fecha_emision,
+                        CASE 
+                            WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+                            WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
+                            WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
+                            WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
+                            WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' THEN 'Talento Científico'
+                            WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
+                            WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
+                            ELSE 'Insignia TecNM'
+                        END as nombre_insignia,
+                        CASE 
+                            WHEN io.Codigo_Insignia LIKE '%MOV%' OR io.Codigo_Insignia LIKE '%EMB%' OR io.Codigo_Insignia LIKE '%ART%' THEN 'Desarrollo Personal'
+                            WHEN io.Codigo_Insignia LIKE '%FOR%' OR io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%CIE%' OR io.Codigo_Insignia LIKE '%INN%' THEN 'Desarrollo Académico'
+                            WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Formación Integral'
+                            ELSE 'Formación Integral'
+                        END as categoria,
+                        re.Nombre_Completo as responsable_nombre,
+                        re.Cargo as responsable_cargo,
+                        'Instituto Tecnológico de San Marcos' as institucion
+                    FROM insigniasotorgadas io
+                    LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+                    LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
+                    WHERE io.Codigo_Insignia = ?
+                ");
+                
+                if ($stmt) {
+                    $stmt->bind_param("s", $codigo_insignia);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $row = $result->fetch_assoc();
+                }
+            }
+        }
+        
+        // Si no se encontró y el código tiene formato ID-Periodo, buscar en T_insignias_otorgadas
+        if (!$row && $usar_tabla_t && !$codigo_tiene_formato_tecnm) {
+            $stmt = $conexion->prepare("
+                SELECT 
+                    CONCAT(ti.id, '-', pe.Nombre_Periodo) as codigo_insignia,
+                    d.Nombre_Completo as destinatario,
+                    tio.Fecha_Emision as fecha_emision,
+                    COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
+                    CASE 
+                        WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                        WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
+                        WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
+                        ELSE 'Formación Integral'
+                    END as categoria,
+                    COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable_nombre,
+                    COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as responsable_cargo,
+                    COALESCE(itc.Nombre_itc, 'Instituto Tecnológico de San Marcos') as institucion
+                FROM T_insignias_otorgadas tio
+                LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+                LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
+                LEFT JOIN destinatario d ON tio.Id_Destinatario = d." . $campo_id_destinatario . "
+                LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
+                LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
+                LEFT JOIN responsable_emision re ON itc.id = re.Adscripcion
+                WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?
+            ");
             
-            if ($row = $result->fetch_assoc()) {
+            if ($stmt) {
+                $stmt->bind_param("s", $codigo_insignia);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $row = $result->fetch_assoc();
+            }
+        }
+        
+        if ($row) {
                 // Usar los datos dinámicos obtenidos de la consulta
                 $codigo_insignia = $row['codigo_insignia'];
                 $nombre_insignia = $row['nombre_insignia'];
