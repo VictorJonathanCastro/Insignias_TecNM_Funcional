@@ -132,7 +132,13 @@ try {
 
     // 2) Si no lo encontramos por el código, buscar/crear por nombre (fallback)
     if (!$responsable_id) {
-        $sql_resp = "SELECT ID_responsable FROM responsable_emision WHERE Nombre_Completo = ? LIMIT 1";
+        // Detectar estructura dinámica de responsable_emision
+        $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+        $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
+        $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+        $campo_select_id = $tiene_id_responsable ? 'id' : 'ID_responsable';
+        
+        $sql_resp = "SELECT " . $campo_select_id . " FROM responsable_emision WHERE Nombre_Completo = ? LIMIT 1";
         $stmt_resp = $conexion->prepare($sql_resp);
         if ($stmt_resp) {
             $stmt_resp->bind_param("s", $responsable);
@@ -140,7 +146,7 @@ try {
             $result_resp = $stmt_resp->get_result();
             if ($result_resp && $result_resp->num_rows > 0) {
                 $row_resp = $result_resp->fetch_assoc();
-                $responsable_id = $row_resp['ID_responsable'];
+                $responsable_id = $row_resp[$campo_select_id];
             } else {
                 $sql_insert_resp = "INSERT INTO responsable_emision (Nombre_Completo, Cargo, Adscripcion) VALUES (?, ?, 1)";
                 $stmt_insert_resp = $conexion->prepare($sql_insert_resp);
@@ -188,30 +194,27 @@ try {
             ]);
         }
         
-        if ($check_cert && $check_cert->num_rows > 0) {
-            // Si el campo existe, actualizar solo la firma (certificado_path puede ser NULL)
-            $sql_update_firma = "UPDATE responsable_emision 
-                                SET firma_digital_base64 = ?
-                                WHERE ID_responsable = ?";
-            $stmt_update = $conexion->prepare($sql_update_firma);
-            
-            if ($stmt_update) {
-                $stmt_update->bind_param("si", $sello_digital_real, $responsable_id);
-                $stmt_update->execute();
-                $stmt_update->close();
+        // Detectar estructura dinámica de responsable_emision
+        $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+        $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
+        $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+        
+        // Actualizar la firma digital en el responsable
+        $sql_update_firma = "UPDATE responsable_emision 
+                            SET firma_digital_base64 = ?
+                            WHERE " . $campo_id_responsable . " = ?";
+        $stmt_update = $conexion->prepare($sql_update_firma);
+        
+        if ($stmt_update) {
+            $stmt_update->bind_param("si", $sello_digital_real, $responsable_id);
+            if ($stmt_update->execute()) {
+                error_log("✅ Firma digital guardada en responsable_emision (ID: $responsable_id)");
+            } else {
+                error_log("❌ Error al guardar firma: " . $stmt_update->error);
             }
+            $stmt_update->close();
         } else {
-            // Si no existe el campo certificado_path, solo actualizar la firma
-            $sql_update_firma = "UPDATE responsable_emision 
-                                SET firma_digital_base64 = ?
-                                WHERE ID_responsable = ?";
-            $stmt_update = $conexion->prepare($sql_update_firma);
-            
-            if ($stmt_update) {
-                $stmt_update->bind_param("si", $sello_digital_real, $responsable_id);
-                $stmt_update->execute();
-                $stmt_update->close();
-            }
+            error_log("❌ Error al preparar UPDATE de firma: " . $conexion->error);
         }
     }
 

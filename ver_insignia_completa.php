@@ -257,10 +257,15 @@ try {
     $insignia_data['firma_digital_base64'] = null;
     if (!empty($insignia_data['responsable_id'])) {
         try {
-            // Verificar si el campo existe primero
+            // Detectar estructura dinámica de responsable_emision
+            $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+            $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
+            $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+            
+            // Verificar si el campo firma_digital_base64 existe primero
             $check_field = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'firma_digital_base64'");
             if ($check_field && $check_field->num_rows > 0) {
-                $sql_firma = "SELECT firma_digital_base64 FROM responsable_emision WHERE id = ? LIMIT 1";
+                $sql_firma = "SELECT firma_digital_base64 FROM responsable_emision WHERE " . $campo_id_responsable . " = ? LIMIT 1";
                 $stmt_firma = $conexion->prepare($sql_firma);
                 if ($stmt_firma) {
                     $stmt_firma->bind_param("i", $insignia_data['responsable_id']);
@@ -269,14 +274,28 @@ try {
                     if ($resultado_firma && $resultado_firma->num_rows > 0) {
                         $fila_firma = $resultado_firma->fetch_assoc();
                         $insignia_data['firma_digital_base64'] = $fila_firma['firma_digital_base64'] ?? null;
+                        
+                        if (!empty($insignia_data['firma_digital_base64'])) {
+                            error_log("✅ Firma digital encontrada para responsable_id: " . $insignia_data['responsable_id']);
+                        } else {
+                            error_log("⚠️ Firma digital vacía para responsable_id: " . $insignia_data['responsable_id']);
+                        }
+                    } else {
+                        error_log("⚠️ No se encontró firma digital para responsable_id: " . $insignia_data['responsable_id']);
                     }
                     $stmt_firma->close();
+                } else {
+                    error_log("❌ Error al preparar consulta de firma: " . $conexion->error);
                 }
+            } else {
+                error_log("⚠️ Campo firma_digital_base64 no existe en responsable_emision");
             }
         } catch (Exception $e) {
             // Si hay error, simplemente no se mostrará la firma digital
             error_log("Error al obtener firma digital: " . $e->getMessage());
         }
+    } else {
+        error_log("⚠️ responsable_id está vacío, no se puede buscar la firma");
     }
     
     // Función para determinar la imagen de la insignia dinámicamente
@@ -972,12 +991,12 @@ try {
                     <!-- Firma en la esquina inferior derecha -->
                     <div style="position: absolute; bottom: 25px; right: 60px; text-align: left; font-size: 9px; color: #333; max-width: 300px;">
                         <?php if (!empty($insignia_data['firma_digital_base64'])): ?>
-                        <!-- Mostrar solo el SELLO DIGITAL REAL del SAT completo (tamaño más grande) -->
-                        <div style="font-size: 6px; font-family: 'Courier New', monospace; color: #333; word-break: break-all; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.1px;">
-                            &lt;sello&gt;<?php echo htmlspecialchars($insignia_data['firma_digital_base64']); ?>&lt;/sello&gt;
+                        <!-- Mostrar el SELLO DIGITAL REAL del SAT (como en la imagen 2) -->
+                        <div style="font-size: 5px; font-family: 'Courier New', monospace; color: #000; word-break: break-all; line-height: 1.1; margin-bottom: 8px; letter-spacing: 0px; background: rgba(255,255,255,0.95); padding: 4px; border: 1px solid #ddd; border-radius: 2px;">
+                            <?php echo htmlspecialchars($insignia_data['firma_digital_base64']); ?>
                         </div>
                         <?php endif; ?>
-                        <div style="font-weight: bold; color: #1b396a; margin-top: 4px; font-size: 11px;"><?php echo htmlspecialchars($insignia_data['responsable']); ?></div>
+                        <div style="font-weight: bold; color: #1b396a; margin-top: 4px; font-size: 11px;"><?php echo htmlspecialchars($insignia_data['responsable'] ?? $insignia_data['responsable_captura'] ?? 'Responsable'); ?></div>
                         <div style="font-size: 8px; color: #666; margin-top: 2px;"><?php echo htmlspecialchars($insignia_data['cargo_responsable'] ?? 'RESPONSABLE DE EMISIÓN'); ?></div>
                     </div>
                     
