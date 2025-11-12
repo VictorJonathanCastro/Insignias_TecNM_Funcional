@@ -720,34 +720,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $fecha_autorizacion
             );
             
-            // Asegurar que autocommit esté activado
-            $conexion->autocommit(true);
-            
-            // Intentar ejecutar el INSERT
-            $resultado_insert = $stmt->execute();
-            
-            if ($resultado_insert) {
+            // Ejecutar el INSERT directamente (como funcionaba localmente)
+            if ($stmt->execute()) {
                 $insignia_insertada_id = $conexion->insert_id;
                 
-                // Debug: Verificar que se insertó correctamente
-                error_log("DEBUG: Insignia insertada correctamente con ID: " . $insignia_insertada_id);
-                error_log("DEBUG: Código guardado en BD: " . $clave);
+                // Debug: Verificar que se insertó
+                error_log("DEBUG: Insignia insertada con ID: " . $insignia_insertada_id . " - Código: " . $clave);
                 
-                // Verificar que el código se guardó correctamente (verificación simple)
-                if ($insignia_insertada_id > 0) {
-                    // Verificar que el código existe en la BD
-                    $verificar_codigo = $conexion->prepare("SELECT Codigo_Insignia FROM insigniasotorgadas WHERE ID_otorgada = ? LIMIT 1");
-                    $verificar_codigo->bind_param("i", $insignia_insertada_id);
-                    $verificar_codigo->execute();
-                    $resultado_verificar = $verificar_codigo->get_result();
-                    
-                    if ($resultado_verificar && $resultado_verificar->num_rows > 0) {
-                        $row_verificar = $resultado_verificar->fetch_assoc();
-                        $clave_guardada = $row_verificar['Codigo_Insignia'];
-                        $clave = $clave_guardada; // Usar el código que realmente se guardó
-                    }
-                    $verificar_codigo->close();
-                }
+                // Cerrar el statement inmediatamente después del INSERT
+                $stmt->close();
                 
                 // Guardar datos en sesión para mostrar la vista completa
                 $_SESSION['insignia_data'] = [
@@ -822,10 +803,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['correo_destinatario'] = $correo;
                 }
                 
-                // SOLO redirigir si TODO salió bien y el código está confirmado en la BD
+                // Redirigir inmediatamente después del INSERT exitoso (como funcionaba localmente)
                 header('Location: ver_insignia_completa.php?insignia=' . urlencode($clave) . '&registrado=1');
                 exit();
             } else {
+                // Cerrar statement si falló
+                $stmt->close();
                 // El INSERT falló - obtener el error detallado
                 $error_mysql = $stmt->error;
                 $codigo_error = $stmt->errno;
@@ -851,8 +834,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // NO hacer redirect - el error se mostrará en la página
             }
-            
-            $stmt->close();
             
         } catch (Exception $e) {
             $mensaje_error = "Error: " . $e->getMessage();
