@@ -178,7 +178,7 @@ try {
     $campo_id_cat = $tiene_id_cat ? 'id' : 'ID_cat';
     
     // Obtener datos de la insignia con categoría dinámica desde la base de datos
-    // Hacer JOIN con tipo_insignia usando el nombre de la insignia derivado del código
+    // Primero obtener los datos básicos, luego buscar la categoría en una consulta separada si es necesario
     $sql = "
         SELECT 
             io.Codigo_Insignia as codigo_insignia,
@@ -194,24 +194,12 @@ try {
                 WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
                 ELSE 'Insignia TecNM'
             END as nombre_insignia,
-            COALESCE(cat.Nombre_cat, 'Formación Integral') as nombre_categoria,
             re.Nombre_Completo as responsable_nombre,
             re.Cargo as responsable_cargo,
             'Instituto Tecnológico de San Marcos' as nombre_instituto
         FROM insigniasotorgadas io
         LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
         LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
-        LEFT JOIN tipo_insignia ti ON (
-            (io.Codigo_Insignia LIKE '%MOV%' AND (ti." . $campo_nombre_tipo . " LIKE '%Movilidad%' OR ti." . $campo_nombre_tipo . " LIKE '%Intercambio%'))
-            OR (io.Codigo_Insignia LIKE '%EMB%' AND (ti." . $campo_nombre_tipo . " LIKE '%Deporte%' OR ti." . $campo_nombre_tipo . " LIKE '%Embajador%'))
-            OR (io.Codigo_Insignia LIKE '%ART%' AND (ti." . $campo_nombre_tipo . " LIKE '%Arte%' OR ti." . $campo_nombre_tipo . " LIKE '%Embajador%'))
-            OR (io.Codigo_Insignia LIKE '%FOR%' AND (ti." . $campo_nombre_tipo . " LIKE '%Formación%' OR ti." . $campo_nombre_tipo . " LIKE '%Actualización%'))
-            OR (io.Codigo_Insignia LIKE '%TAL%' AND ti." . $campo_nombre_tipo . " LIKE '%Científico%')
-            OR (io.Codigo_Insignia LIKE '%CIE%' AND ti." . $campo_nombre_tipo . " LIKE '%Científico%')
-            OR (io.Codigo_Insignia LIKE '%INN%' AND (ti." . $campo_nombre_tipo . " LIKE '%Innovador%' OR ti." . $campo_nombre_tipo . " LIKE '%Innovación%'))
-            OR (io.Codigo_Insignia LIKE '%SOC%' AND (ti." . $campo_nombre_tipo . " LIKE '%Social%' OR ti." . $campo_nombre_tipo . " LIKE '%Responsabilidad%'))
-        )
-        " . ($tiene_cat_ins ? "LEFT JOIN cat_insignias cat ON ti.Cat_ins = cat." . $campo_id_cat : "") . "
         WHERE io.Codigo_Insignia = ?
         LIMIT 1
     ";
@@ -229,12 +217,45 @@ try {
     $result = $stmt->get_result();
     
     if ($row = $result->fetch_assoc()) {
+            // Obtener la categoría dinámicamente desde la base de datos
+            $nombre_categoria = 'Formación Integral'; // Valor por defecto
+            
+            if ($tiene_cat_ins) {
+                // Buscar el tipo_insignia basándose en el nombre de la insignia
+                $nombre_insignia_buscar = $row['nombre_insignia'];
+                
+                $sql_categoria = "
+                    SELECT cat.Nombre_cat
+                    FROM tipo_insignia ti
+                    LEFT JOIN cat_insignias cat ON ti.Cat_ins = cat." . $campo_id_cat . "
+                    WHERE ti." . $campo_nombre_tipo . " LIKE ?
+                    LIMIT 1
+                ";
+                
+                $stmt_cat = $conexion->prepare($sql_categoria);
+                if ($stmt_cat) {
+                    $buscar_like = '%' . $nombre_insignia_buscar . '%';
+                    $stmt_cat->bind_param("s", $buscar_like);
+                    if ($stmt_cat->execute()) {
+                        $result_cat = $stmt_cat->get_result();
+                        if ($row_cat = $result_cat->fetch_assoc()) {
+                            $nombre_categoria = $row_cat['Nombre_cat'] ?? 'Formación Integral';
+                        }
+                    }
+                    $stmt_cat->close();
+                }
+            }
+            
+            // Agregar la categoría al array de resultados
+            $row['nombre_categoria'] = $nombre_categoria;
+            
             // Mapear nombre de insignia a imagen PNG correspondiente
             $nombre_insignia = $row['nombre_insignia'];
             
             // Debug: Mostrar el nombre de insignia obtenido
             echo "<!-- DEBUG: nombre_insignia = '$nombre_insignia' -->";
             echo "<!-- DEBUG: codigo_insignia = '" . $row['codigo_insignia'] . "' -->";
+            echo "<!-- DEBUG: nombre_categoria = '$nombre_categoria' -->";
             
             // Función para determinar la insignia dinámicamente basándose en el código
             function determinarInsigniaDinamica($codigo_insignia, $nombre_insignia) {
