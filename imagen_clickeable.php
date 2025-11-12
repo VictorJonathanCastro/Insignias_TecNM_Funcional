@@ -230,15 +230,24 @@ if (!empty($codigo_insignia)) {
         $base_url = 'http://' . $host . '/Insignias_TecNM_Funcional';
     }
     
+    // URL de la imagen de la insignia para compartir en Facebook
     $image_url = $base_url . '/' . (isset($insignia_data['imagen_path']) ? $insignia_data['imagen_path'] : 'imagen/Insignias/ResponsabilidadSocial.png');
+    
+    // URL de esta página (imagen_clickeable.php) para que Facebook redirija aquí
+    // Cuando alguien haga clic en el enlace compartido, llegará aquí y podrá hacer clic en la imagen para ver el certificado completo
+    $share_url = $base_url . '/imagen_clickeable.php?codigo=' . urlencode($codigo_insignia);
+    
+    // URL de validación pública (para el QR code)
     $validation_url = $base_url . '/validacion.php?insignia=' . urlencode($codigo_insignia);
     ?>
     
     <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
-    <meta property="og:description" content="Insignia de <?php echo htmlspecialchars($insignia_data['nombre']); ?> otorgada a <?php echo htmlspecialchars($insignia_data['destinatario']); ?>">
+    <meta property="og:description" content="Insignia de <?php echo htmlspecialchars($insignia_data['nombre']); ?> otorgada a <?php echo htmlspecialchars($insignia_data['destinatario']); ?>. Haz clic en la imagen para ver el certificado completo.">
     <meta property="og:image" content="<?php echo $image_url; ?>">
-    <meta property="og:url" content="<?php echo $validation_url; ?>">
+    <meta property="og:url" content="<?php echo $share_url; ?>">
     <meta property="og:type" content="website">
+    <meta property="og:image:width" content="500">
+    <meta property="og:image:height" content="500">
     
     <style>
         body {
