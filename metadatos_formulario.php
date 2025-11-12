@@ -672,8 +672,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             
             if ($stmt->execute()) {
+                $insignia_insertada_id = $conexion->insert_id;
+                
+                // Verificar que el código se guardó correctamente
+                $verificar_codigo = $conexion->prepare("SELECT Codigo_Insignia FROM insigniasotorgadas WHERE ID_otorgada = ?");
+                $verificar_codigo->bind_param("i", $insignia_insertada_id);
+                $verificar_codigo->execute();
+                $resultado_verificar = $verificar_codigo->get_result();
+                
+                if ($resultado_verificar && $resultado_verificar->num_rows > 0) {
+                    $row_verificar = $resultado_verificar->fetch_assoc();
+                    $clave_guardada = $row_verificar['Codigo_Insignia'];
+                    // Usar el código que realmente se guardó en la BD
+                    $clave = $clave_guardada;
+                }
+                $verificar_codigo->close();
+                
                 // Debug: Verificar que se insertó correctamente
-                echo "<!-- DEBUG: Insignia insertada correctamente con ID: " . $conexion->insert_id . " -->";
+                echo "<!-- DEBUG: Insignia insertada correctamente con ID: " . $insignia_insertada_id . " -->";
+                echo "<!-- DEBUG: Código guardado en BD: " . htmlspecialchars($clave) . " -->";
                 
                 // Guardar datos en sesión para mostrar la vista completa
                 $_SESSION['insignia_data'] = [
