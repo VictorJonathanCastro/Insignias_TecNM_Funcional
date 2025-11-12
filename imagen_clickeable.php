@@ -208,8 +208,8 @@ if (!empty($codigo_insignia)) {
         $base_url = 'http://' . $host . '/Insignias_TecNM_Funcional';
     }
     
-    $image_url = $base_url . '/' . (isset($insignia_data['imagen_path']) ? $insignia_data['imagen_path'] : 'imagen/insignia_Responsabilidad Social.png');
-    $validation_url = $base_url . '/validacion.php?insignia=' . $codigo_insignia;
+    $image_url = $base_url . '/' . (isset($insignia_data['imagen_path']) ? $insignia_data['imagen_path'] : 'imagen/Insignias/ResponsabilidadSocial.png');
+    $validation_url = $base_url . '/validacion.php?insignia=' . urlencode($codigo_insignia);
     ?>
     
     <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
