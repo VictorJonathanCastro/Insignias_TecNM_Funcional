@@ -661,6 +661,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Usar el estatus seleccionado
             $estatus_id = $estatus;
             
+            // Validar que todos los valores necesarios estén presentes
+            if (empty($clave)) {
+                throw new Exception("Error: El código de la insignia está vacío");
+            }
+            if (empty($destinatario_id)) {
+                throw new Exception("Error: No se pudo obtener o crear el destinatario. Estudiante: " . htmlspecialchars($estudiante));
+            }
+            if (empty($periodo_id)) {
+                throw new Exception("Error: No se pudo obtener o crear el periodo. Periodo: " . htmlspecialchars($periodo));
+            }
+            if (empty($responsable_id)) {
+                throw new Exception("Error: No se pudo obtener o crear el responsable. Responsable: " . htmlspecialchars($responsable));
+            }
+            if (empty($estatus_id)) {
+                throw new Exception("Error: El estatus está vacío");
+            }
+            if (empty($fecha_otorgamiento)) {
+                throw new Exception("Error: La fecha de otorgamiento está vacía");
+            }
+            
+            // Debug: Mostrar valores que se van a insertar
+            error_log("DEBUG INSERT insigniasotorgadas: clave=$clave, destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id, fecha_otorgamiento=$fecha_otorgamiento, fecha_autorizacion=$fecha_autorizacion");
+            
             $stmt->bind_param("siiiiss", 
                 $clave,
                 $destinatario_id, 
@@ -769,7 +792,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: ver_insignia_completa.php?insignia=' . urlencode($clave) . '&registrado=1');
                 exit();
             } else {
-                $mensaje_error = "Error al guardar en la base de datos: " . $stmt->error;
+                $error_detalle = "Error al ejecutar INSERT: " . $stmt->error . " (Código MySQL: " . $stmt->errno . ")";
+                error_log("ERROR INSERT insigniasotorgadas: " . $error_detalle);
+                error_log("SQL: " . $sql);
+                error_log("Valores: clave=$clave, destinatario_id=$destinatario_id, periodo_id=$periodo_id, responsable_id=$responsable_id, estatus_id=$estatus_id");
+                $mensaje_error = "Error al guardar en la base de datos: " . $error_detalle;
             }
             
             $stmt->close();
