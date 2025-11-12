@@ -36,7 +36,7 @@ try {
     if ($codigo_tiene_formato_tecnm) {
         // Si el código tiene formato TECNM-OFCM-..., buscar SIEMPRE en insigniasotorgadas
         if (!$usar_tabla_io) {
-            // Si la tabla no existe, intentar crearla
+            // Si la tabla no existe, intentar crearla (sin FOREIGN KEY para evitar problemas de permisos)
             $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
                 ID_otorgada INT AUTO_INCREMENT PRIMARY KEY,
                 Codigo_Insignia VARCHAR(255) NOT NULL UNIQUE,
@@ -47,13 +47,22 @@ try {
                 Fecha_Emision DATE,
                 Fecha_Vencimiento DATE,
                 Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (Destinatario) REFERENCES destinatario(ID_destinatario),
-                INDEX idx_codigo (Codigo_Insignia)
-            )";
-            if ($conexion->query($sql_crear_tabla)) {
-                $usar_tabla_io = true;
+                INDEX idx_codigo (Codigo_Insignia),
+                INDEX idx_destinatario (Destinatario)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+            
+            $resultado_crear = $conexion->query($sql_crear_tabla);
+            if ($resultado_crear) {
+                // Verificar que la tabla se creó correctamente
+                $verificar = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+                if ($verificar && $verificar->num_rows > 0) {
+                    $usar_tabla_io = true;
+                } else {
+                    throw new Exception("La tabla 'insigniasotorgadas' no se pudo crear. Error: " . $conexion->error . " (Código: " . $conexion->errno . ")");
+                }
             } else {
-                throw new Exception("El código tiene formato TECNM-OFCM-... pero la tabla 'insigniasotorgadas' no existe y no se pudo crear: " . $conexion->error);
+                $error_detalle = "Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")";
+                throw new Exception("El código tiene formato TECNM-OFCM-... pero la tabla 'insigniasotorgadas' no existe y no se pudo crear. " . $error_detalle . "<br><br>Posibles soluciones:<br>1. Verificar permisos del usuario MySQL<br>2. Crear la tabla manualmente con el usuario root<br>3. Contactar al administrador de la base de datos");
             }
         }
         // Usar insigniasotorgadas cuando el código tiene formato TECNM-OFCM-...

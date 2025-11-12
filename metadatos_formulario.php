@@ -454,7 +454,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Si no existe ninguna tabla, crear insigniasotorgadas
             if (!$usar_tabla_io && !$usar_tabla_t) {
-                // Crear tabla insigniasotorgadas si no existe
+                // Crear tabla insigniasotorgadas si no existe (sin FOREIGN KEY para evitar problemas de permisos)
                 $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
                     ID_otorgada INT AUTO_INCREMENT PRIMARY KEY,
                     Codigo_Insignia VARCHAR(255) NOT NULL UNIQUE,
@@ -465,13 +465,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (Destinatario) REFERENCES destinatario(ID_destinatario),
-                    INDEX idx_codigo (Codigo_Insignia)
-                )";
-                if ($conexion->query($sql_crear_tabla)) {
-                    $usar_tabla_io = true;
+                    INDEX idx_codigo (Codigo_Insignia),
+                    INDEX idx_destinatario (Destinatario)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+                
+                $resultado_crear = $conexion->query($sql_crear_tabla);
+                if ($resultado_crear) {
+                    // Verificar que la tabla se creó
+                    $verificar = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+                    if ($verificar && $verificar->num_rows > 0) {
+                        $usar_tabla_io = true;
+                    } else {
+                        throw new Exception("Error: La tabla 'insigniasotorgadas' no se pudo crear. Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")");
+                    }
                 } else {
-                    throw new Exception("Error al crear tabla insigniasotorgadas: " . $conexion->error);
+                    throw new Exception("Error al crear tabla insigniasotorgadas. Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")<br><br>Posibles soluciones:<br>1. Verificar permisos del usuario MySQL (necesita CREATE TABLE)<br>2. Crear la tabla manualmente con el usuario root");
                 }
             }
             
@@ -488,9 +496,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Vencimiento
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)";
             } else {
-                // Si solo existe T_insignias_otorgadas, necesitamos crear primero la insignia en T_insignias
-                // y luego guardar en T_insignias_otorgadas
-                // Por ahora, crear insigniasotorgadas de todas formas
+                // Si solo existe T_insignias_otorgadas, crear insigniasotorgadas de todas formas
                 $sql_crear_tabla = "CREATE TABLE IF NOT EXISTS insigniasotorgadas (
                     ID_otorgada INT AUTO_INCREMENT PRIMARY KEY,
                     Codigo_Insignia VARCHAR(255) NOT NULL UNIQUE,
@@ -501,22 +507,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     Fecha_Emision DATE,
                     Fecha_Vencimiento DATE,
                     Fecha_Creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (Destinatario) REFERENCES destinatario(ID_destinatario),
-                    INDEX idx_codigo (Codigo_Insignia)
-                )";
-                if ($conexion->query($sql_crear_tabla)) {
-                    $usar_tabla_io = true;
-                    $sql = "INSERT INTO insigniasotorgadas (
-                        Codigo_Insignia, 
-                        Destinatario, 
-                        Periodo_Emision, 
-                        Responsable_Emision,
-                        Estatus, 
-                        Fecha_Emision, 
-                        Fecha_Vencimiento
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    INDEX idx_codigo (Codigo_Insignia),
+                    INDEX idx_destinatario (Destinatario)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+                
+                $resultado_crear = $conexion->query($sql_crear_tabla);
+                if ($resultado_crear) {
+                    $verificar = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+                    if ($verificar && $verificar->num_rows > 0) {
+                        $usar_tabla_io = true;
+                        $sql = "INSERT INTO insigniasotorgadas (
+                            Codigo_Insignia, 
+                            Destinatario, 
+                            Periodo_Emision, 
+                            Responsable_Emision,
+                            Estatus, 
+                            Fecha_Emision, 
+                            Fecha_Vencimiento
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                    } else {
+                        throw new Exception("Error: La tabla 'insigniasotorgadas' no se pudo crear. Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")");
+                    }
                 } else {
-                    throw new Exception("Error al crear tabla insigniasotorgadas: " . $conexion->error);
+                    throw new Exception("Error al crear tabla insigniasotorgadas. Error MySQL: " . $conexion->error . " (Código: " . $conexion->errno . ")<br><br>Posibles soluciones:<br>1. Verificar permisos del usuario MySQL (necesita CREATE TABLE)<br>2. Crear la tabla manualmente con el usuario root");
                 }
             }
             
