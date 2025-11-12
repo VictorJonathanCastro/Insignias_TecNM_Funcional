@@ -491,8 +491,8 @@ if (!empty($codigo_insignia)) {
 </head>
 <body>
     <div class="insignia-container">
-        <div class="insignia-image" style="background-image: url('<?php echo $insignia_data['imagen_path']; ?>');" onclick="window.open('validacion.php?insignia=<?php echo urlencode($codigo_insignia); ?>', '_blank')">
-            <div class="click-indicator">👆 Haz clic para validar</div>
+        <div class="insignia-image" style="background-image: url('<?php echo $insignia_data['imagen_path']; ?>');" onclick="window.open('ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>', '_blank')">
+            <div class="click-indicator">👆 Haz clic para ver certificado completo</div>
         </div>
         
         <div class="share-section">
@@ -559,7 +559,10 @@ if (!empty($codigo_insignia)) {
         // Generar código QR al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             const baseUrl = getCorrectIP();
+            // El QR debe apuntar a validacion.php para verificación pública
             const verificationUrl = `${baseUrl}/Insignias_TecNM_Funcional/validacion.php?insignia=<?php echo urlencode($codigo_insignia); ?>`;
+            // Pero el clic en la imagen debe ir al certificado completo
+            const certificadoUrl = `${baseUrl}/Insignias_TecNM_Funcional/ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>`;
             const canvas = document.getElementById('qrcode');
             
             console.log('URL de verificación:', verificationUrl);
@@ -810,7 +813,7 @@ if (!empty($codigo_insignia)) {
         
         // Agregar evento de clic a la imagen
         document.querySelector('.insignia-image').addEventListener('click', function() {
-            window.open('validacion.php?insignia=<?php echo urlencode($codigo_insignia); ?>', '_blank');
+            window.open('ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>', '_blank');
         });
     </script>
 </body>
