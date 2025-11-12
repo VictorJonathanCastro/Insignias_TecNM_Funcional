@@ -586,8 +586,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
-            // 2. Obtener periodo_id
-            $sql_periodo_id = "SELECT ID_periodo FROM periodo_emision WHERE periodo = ? LIMIT 1";
+            // 2. Obtener periodo_id (usar campos dinámicos detectados al inicio)
+            $check_periodo_insert = $conexion->query("SHOW COLUMNS FROM periodo_emision LIKE 'id'");
+            $tiene_id_periodo_insert = ($check_periodo_insert && $check_periodo_insert->num_rows > 0);
+            $campo_id_periodo_insert = $tiene_id_periodo_insert ? 'id' : 'ID_periodo';
+            
+            $check_nombre_periodo_insert = $conexion->query("SHOW COLUMNS FROM periodo_emision LIKE 'Nombre_Periodo'");
+            $tiene_nombre_periodo_insert = ($check_nombre_periodo_insert && $check_nombre_periodo_insert->num_rows > 0);
+            $campo_periodo_insert = $tiene_nombre_periodo_insert ? 'Nombre_Periodo' : 'periodo';
+            
+            $sql_periodo_id = "SELECT $campo_id_periodo_insert as id FROM periodo_emision WHERE $campo_periodo_insert = ? LIMIT 1";
             $stmt_periodo = $conexion->prepare($sql_periodo_id);
             $periodo_id = null;
             
@@ -598,10 +606,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($result_periodo && $result_periodo->num_rows > 0) {
                     $row_periodo = $result_periodo->fetch_assoc();
-                    $periodo_id = $row_periodo['ID_periodo'];
+                    $periodo_id = $row_periodo['id'];
                 } else {
                     // Crear periodo si no existe
-                    $sql_insert_periodo = "INSERT INTO periodo_emision (periodo) VALUES (?)";
+                    $sql_insert_periodo = "INSERT INTO periodo_emision ($campo_periodo_insert) VALUES (?)";
                     $stmt_insert_periodo = $conexion->prepare($sql_insert_periodo);
                     if ($stmt_insert_periodo) {
                         $stmt_insert_periodo->bind_param("s", $periodo);
