@@ -569,7 +569,7 @@ if (!empty($codigo_insignia)) {
         </div>
         
         <div class="url-section">
-            <div class="url-title">🔗 URL de Verificación:</div>
+            <div class="url-title">🔗 URL del Certificado Completo:</div>
             <input type="text" class="url-input" id="verificationUrl" readonly>
             <button class="copy-btn" onclick="copyUrl()">Copiar URL</button>
         </div>
@@ -816,8 +816,10 @@ if (!empty($codigo_insignia)) {
         
         // Función para compartir en Facebook
         function shareFacebook() {
-            const verificationUrl = document.getElementById('verificationUrl').value;
-            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(verificationUrl)}`;
+            // Usar la URL del certificado completo para compartir
+            const baseUrl = getCorrectIP();
+            const certificadoUrl = `${baseUrl}/ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>`;
+            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(certificadoUrl)}`;
             window.open(facebookUrl, '_blank');
         }
         
