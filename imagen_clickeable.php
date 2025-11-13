@@ -607,16 +607,23 @@ if (!empty($codigo_insignia)) {
     
     <script>
         // Redirigir automáticamente al certificado completo si se accede desde un enlace compartido
-        // (por ejemplo, desde Facebook, pero permitir navegación normal si se accede directamente)
+        // Verificar si viene de Facebook, Twitter, WhatsApp u otro sitio de redes sociales
         const urlParams = new URLSearchParams(window.location.search);
-        const fromShare = urlParams.get('from_share') || document.referrer.includes('facebook.com') || document.referrer.includes('twitter.com') || document.referrer.includes('whatsapp');
+        const codigo = urlParams.get('codigo');
         
-        if (fromShare && !urlParams.get('stay')) {
-            // Redirigir al certificado completo cuando se accede desde un enlace compartido
-            const codigo = urlParams.get('codigo');
-            if (codigo) {
-                window.location.href = `ver_insignia_completa.php?codigo=${encodeURIComponent(codigo)}`;
-            }
+        // Detectar si viene de un enlace compartido
+        const referrer = document.referrer.toLowerCase();
+        const isFromSocialMedia = referrer.includes('facebook.com') || 
+                                  referrer.includes('twitter.com') || 
+                                  referrer.includes('whatsapp') ||
+                                  referrer.includes('linkedin.com') ||
+                                  referrer.includes('reddit.com') ||
+                                  urlParams.get('from_share') === '1';
+        
+        // Si viene de redes sociales y no tiene el parámetro 'stay', redirigir
+        if (isFromSocialMedia && !urlParams.get('stay') && codigo) {
+            // Usar replace en lugar de href para evitar que el usuario pueda volver atrás
+            window.location.replace(`ver_insignia_completa.php?codigo=${encodeURIComponent(codigo)}`);
         }
         
         // La imagen ya se aplica directamente en el HTML
