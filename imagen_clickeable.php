@@ -205,9 +205,25 @@ if (!empty($codigo_insignia)) {
     $codigo_insignia = $insignia_data['codigo'];
 }
 
+// Detectar si es un crawler de redes sociales (Facebook, Twitter, etc.)
+// Los crawlers necesitan leer los meta tags, así que NO debemos redirigir
+$user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
+$is_crawler = strpos($user_agent, 'facebookexternalhit') !== false ||  // Facebook crawler
+              strpos($user_agent, 'facebot') !== false ||                // Facebook bot
+              strpos($user_agent, 'twitterbot') !== false ||             // Twitter crawler
+              strpos($user_agent, 'linkedinbot') !== false ||            // LinkedIn crawler
+              strpos($user_agent, 'whatsapp') !== false ||                // WhatsApp crawler
+              strpos($user_agent, 'slackbot') !== false ||                // Slack crawler
+              strpos($user_agent, 'discordbot') !== false ||              // Discord crawler
+              strpos($user_agent, 'redditbot') !== false ||               // Reddit crawler
+              strpos($user_agent, 'googlebot') !== false ||               // Google crawler
+              strpos($user_agent, 'bingbot') !== false ||                 // Bing crawler
+              strpos($user_agent, 'crawler') !== false ||                 // Cualquier crawler genérico
+              strpos($user_agent, 'bot') !== false;                       // Cualquier bot genérico
+
 // Redirigir automáticamente al certificado completo si viene de Facebook u otra red social
-// Esto se hace del lado del servidor para que funcione incluso si JavaScript está deshabilitado
-if (isset($_GET['codigo']) && !isset($_GET['stay'])) {
+// PERO SOLO si NO es un crawler (los crawlers necesitan leer los meta tags)
+if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
     $referer = isset($_SERVER['HTTP_REFERER']) ? strtolower($_SERVER['HTTP_REFERER']) : '';
     $isFromSocialMedia = strpos($referer, 'facebook.com') !== false || 
                         strpos($referer, 'twitter.com') !== false || 
@@ -217,7 +233,7 @@ if (isset($_GET['codigo']) && !isset($_GET['stay'])) {
                         isset($_GET['from_share']);
     
     if ($isFromSocialMedia) {
-        // Redirigir inmediatamente al certificado completo
+        // Redirigir inmediatamente al certificado completo (solo para usuarios reales, no crawlers)
         $codigo_redirect = urlencode($_GET['codigo']);
         header("Location: ver_insignia_completa.php?codigo=$codigo_redirect");
         exit();
@@ -626,11 +642,27 @@ if (isset($_GET['codigo']) && !isset($_GET['stay'])) {
     
     <script>
         // Redirigir automáticamente al certificado completo si se accede desde un enlace compartido
+        // PERO solo si NO es un crawler (los crawlers ya fueron manejados por PHP)
         // Verificar si viene de Facebook, Twitter, WhatsApp u otro sitio de redes sociales
         const urlParams = new URLSearchParams(window.location.search);
         const codigo = urlParams.get('codigo');
         
-        // Detectar si viene de un enlace compartido
+        // Detectar si es un crawler (no redirigir si es crawler)
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isCrawler = userAgent.includes('facebookexternalhit') ||
+                         userAgent.includes('facebot') ||
+                         userAgent.includes('twitterbot') ||
+                         userAgent.includes('linkedinbot') ||
+                         userAgent.includes('whatsapp') ||
+                         userAgent.includes('slackbot') ||
+                         userAgent.includes('discordbot') ||
+                         userAgent.includes('redditbot') ||
+                         userAgent.includes('googlebot') ||
+                         userAgent.includes('bingbot') ||
+                         userAgent.includes('crawler') ||
+                         userAgent.includes('bot');
+        
+        // Detectar si viene de un enlace compartido (solo para usuarios reales, no crawlers)
         const referrer = document.referrer.toLowerCase();
         const isFromSocialMedia = referrer.includes('facebook.com') || 
                                   referrer.includes('twitter.com') || 
@@ -639,8 +671,8 @@ if (isset($_GET['codigo']) && !isset($_GET['stay'])) {
                                   referrer.includes('reddit.com') ||
                                   urlParams.get('from_share') === '1';
         
-        // Si viene de redes sociales y no tiene el parámetro 'stay', redirigir
-        if (isFromSocialMedia && !urlParams.get('stay') && codigo) {
+        // Si viene de redes sociales, NO es un crawler, y no tiene el parámetro 'stay', redirigir
+        if (isFromSocialMedia && !isCrawler && !urlParams.get('stay') && codigo) {
             // Usar replace en lugar de href para evitar que el usuario pueda volver atrás
             window.location.replace(`ver_insignia_completa.php?codigo=${encodeURIComponent(codigo)}`);
         }
