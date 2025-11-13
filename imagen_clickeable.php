@@ -259,9 +259,9 @@ if (!empty($codigo_insignia)) {
     $image_path = ltrim($image_path, '/');
     $image_url = $base_url . '/' . $image_path;
     
-    // URL de esta página (imagen_clickeable.php) para que Facebook redirija aquí
-    // Cuando alguien haga clic en el enlace compartido, llegará aquí y podrá hacer clic en la imagen para ver el certificado completo
-    $share_url = $base_url . '/imagen_clickeable.php?codigo=' . urlencode($codigo_insignia);
+    // URL para compartir en Facebook - debe apuntar directamente a ver_insignia_completa.php
+    // Cuando alguien haga clic en el enlace compartido de Facebook, irá directamente al certificado completo
+    $share_url = $base_url . '/ver_insignia_completa.php?codigo=' . urlencode($codigo_insignia);
     
     // URL de validación pública (para el QR code)
     $validation_url = $base_url . '/validacion.php?insignia=' . urlencode($codigo_insignia);
@@ -280,7 +280,7 @@ if (!empty($codigo_insignia)) {
     <!-- share_url: <?php echo htmlspecialchars($share_url); ?> -->
     
     <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
-    <meta property="og:description" content="Insignia de <?php echo htmlspecialchars($insignia_data['nombre']); ?> otorgada a <?php echo htmlspecialchars($insignia_data['destinatario']); ?>. Haz clic en la imagen para ver el certificado completo.">
+    <meta property="og:description" content="Insignia de <?php echo htmlspecialchars($insignia_data['nombre']); ?> otorgada a <?php echo htmlspecialchars($insignia_data['destinatario']); ?>. Haz clic para ver el certificado completo.">
     <meta property="og:image" content="<?php echo htmlspecialchars($image_url); ?>">
     <meta property="og:url" content="<?php echo htmlspecialchars($share_url); ?>">
     <meta property="og:type" content="website">
