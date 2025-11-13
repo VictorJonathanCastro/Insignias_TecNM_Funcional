@@ -606,6 +606,19 @@ if (!empty($codigo_insignia)) {
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     
     <script>
+        // Redirigir automáticamente al certificado completo si se accede desde un enlace compartido
+        // (por ejemplo, desde Facebook, pero permitir navegación normal si se accede directamente)
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromShare = urlParams.get('from_share') || document.referrer.includes('facebook.com') || document.referrer.includes('twitter.com') || document.referrer.includes('whatsapp');
+        
+        if (fromShare && !urlParams.get('stay')) {
+            // Redirigir al certificado completo cuando se accede desde un enlace compartido
+            const codigo = urlParams.get('codigo');
+            if (codigo) {
+                window.location.href = `ver_insignia_completa.php?codigo=${encodeURIComponent(codigo)}`;
+            }
+        }
+        
         // La imagen ya se aplica directamente en el HTML
         
         // Función para obtener la URL base correcta (como funcionaba localmente)
