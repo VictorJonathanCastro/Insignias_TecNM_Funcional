@@ -258,35 +258,57 @@ if (!empty($codigo_insignia)) {
     // URL de la imagen de la insignia para compartir en Facebook
     $image_path = isset($insignia_data['imagen_path']) ? $insignia_data['imagen_path'] : 'imagen/Insignias/ResponsabilidadSocial.png';
     $image_path = ltrim($image_path, '/');
-    $image_url = $base_url . '/' . $image_path;
     
-    // URL para compartir en Facebook - debe apuntar directamente a ver_insignia_completa.php
-    // Cuando alguien haga clic en el enlace compartido de Facebook, irá directamente al certificado completo
-    $share_url = $base_url . '/ver_insignia_completa.php?codigo=' . urlencode($codigo_insignia);
+    // Asegurar que la URL de la imagen sea absoluta y accesible
+    // Si la imagen está en una subcarpeta, incluirla en la URL base
+    if (!empty($base_path)) {
+        $image_url = $base_url . '/' . $image_path;
+    } else {
+        $image_url = $base_url . '/' . $image_path;
+    }
+    
+    // URL para compartir en Facebook - debe apuntar a imagen_clickeable.php (esta página)
+    // para que Facebook lea los meta tags correctos
+    $share_url = $base_url . '/imagen_clickeable.php?codigo=' . urlencode($codigo_insignia);
     
     // URL del certificado completo (para el QR code también)
     $certificado_url = $base_url . '/ver_insignia_completa.php?codigo=' . urlencode($codigo_insignia);
+    
+    // Título dinámico según la insignia
+    $og_title = "Insignia TecNM - " . htmlspecialchars($insignia_data['nombre']);
+    $og_description = "Insignia de " . htmlspecialchars($insignia_data['nombre']) . " otorgada a " . htmlspecialchars($insignia_data['destinatario']) . ". Haz clic para ver el certificado completo.";
     
     // Debug: Log de las URLs generadas
     error_log("DEBUG imagen_clickeable.php - host: $host");
     error_log("DEBUG imagen_clickeable.php - base_path: $base_path");
     error_log("DEBUG imagen_clickeable.php - base_url: $base_url");
+    error_log("DEBUG imagen_clickeable.php - image_path: $image_path");
     error_log("DEBUG imagen_clickeable.php - image_url: $image_url");
     error_log("DEBUG imagen_clickeable.php - share_url: $share_url");
+    error_log("DEBUG imagen_clickeable.php - og_title: $og_title");
     ?>
     
     <!-- DEBUG: URLs generadas para compartir -->
     <!-- base_url: <?php echo htmlspecialchars($base_url); ?> -->
+    <!-- image_path: <?php echo htmlspecialchars($image_path); ?> -->
     <!-- image_url: <?php echo htmlspecialchars($image_url); ?> -->
     <!-- share_url: <?php echo htmlspecialchars($share_url); ?> -->
     
-    <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
-    <meta property="og:description" content="Insignia de <?php echo htmlspecialchars($insignia_data['nombre']); ?> otorgada a <?php echo htmlspecialchars($insignia_data['destinatario']); ?>. Haz clic para ver el certificado completo.">
+    <!-- Meta tags para Facebook - TÍTULO DINÁMICO según la insignia -->
+    <meta property="og:title" content="<?php echo $og_title; ?>">
+    <meta property="og:description" content="<?php echo $og_description; ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($image_url); ?>">
     <meta property="og:url" content="<?php echo htmlspecialchars($share_url); ?>">
     <meta property="og:type" content="website">
     <meta property="og:image:width" content="500">
     <meta property="og:image:height" content="500">
+    <meta property="og:image:type" content="image/png">
+    
+    <!-- Meta tags adicionales para mejor compatibilidad -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?php echo $og_title; ?>">
+    <meta name="twitter:description" content="<?php echo $og_description; ?>">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars($image_url); ?>">
     
     <style>
         body {
@@ -816,10 +838,10 @@ if (!empty($codigo_insignia)) {
         
         // Función para compartir en Facebook
         function shareFacebook() {
-            // Usar la URL del certificado completo para compartir
+            // Usar la URL de imagen_clickeable.php para que Facebook lea los meta tags correctos
             const baseUrl = getCorrectIP();
-            const certificadoUrl = `${baseUrl}/ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>`;
-            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(certificadoUrl)}`;
+            const shareUrl = `${baseUrl}/imagen_clickeable.php?codigo=<?php echo urlencode($codigo_insignia); ?>`;
+            const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
             window.open(facebookUrl, '_blank');
         }
         
