@@ -214,48 +214,49 @@ if (!empty($codigo_insignia)) {
     
     <!-- Meta tags para redes sociales -->
     <?php
-    // Generar URLs públicas para Facebook usando la URL actual de la página
-    // Esto funciona tanto en local como en servidor
+    // Generar URLs públicas para Facebook - forma simple que funciona como localmente
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
     
-    // Obtener la ruta base desde la URL actual
-    // Si estamos en imagen_clickeable.php, obtener el directorio base
-    $current_script = $_SERVER['SCRIPT_NAME'];
-    $script_dir = dirname($current_script);
+    // Construir URL base de forma simple (como funcionaba localmente)
+    // Usar REQUEST_URI para obtener la ruta completa y construir desde ahí
+    $request_uri = $_SERVER['REQUEST_URI'];
+    $script_name = $_SERVER['SCRIPT_NAME'];
     
-    // Construir URL base: protocolo + host + directorio del script
-    // Si el script está en la raíz, $script_dir será '/' o '.', así que lo normalizamos
+    // Obtener el directorio base del script
+    $script_dir = dirname($script_name);
+    // Normalizar: si está en raíz, será '/' o '.'
     if ($script_dir === '/' || $script_dir === '.' || $script_dir === '\\') {
-        $base_url = $protocol . '://' . $host;
+        $base_path = '';
     } else {
-        // Normalizar: eliminar punto inicial y barras duplicadas
-        $script_dir = trim($script_dir, '/\\');
-        $base_url = $protocol . '://' . $host . '/' . $script_dir;
+        $base_path = trim($script_dir, '/\\');
+    }
+    
+    // Construir base_url
+    if (!empty($base_path)) {
+        $base_url = $protocol . '://' . $host . '/' . $base_path;
+    } else {
+        $base_url = $protocol . '://' . $host;
     }
     
     // Si es localhost o IP local, usar configuración especial (como funcionaba localmente)
     if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false || strpos($host, '192.168.') !== false) {
-        // Verificar si hay una URL de ngrok configurada
         if (isset($_SESSION['ngrok_url']) && !empty($_SESSION['ngrok_url'])) {
             $base_url = rtrim($_SESSION['ngrok_url'], '/');
-            if ($script_dir !== '/' && $script_dir !== '.' && $script_dir !== '\\') {
-                $script_dir = trim($script_dir, '/\\');
-                $base_url .= '/' . $script_dir;
+            if (!empty($base_path)) {
+                $base_url .= '/' . $base_path;
             }
         } else {
-            // Fallback a localtunnel si no hay ngrok configurado (como funcionaba localmente)
+            // Fallback a localtunnel (como funcionaba localmente)
             $base_url = 'https://bad-elephant-84.loca.lt';
-            if ($script_dir !== '/' && $script_dir !== '.' && $script_dir !== '\\') {
-                $script_dir = trim($script_dir, '/\\');
-                $base_url .= '/' . $script_dir;
+            if (!empty($base_path)) {
+                $base_url .= '/' . $base_path;
             }
         }
     }
     
     // URL de la imagen de la insignia para compartir en Facebook
     $image_path = isset($insignia_data['imagen_path']) ? $insignia_data['imagen_path'] : 'imagen/Insignias/ResponsabilidadSocial.png';
-    // Asegurar que la ruta de la imagen sea relativa desde la raíz del proyecto
     $image_path = ltrim($image_path, '/');
     $image_url = $base_url . '/' . $image_path;
     
@@ -263,12 +264,12 @@ if (!empty($codigo_insignia)) {
     // Cuando alguien haga clic en el enlace compartido de Facebook, irá directamente al certificado completo
     $share_url = $base_url . '/ver_insignia_completa.php?codigo=' . urlencode($codigo_insignia);
     
-    // URL de validación pública (para el QR code)
-    $validation_url = $base_url . '/validacion.php?insignia=' . urlencode($codigo_insignia);
+    // URL del certificado completo (para el QR code también)
+    $certificado_url = $base_url . '/ver_insignia_completa.php?codigo=' . urlencode($codigo_insignia);
     
     // Debug: Log de las URLs generadas
     error_log("DEBUG imagen_clickeable.php - host: $host");
-    error_log("DEBUG imagen_clickeable.php - script_dir: $script_dir");
+    error_log("DEBUG imagen_clickeable.php - base_path: $base_path");
     error_log("DEBUG imagen_clickeable.php - base_url: $base_url");
     error_log("DEBUG imagen_clickeable.php - image_url: $image_url");
     error_log("DEBUG imagen_clickeable.php - share_url: $share_url");
@@ -573,7 +574,7 @@ if (!empty($codigo_insignia)) {
             <button class="copy-btn" onclick="copyUrl()">Copiar URL</button>
         </div>
         
-        <a href="ver_insignia_completa.php" class="back-link">← Volver a la insignia completa</a>
+        <a href="ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>" class="back-link">← Volver a la insignia completa</a>
         
     </div>
     
@@ -585,7 +586,7 @@ if (!empty($codigo_insignia)) {
     <script>
         // La imagen ya se aplica directamente en el HTML
         
-        // Función para obtener la URL base correcta
+        // Función para obtener la URL base correcta (como funcionaba localmente)
         function getCorrectIP() {
             const hostname = window.location.hostname;
             
@@ -599,30 +600,35 @@ if (!empty($codigo_insignia)) {
                 <?php endif; ?>
             }
             
+            // Para servidor, usar la URL actual
             const port = window.location.port || '80';
-            return `${window.location.protocol}//${hostname}${port !== '80' ? ':' + port : ''}`;
+            const baseUrl = `${window.location.protocol}//${hostname}${port !== '80' ? ':' + port : ''}`;
+            
+            // Obtener el path base del script actual
+            const currentPath = window.location.pathname;
+            const scriptPath = currentPath.substring(0, currentPath.lastIndexOf('/'));
+            
+            return baseUrl + scriptPath;
         }
         
         // Generar código QR al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             const baseUrl = getCorrectIP();
-            // El QR debe apuntar a validacion.php para verificación pública
-            const verificationUrl = `${baseUrl}/Insignias_TecNM_Funcional/validacion.php?insignia=<?php echo urlencode($codigo_insignia); ?>`;
-            // Pero el clic en la imagen debe ir al certificado completo
-            const certificadoUrl = `${baseUrl}/Insignias_TecNM_Funcional/ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>`;
+            // El QR debe apuntar a ver_insignia_completa.php (certificado completo) - misma funcionalidad que la imagen
+            const certificadoUrl = `${baseUrl}/ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>`;
             const canvas = document.getElementById('qrcode');
             
-            console.log('URL de verificación:', verificationUrl);
+            console.log('URL del certificado completo:', certificadoUrl);
             console.log('Canvas encontrado:', canvas);
             
             // Establecer la URL en el campo de entrada
             const urlInput = document.getElementById('verificationUrl');
             if (urlInput) {
-                urlInput.value = verificationUrl;
+                urlInput.value = certificadoUrl;
             }
             
-            // Generar QR dinámicamente
-            generateQRCode(verificationUrl, canvas);
+            // Generar QR dinámicamente apuntando al certificado completo
+            generateQRCode(certificadoUrl, canvas);
         });
         
         // Función para generar código QR
