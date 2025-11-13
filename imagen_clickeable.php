@@ -295,12 +295,13 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
     $image_path = ltrim($image_path, '/');
     
     // Asegurar que la URL de la imagen sea absoluta y accesible
-    // Si la imagen está en una subcarpeta, incluirla en la URL base
-    if (!empty($base_path)) {
-        $image_url = $base_url . '/' . $image_path;
-    } else {
-        $image_url = $base_url . '/' . $image_path;
-    }
+    // Construir URL completa de la imagen
+    $image_url = $base_url . '/' . $image_path;
+    
+    // Asegurar que la URL de la imagen no tenga barras dobles
+    $image_url = str_replace('//', '/', $image_url);
+    $image_url = str_replace('http:/', 'http://', $image_url);
+    $image_url = str_replace('https:/', 'https://', $image_url);
     
     // URL para compartir en Facebook - debe apuntar a imagen_clickeable.php (esta página)
     // para que Facebook lea los meta tags correctos
@@ -330,20 +331,27 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
     <!-- share_url: <?php echo htmlspecialchars($share_url); ?> -->
     
     <!-- Meta tags para Facebook - TÍTULO DINÁMICO según la insignia -->
+    <!-- IMPORTANTE: Estos meta tags deben estar ANTES de cualquier contenido para que Facebook los lea correctamente -->
     <meta property="og:title" content="<?php echo $og_title; ?>">
     <meta property="og:description" content="<?php echo $og_description; ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($image_url); ?>">
     <meta property="og:url" content="<?php echo htmlspecialchars($share_url); ?>">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Insignias TecNM">
     <meta property="og:image:width" content="500">
     <meta property="og:image:height" content="500">
     <meta property="og:image:type" content="image/png">
+    <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($image_url); ?>">
     
     <!-- Meta tags adicionales para mejor compatibilidad -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?php echo $og_title; ?>">
     <meta name="twitter:description" content="<?php echo $og_description; ?>">
     <meta name="twitter:image" content="<?php echo htmlspecialchars($image_url); ?>">
+    
+    <!-- Meta tags adicionales para asegurar que Facebook muestre el botón Publicar -->
+    <meta name="description" content="<?php echo $og_description; ?>">
+    <link rel="canonical" href="<?php echo htmlspecialchars($share_url); ?>">
     
     <style>
         body {
