@@ -204,6 +204,25 @@ if (!empty($codigo_insignia)) {
     $insignia_data = $_SESSION['insignia_data'];
     $codigo_insignia = $insignia_data['codigo'];
 }
+
+// Redirigir automáticamente al certificado completo si viene de Facebook u otra red social
+// Esto se hace del lado del servidor para que funcione incluso si JavaScript está deshabilitado
+if (isset($_GET['codigo']) && !isset($_GET['stay'])) {
+    $referer = isset($_SERVER['HTTP_REFERER']) ? strtolower($_SERVER['HTTP_REFERER']) : '';
+    $isFromSocialMedia = strpos($referer, 'facebook.com') !== false || 
+                        strpos($referer, 'twitter.com') !== false || 
+                        strpos($referer, 'whatsapp') !== false ||
+                        strpos($referer, 'linkedin.com') !== false ||
+                        strpos($referer, 'reddit.com') !== false ||
+                        isset($_GET['from_share']);
+    
+    if ($isFromSocialMedia) {
+        // Redirigir inmediatamente al certificado completo
+        $codigo_redirect = urlencode($_GET['codigo']);
+        header("Location: ver_insignia_completa.php?codigo=$codigo_redirect");
+        exit();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
