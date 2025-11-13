@@ -208,8 +208,9 @@ if (!empty($codigo_insignia)) {
 // Detectar si es un crawler de redes sociales (Facebook, Twitter, etc.)
 // Los crawlers necesitan leer los meta tags, así que NO debemos redirigir
 $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
-$is_crawler = strpos($user_agent, 'facebookexternalhit') !== false ||  // Facebook crawler
+$is_crawler = strpos($user_agent, 'facebookexternalhit') !== false ||  // Facebook crawler (principal)
               strpos($user_agent, 'facebot') !== false ||                // Facebook bot
+              strpos($user_agent, 'facebook') !== false ||               // Cualquier Facebook bot
               strpos($user_agent, 'twitterbot') !== false ||             // Twitter crawler
               strpos($user_agent, 'linkedinbot') !== false ||            // LinkedIn crawler
               strpos($user_agent, 'whatsapp') !== false ||                // WhatsApp crawler
@@ -219,7 +220,7 @@ $is_crawler = strpos($user_agent, 'facebookexternalhit') !== false ||  // Facebo
               strpos($user_agent, 'googlebot') !== false ||               // Google crawler
               strpos($user_agent, 'bingbot') !== false ||                 // Bing crawler
               strpos($user_agent, 'crawler') !== false ||                 // Cualquier crawler genérico
-              strpos($user_agent, 'bot') !== false;                       // Cualquier bot genérico
+              (strpos($user_agent, 'bot') !== false && strpos($user_agent, 'mozilla') === false); // Bot genérico (pero no navegadores)
 
 // Redirigir automáticamente al certificado completo si viene de Facebook u otra red social
 // PERO SOLO si NO es un crawler (los crawlers necesitan leer los meta tags)
@@ -241,7 +242,7 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" prefix="og: http://ogp.me/ns#">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -338,10 +339,12 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
     <meta property="og:url" content="<?php echo htmlspecialchars($share_url); ?>">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Insignias TecNM">
+    <meta property="og:locale" content="es_MX">
     <meta property="og:image:width" content="500">
     <meta property="og:image:height" content="500">
     <meta property="og:image:type" content="image/png">
     <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($image_url); ?>">
+    <meta property="og:image:alt" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
     
     <!-- Meta tags adicionales para mejor compatibilidad -->
     <meta name="twitter:card" content="summary_large_image">
@@ -352,6 +355,10 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
     <!-- Meta tags adicionales para asegurar que Facebook muestre el botón Publicar -->
     <meta name="description" content="<?php echo $og_description; ?>">
     <link rel="canonical" href="<?php echo htmlspecialchars($share_url); ?>">
+    
+    <!-- Evitar que Facebook detecte redirects o problemas -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="robots" content="index, follow">
     
     <style>
         body {
