@@ -69,10 +69,115 @@ function obtenerMetodoCorreoUsado() {
 }
 
 /**
- * Envía correo usando mail() nativo de PHP con envío inmediato
- * Configurado para enviar directamente sin cola (tiempo real)
+ * Envía correo usando mail() nativo de PHP
+ * SOLUCIÓN: Si PHPMailer está disponible, lo usa internamente para tiempo real
+ * Si no, usa mail() nativo normal
  */
 function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
+    // SOLUCIÓN DEFINITIVA: Si tenemos configuración SMTP, usar PHPMailer internamente
+    // Esto garantiza tiempo real sin depender de sendmail
+    if (file_exists('config_smtp.php')) {
+        require_once 'config_smtp.php';
+        
+        // Si tenemos credenciales, intentar usar PHPMailer internamente
+        if (defined('SMTP_USERNAME') && defined('SMTP_PASSWORD') && 
+            !empty(SMTP_USERNAME) && !empty(SMTP_PASSWORD) && 
+            SMTP_PASSWORD !== 'CONTRASEÑA_QUE_TE_DEN_PARA_ESTE_CORREO') {
+            
+            // Intentar usar PHPMailer con servidores de TecNM (sin autenticación primero)
+            if (file_exists('src/PHPMailer.php')) {
+                try {
+                    require 'src/Exception.php';
+                    require 'src/PHPMailer.php';
+                    require 'src/SMTP.php';
+                    
+                    // PHPMailer ya está incluido al inicio del archivo
+                    
+                    $mail = new PHPMailer(true);
+                    $mail->isSMTP();
+                    
+                    // Probar servidores de TecNM primero (sin autenticación)
+                    $servidores_tecnm = ['smtp.tecnm.mx', 'mail.tecnm.mx', 'smtp.smarcos.tecnm.mx'];
+                    
+                    foreach ($servidores_tecnm as $servidor) {
+                        try {
+                            $mail->clearAddresses();
+                            $mail->Host = $servidor;
+                            $mail->SMTPAuth = false; // Sin autenticación primero
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                            $mail->Port = 587;
+                            $mail->CharSet = 'UTF-8';
+                            $mail->SMTPDebug = 0;
+                            $mail->Timeout = 10;
+                            $mail->SMTPOptions = array(
+                                'ssl' => array(
+                                    'verify_peer' => false,
+                                    'verify_peer_name' => false,
+                                    'allow_self_signed' => true
+                                )
+                            );
+                            
+                            $from_email = defined('SMTP_FROM_EMAIL') ? SMTP_FROM_EMAIL : 'sistema.insignias@smarcos.tecnm.mx';
+                            $from_name = defined('SMTP_FROM_NAME') ? SMTP_FROM_NAME : 'sistema insignias';
+                            $mail->setFrom($from_email, $from_name);
+                            $mail->addAddress($destinatario_email);
+                            $mail->isHTML(true);
+                            $mail->Subject = $asunto;
+                            $mail->Body = $mensaje_html;
+                            $mail->AltBody = strip_tags($mensaje_html);
+                            
+                            $mail->send();
+                            
+                            error_log("✅ Correo NATIVO (usando PHPMailer internamente) enviado en TIEMPO REAL a: " . $destinatario_email . " via $servidor");
+                            return true;
+                        } catch (Exception $e) {
+                            // Si falla sin auth, intentar con auth
+                            if (!empty(SMTP_USERNAME) && !empty(SMTP_PASSWORD)) {
+                                try {
+                                    $mail2 = new PHPMailer(true);
+                                    $mail2->isSMTP();
+                                    $mail2->Host = $servidor;
+                                    $mail2->SMTPAuth = true;
+                                    $mail2->Username = SMTP_USERNAME;
+                                    $mail2->Password = SMTP_PASSWORD;
+                                    $mail2->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                                    $mail2->Port = 587;
+                                    $mail2->CharSet = 'UTF-8';
+                                    $mail2->SMTPDebug = 0;
+                                    $mail2->Timeout = 10;
+                                    $mail2->SMTPOptions = array(
+                                        'ssl' => array(
+                                            'verify_peer' => false,
+                                            'verify_peer_name' => false,
+                                            'allow_self_signed' => true
+                                        )
+                                    );
+                                    $mail2->setFrom($from_email, $from_name);
+                                    $mail2->addAddress($destinatario_email);
+                                    $mail2->isHTML(true);
+                                    $mail2->Subject = $asunto;
+                                    $mail2->Body = $mensaje_html;
+                                    $mail2->AltBody = strip_tags($mensaje_html);
+                                    $mail2->send();
+                                    
+                                    error_log("✅ Correo NATIVO (usando PHPMailer con auth) enviado en TIEMPO REAL a: " . $destinatario_email . " via $servidor");
+                                    return true;
+                                } catch (Exception $e2) {
+                                    continue; // Probar siguiente servidor
+                                }
+                            }
+                            continue; // Probar siguiente servidor
+                        }
+                    }
+                } catch (Exception $e) {
+                    // Si PHPMailer falla, continuar con mail() nativo normal
+                    error_log("⚠️ PHPMailer no disponible en mail() nativo, usando sendmail");
+                }
+            }
+        }
+    }
+    
+    // Fallback: mail() nativo normal (puede tener retrasos)
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8" . "\r\n";
     $from_email = defined('SMTP_FROM_EMAIL') ? SMTP_FROM_EMAIL : 'sistema.insignias@smarcos.tecnm.mx';
@@ -80,68 +185,13 @@ function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
     $headers .= "From: $from_name <$from_email>" . "\r\n";
     $headers .= "Reply-To: $from_email" . "\r\n";
     $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
-    $headers .= "X-Priority: 1" . "\r\n"; // Alta prioridad
-    $headers .= "Importance: High" . "\r\n";
     
-    // Configurar sendmail para envío inmediato (sin cola)
-    // Guardar configuración original
-    $sendmail_path_original = ini_get('sendmail_path');
-    
-    // Configurar sendmail para envío inmediato usando SMTP directo si está disponible
-    // Opción 1: Usar sendmail con opción -t (leer destinatario del header) y -i (ignorar puntos)
-    // Opción 2: Si hay configuración SMTP, intentar usar sendmail con relay SMTP
-    
-    $resultado = false;
-    
-    // Intentar envío directo con sendmail configurado para SMTP
-    if (file_exists('config_smtp.php')) {
-        require_once 'config_smtp.php';
-        
-        // Si tenemos credenciales SMTP, configurar sendmail para usar SMTP directo
-        if (defined('SMTP_HOST') && defined('SMTP_USERNAME') && defined('SMTP_PASSWORD')) {
-            // Configurar sendmail_path temporalmente para usar SMTP
-            $smtp_host = SMTP_HOST;
-            $smtp_port = defined('SMTP_PORT') ? SMTP_PORT : 587;
-            $smtp_user = SMTP_USERNAME;
-            $smtp_pass = SMTP_PASSWORD;
-            
-            // Intentar usar sendmail con configuración SMTP
-            // Nota: Esto requiere que sendmail esté configurado con relay SMTP
-            // Por ahora, intentamos el envío normal pero con prioridad alta
-        }
-    }
-    
-    // Configurar sendmail para envío inmediato usando SMTP directo
-    if (file_exists('config_smtp.php')) {
-        require_once 'config_smtp.php';
-        
-        if (defined('SMTP_HOST') && defined('SMTP_USERNAME') && defined('SMTP_PASSWORD')) {
-            $smtp_host = SMTP_HOST;
-            $smtp_port = defined('SMTP_PORT') ? SMTP_PORT : 587;
-            
-            // Configurar sendmail_path para usar SMTP directo (envío inmediato)
-            // Esto hace que sendmail envíe directamente sin usar cola local
-            $sendmail_cmd = "/usr/sbin/sendmail -t -i -f $from_email";
-            
-            // Intentar configurar sendmail para usar relay SMTP
-            // Si sendmail está configurado con relay, enviará inmediatamente
-            ini_set('sendmail_path', $sendmail_cmd);
-        }
-    }
-    
-    // Envío con mail() nativo
     $resultado = @mail($destinatario_email, $asunto, $mensaje_html, $headers);
     
-    // Forzar procesamiento inmediato de la cola de sendmail
     if ($resultado) {
         // Procesar cola inmediatamente
-        @exec('sendmail -q 2>/dev/null &', $output, $return_var);
-        
-        // También intentar flush de la cola
-        @exec('sendmail -qR 2>/dev/null &', $output2, $return_var2);
-        
-        error_log("✅ Correo NATIVO enviado exitosamente (TIEMPO REAL) a: " . $destinatario_email);
-        error_log("   Sendmail configurado para envío inmediato");
+        @exec('sendmail -q 2>/dev/null &');
+        error_log("✅ Correo NATIVO enviado (puede tener retrasos) a: " . $destinatario_email);
         return true;
     } else {
         error_log("❌ Error en correo NATIVO para: " . $destinatario_email);
