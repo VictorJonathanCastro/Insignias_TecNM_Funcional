@@ -108,22 +108,31 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
             $tu_correo = defined('SMTP_USERNAME') ? SMTP_USERNAME : '';
             $tu_contraseña = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
             
-            // Agregar servidor principal
+            // Agregar servidor principal PRIMERO (tiene prioridad)
             if (defined('SMTP_HOST') && defined('SMTP_PORT')) {
                 $encryption = defined('SMTP_ENCRYPTION') ? SMTP_ENCRYPTION : 'tls';
                 $servidores[SMTP_HOST] = [
                     'port' => SMTP_PORT,
-                    'encryption' => $encryption
+                    'encryption' => $encryption,
+                    'auth' => true
                 ];
             }
             
-            // Agregar servidores alternativos
+            // Agregar servidores alternativos DESPUÉS (orden se mantiene)
             if (defined('SMTP_SERVERS_ALTERNATIVOS')) {
                 foreach (SMTP_SERVERS_ALTERNATIVOS as $host => $config) {
+                    // No sobrescribir el servidor principal si ya está configurado
                     if (!isset($servidores[$host])) {
                         $servidores[$host] = $config;
                     }
                 }
+            }
+            
+            // Reordenar para que el servidor principal esté primero
+            if (defined('SMTP_HOST') && isset($servidores[SMTP_HOST])) {
+                $servidor_principal = [SMTP_HOST => $servidores[SMTP_HOST]];
+                unset($servidores[SMTP_HOST]);
+                $servidores = $servidor_principal + $servidores;
             }
         }
         
@@ -148,8 +157,13 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
         $funciono = false;
         $servidor_exitoso = '';
         $ultimo_error = '';
+        
+        // Debug: Log de servidores que se probarán
+        $lista_servidores = array_keys($servidores);
+        error_log("🔍 PHPMailer: Probando servidores en orden: " . implode(", ", $lista_servidores));
 
         foreach ($servidores as $servidor => $config) {
+            error_log("🔍 PHPMailer: Intentando con servidor: $servidor");
             try {
                 $mail = new PHPMailer(true);
                 $mail->clearAddresses();
