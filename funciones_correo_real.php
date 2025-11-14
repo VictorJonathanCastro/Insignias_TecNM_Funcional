@@ -19,6 +19,10 @@ require 'src/Exception.php';
 require 'src/PHPMailer.php';
 require 'src/SMTP.php';
 
+// Variables globales para rastrear el método de correo usado
+$metodo_correo_usado = 'simulacion'; // Por defecto
+$mail_nativo_usó_phpmailer = false; // Indica si mail() nativo usó PHPMailer internamente
+
 /**
  * Envía notificación REAL por correo cuando se otorga una insignia
  * Usa la configuración exitosa de prueba_simple.php
@@ -28,8 +32,9 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
     $mensaje_html = generarMensajeCorreo($datos_insignia);
     
     // Guardar método usado en variable global para que pueda ser consultado
-    global $metodo_correo_usado;
+    global $metodo_correo_usado, $mail_nativo_usó_phpmailer;
     $metodo_correo_usado = 'simulacion'; // Por defecto
+    $mail_nativo_usó_phpmailer = false; // Resetear
     
     // 1. PRIMERO: Intentar PHPMailer con SMTP (TIEMPO REAL - requiere credenciales del sistema)
     // Esto garantiza entrega inmediata si las credenciales están correctas
@@ -43,13 +48,19 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
         }
     }
     
-    // 2. Si PHPMailer falla, intentar mail() nativo como respaldo (puede tener retrasos)
-    // Solo necesita que sendmail esté instalado en el servidor
+    // 2. Si PHPMailer falla, intentar mail() nativo como respaldo
+    // Si mail() nativo usa PHPMailer internamente, también es tiempo real
     $enviado_nativo = enviarConMailNativo($destinatario_email, $asunto, $mensaje_html);
     
     if ($enviado_nativo) {
-        $metodo_correo_usado = 'nativo';
-        error_log("✅ Correo NATIVO enviado exitosamente (TIEMPO REAL) a: " . $destinatario_email);
+        // Si mail() nativo usó PHPMailer internamente, marcar como phpmailer (tiempo real)
+        if ($mail_nativo_usó_phpmailer) {
+            $metodo_correo_usado = 'phpmailer';
+            error_log("✅ Correo NATIVO (usando PHPMailer internamente) enviado exitosamente (TIEMPO REAL) a: " . $destinatario_email);
+        } else {
+            $metodo_correo_usado = 'nativo';
+            error_log("✅ Correo NATIVO enviado exitosamente (puede tener retrasos) a: " . $destinatario_email);
+        }
         return true;
     }
     
@@ -128,6 +139,10 @@ function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
                             
                             $mail->send();
                             
+                            // Marcar que mail() nativo usó PHPMailer internamente (tiempo real)
+                            global $mail_nativo_usó_phpmailer;
+                            $mail_nativo_usó_phpmailer = true;
+                            
                             error_log("✅ Correo NATIVO (usando PHPMailer internamente) enviado en TIEMPO REAL a: " . $destinatario_email . " via $servidor");
                             return true;
                         } catch (Exception $e) {
@@ -159,6 +174,10 @@ function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
                                     $mail2->Body = $mensaje_html;
                                     $mail2->AltBody = strip_tags($mensaje_html);
                                     $mail2->send();
+                                    
+                                    // Marcar que mail() nativo usó PHPMailer internamente (tiempo real)
+                                    global $mail_nativo_usó_phpmailer;
+                                    $mail_nativo_usó_phpmailer = true;
                                     
                                     error_log("✅ Correo NATIVO (usando PHPMailer con auth) enviado en TIEMPO REAL a: " . $destinatario_email . " via $servidor");
                                     return true;
