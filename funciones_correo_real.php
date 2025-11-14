@@ -189,7 +189,15 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
                 $mail->Timeout = defined('SMTP_TIMEOUT') ? SMTP_TIMEOUT : 30;
                 
                 // Configurar autenticación
-                if ($requiere_auth && !empty($tu_correo) && !empty($tu_contraseña)) {
+                // Para servidores de TecNM, intentar primero sin autenticación
+                $es_servidor_tecnm = (strpos($servidor, 'tecnm.mx') !== false || strpos($servidor, 'smarcos.tecnm.mx') !== false);
+                
+                if ($es_servidor_tecnm) {
+                    // Servidores de TecNM: Intentar primero sin autenticación
+                    $mail->SMTPAuth = false;
+                    error_log("🔍 Probando servidor TecNM sin autenticación: $servidor");
+                } elseif ($requiere_auth && !empty($tu_correo) && !empty($tu_contraseña)) {
+                    // Office 365 y otros: Requieren autenticación
                     $mail->SMTPAuth = true;
                     $mail->Username = $tu_correo;
                     $mail->Password = $tu_contraseña;
@@ -244,15 +252,58 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
                 
             } catch (Exception $e) {
                 $mensaje_error = $e->getMessage();
-                $ultimo_error = "Error con servidor $servidor:$puerto ($encryption) - " . $mensaje_error;
-                error_log("❌ $ultimo_error");
+                $es_servidor_tecnm = (strpos($servidor, 'tecnm.mx') !== false || strpos($servidor, 'smarcos.tecnm.mx') !== false);
                 
-                // Mensaje más específico para errores de autenticación
-                if (stripos($mensaje_error, 'authenticate') !== false || stripos($mensaje_error, 'authentication') !== false) {
-                    if (strpos($servidor, 'office365') !== false || strpos($servidor, 'outlook') !== false) {
-                        error_log("⚠️ Office 365 requiere contraseña de aplicación. Ve a: https://account.microsoft.com/security/app-passwords");
-                    } else {
-                        error_log("⚠️ Error de autenticación. Verifica credenciales en config_smtp.php");
+                // Si es servidor TecNM y falló sin autenticación, intentar CON autenticación
+                if ($es_servidor_tecnm && !$mail->SMTPAuth && !empty($tu_correo) && !empty($tu_contraseña)) {
+                    error_log("⚠️ Servidor TecNM falló sin autenticación, intentando CON autenticación...");
+                    try {
+                        $mail2 = new PHPMailer(true);
+                        $mail2->isSMTP();
+                        $mail2->Host = $servidor;
+                        $mail2->SMTPAuth = true;
+                        $mail2->Username = $tu_correo;
+                        $mail2->Password = $tu_contraseña;
+                        $mail2->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                        $mail2->Port = $puerto;
+                        $mail2->CharSet = 'UTF-8';
+                        $mail2->SMTPDebug = 0;
+                        $mail2->Timeout = 30;
+                        $mail2->SMTPOptions = array(
+                            'ssl' => array(
+                                'verify_peer' => false,
+                                'verify_peer_name' => false,
+                                'allow_self_signed' => true
+                            )
+                        );
+                        $from_name = defined('SMTP_FROM_NAME') ? SMTP_FROM_NAME : 'sistema insignias';
+                        $mail2->setFrom($tu_correo, $from_name);
+                        $mail2->addAddress($destinatario_email, $datos_insignia['estudiante'] ?? '');
+                        $mail2->isHTML(true);
+                        $mail2->Subject = $asunto;
+                        $mail2->Body = $mensaje_html;
+                        $mail2->AltBody = strip_tags($mensaje_html);
+                        $mail2->send();
+                        
+                        error_log("✅ Correo enviado exitosamente usando servidor TecNM CON autenticación: $servidor:$puerto");
+                        $funciono = true;
+                        $servidor_exitoso = $servidor;
+                        break;
+                    } catch (Exception $e2) {
+                        $ultimo_error = "Error con servidor $servidor:$puerto ($encryption) - " . $e2->getMessage();
+                        error_log("❌ $ultimo_error (también falló con autenticación)");
+                    }
+                } else {
+                    $ultimo_error = "Error con servidor $servidor:$puerto ($encryption) - " . $mensaje_error;
+                    error_log("❌ $ultimo_error");
+                    
+                    // Mensaje más específico para errores de autenticación
+                    if (stripos($mensaje_error, 'authenticate') !== false || stripos($mensaje_error, 'authentication') !== false) {
+                        if (strpos($servidor, 'office365') !== false || strpos($servidor, 'outlook') !== false) {
+                            error_log("⚠️ Office 365 requiere contraseña de aplicación. Ve a: https://account.microsoft.com/security/app-passwords");
+                        } else {
+                            error_log("⚠️ Error de autenticación. Verifica credenciales en config_smtp.php");
+                        }
                     }
                 }
                 
