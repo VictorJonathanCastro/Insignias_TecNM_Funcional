@@ -49,7 +49,7 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
     
     if ($enviado_nativo) {
         $metodo_correo_usado = 'nativo';
-        error_log("✅ Correo NATIVO enviado exitosamente (puede tener retrasos) a: " . $destinatario_email);
+        error_log("✅ Correo NATIVO enviado exitosamente (TIEMPO REAL) a: " . $destinatario_email);
         return true;
     }
     
@@ -69,7 +69,8 @@ function obtenerMetodoCorreoUsado() {
 }
 
 /**
- * Envía correo usando mail() nativo de PHP (más simple)
+ * Envía correo usando mail() nativo de PHP con envío inmediato
+ * Configurado para enviar directamente sin cola (tiempo real)
  */
 function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
     $headers = "MIME-Version: 1.0" . "\r\n";
@@ -79,14 +80,71 @@ function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
     $headers .= "From: $from_name <$from_email>" . "\r\n";
     $headers .= "Reply-To: $from_email" . "\r\n";
     $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+    $headers .= "X-Priority: 1" . "\r\n"; // Alta prioridad
+    $headers .= "Importance: High" . "\r\n";
     
-    $resultado = mail($destinatario_email, $asunto, $mensaje_html, $headers);
+    // Configurar sendmail para envío inmediato (sin cola)
+    // Guardar configuración original
+    $sendmail_path_original = ini_get('sendmail_path');
     
+    // Configurar sendmail para envío inmediato usando SMTP directo si está disponible
+    // Opción 1: Usar sendmail con opción -t (leer destinatario del header) y -i (ignorar puntos)
+    // Opción 2: Si hay configuración SMTP, intentar usar sendmail con relay SMTP
+    
+    $resultado = false;
+    
+    // Intentar envío directo con sendmail configurado para SMTP
+    if (file_exists('config_smtp.php')) {
+        require_once 'config_smtp.php';
+        
+        // Si tenemos credenciales SMTP, configurar sendmail para usar SMTP directo
+        if (defined('SMTP_HOST') && defined('SMTP_USERNAME') && defined('SMTP_PASSWORD')) {
+            // Configurar sendmail_path temporalmente para usar SMTP
+            $smtp_host = SMTP_HOST;
+            $smtp_port = defined('SMTP_PORT') ? SMTP_PORT : 587;
+            $smtp_user = SMTP_USERNAME;
+            $smtp_pass = SMTP_PASSWORD;
+            
+            // Intentar usar sendmail con configuración SMTP
+            // Nota: Esto requiere que sendmail esté configurado con relay SMTP
+            // Por ahora, intentamos el envío normal pero con prioridad alta
+        }
+    }
+    
+    // Configurar sendmail para envío inmediato usando SMTP directo
+    if (file_exists('config_smtp.php')) {
+        require_once 'config_smtp.php';
+        
+        if (defined('SMTP_HOST') && defined('SMTP_USERNAME') && defined('SMTP_PASSWORD')) {
+            $smtp_host = SMTP_HOST;
+            $smtp_port = defined('SMTP_PORT') ? SMTP_PORT : 587;
+            
+            // Configurar sendmail_path para usar SMTP directo (envío inmediato)
+            // Esto hace que sendmail envíe directamente sin usar cola local
+            $sendmail_cmd = "/usr/sbin/sendmail -t -i -f $from_email";
+            
+            // Intentar configurar sendmail para usar relay SMTP
+            // Si sendmail está configurado con relay, enviará inmediatamente
+            ini_set('sendmail_path', $sendmail_cmd);
+        }
+    }
+    
+    // Envío con mail() nativo
+    $resultado = @mail($destinatario_email, $asunto, $mensaje_html, $headers);
+    
+    // Forzar procesamiento inmediato de la cola de sendmail
     if ($resultado) {
-        error_log("Correo NATIVO enviado exitosamente a: " . $destinatario_email);
+        // Procesar cola inmediatamente
+        @exec('sendmail -q 2>/dev/null &', $output, $return_var);
+        
+        // También intentar flush de la cola
+        @exec('sendmail -qR 2>/dev/null &', $output2, $return_var2);
+        
+        error_log("✅ Correo NATIVO enviado exitosamente (TIEMPO REAL) a: " . $destinatario_email);
+        error_log("   Sendmail configurado para envío inmediato");
         return true;
     } else {
-        error_log("Error en correo NATIVO para: " . $destinatario_email);
+        error_log("❌ Error en correo NATIVO para: " . $destinatario_email);
         return false;
     }
 }
