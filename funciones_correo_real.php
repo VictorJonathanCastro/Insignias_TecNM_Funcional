@@ -27,32 +27,45 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
     $asunto = "🎖️ Insignia Otorgada - " . $datos_insignia['nombre_insignia'];
     $mensaje_html = generarMensajeCorreo($datos_insignia);
     
-    // 1. PRIMERO: Intentar envío con mail() nativo (NO requiere credenciales SMTP)
-    // Solo necesita que sendmail esté instalado en el servidor
-    $enviado_nativo = enviarConMailNativo($destinatario_email, $asunto, $mensaje_html);
+    // Guardar método usado en variable global para que pueda ser consultado
+    global $metodo_correo_usado;
+    $metodo_correo_usado = 'simulacion'; // Por defecto
     
-    if ($enviado_nativo) {
-        error_log("✅ Correo NATIVO enviado exitosamente a: " . $destinatario_email);
-        return true;
-    }
-    
-    // 2. Si falla mail() nativo, intentar PHPMailer con SMTP (requiere credenciales del sistema)
-    // Solo si config_smtp.php tiene credenciales válidas del sistema
+    // 1. PRIMERO: Intentar PHPMailer con SMTP (TIEMPO REAL - requiere credenciales del sistema)
+    // Esto garantiza entrega inmediata si las credenciales están correctas
     if (file_exists('config_smtp.php')) {
         $enviado_real = enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
         
         if ($enviado_real) {
-            error_log("✅ Correo PHPMailer enviado exitosamente a: " . $destinatario_email);
+            $metodo_correo_usado = 'phpmailer';
+            error_log("✅ Correo PHPMailer enviado exitosamente (TIEMPO REAL) a: " . $destinatario_email);
             return true;
         }
-    } else {
-        error_log("⚠️ config_smtp.php no existe. Solo se intentó mail() nativo.");
     }
     
-    // 3. Si todo falla, usar simulación como respaldo (guarda en archivo)
+    // 2. Si PHPMailer falla, intentar mail() nativo como respaldo (puede tener retrasos)
+    // Solo necesita que sendmail esté instalado en el servidor
+    $enviado_nativo = enviarConMailNativo($destinatario_email, $asunto, $mensaje_html);
+    
+    if ($enviado_nativo) {
+        $metodo_correo_usado = 'nativo';
+        error_log("✅ Correo NATIVO enviado exitosamente (puede tener retrasos) a: " . $destinatario_email);
+        return true;
+    }
+    
+    // 3. Si todo falla, usar simulación como último recurso (guarda en archivo)
+    $metodo_correo_usado = 'simulacion';
     error_log("⚠️ Todos los métodos fallaron, usando simulación para: " . $destinatario_email);
-    error_log("   SOLUCIÓN: Instala sendmail o configura un correo del sistema en config_smtp.php");
+    error_log("   SOLUCIÓN: Configura correctamente config_smtp.php o instala sendmail");
     return enviarCorreoSimuladoInterno($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
+}
+
+/**
+ * Obtiene el método de correo que se usó en el último envío
+ */
+function obtenerMetodoCorreoUsado() {
+    global $metodo_correo_usado;
+    return $metodo_correo_usado ?? 'desconocido';
 }
 
 /**
@@ -61,8 +74,10 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
 function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8" . "\r\n";
-    $headers .= "From: Sistema Insignias TecNM <noreply@tecnm.mx>" . "\r\n";
-    $headers .= "Reply-To: noreply@tecnm.mx" . "\r\n";
+    $from_email = defined('SMTP_FROM_EMAIL') ? SMTP_FROM_EMAIL : 'sistema.insignias@smarcos.tecnm.mx';
+    $from_name = defined('SMTP_FROM_NAME') ? SMTP_FROM_NAME : 'sistema insignias';
+    $headers .= "From: $from_name <$from_email>" . "\r\n";
+    $headers .= "Reply-To: $from_email" . "\r\n";
     $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
     
     $resultado = mail($destinatario_email, $asunto, $mensaje_html, $headers);
@@ -83,15 +98,15 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
     $mail = new PHPMailer(true);
 
     try {
-        // Cargar configuración SMTP
-        $tu_correo = "211230001@smarcos.tecnm.mx";
-        $tu_contraseña = "cas29ye02vi20";
+        // Cargar configuración SMTP desde config_smtp.php
+        $tu_correo = '';
+        $tu_contraseña = '';
         $servidores = [];
         
         if (file_exists('config_smtp.php')) {
             require_once 'config_smtp.php';
-            $tu_correo = defined('SMTP_USERNAME') ? SMTP_USERNAME : $tu_correo;
-            $tu_contraseña = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : $tu_contraseña;
+            $tu_correo = defined('SMTP_USERNAME') ? SMTP_USERNAME : '';
+            $tu_contraseña = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : '';
             
             // Agregar servidor principal
             if (defined('SMTP_HOST') && defined('SMTP_PORT')) {
@@ -113,13 +128,21 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
         }
         
         // Si no hay configuración, usar valores por defecto
+        // PRIORIDAD: Probar primero servidores de TecNM (pueden no requerir autenticación moderna)
         if (empty($servidores)) {
             $servidores = [
-                'smtp.office365.com' => ['port' => 587, 'encryption' => 'tls'],
-                'smtp-mail.outlook.com' => ['port' => 587, 'encryption' => 'tls'],
-                'smtp.gmail.com' => ['port' => 587, 'encryption' => 'tls'],
-                'mail.tecnm.mx' => ['port' => 587, 'encryption' => 'tls'],
+                'smtp.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+                'mail.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+                'smtp.smarcos.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+                'smtp-mail.outlook.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true], // Office 365 alternativo
+                'smtp.office365.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true], // Office 365 principal
             ];
+        }
+        
+        // Validar que tenemos credenciales
+        if (empty($tu_correo) || empty($tu_contraseña)) {
+            error_log("❌ PHPMailer: No hay credenciales SMTP configuradas en config_smtp.php");
+            return false;
         }
 
         $funciono = false;
@@ -134,13 +157,11 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
                 // Configuración SMTP
                 $mail->isSMTP();
                 $mail->Host = $servidor;
-                $mail->SMTPAuth = true;
-                $mail->Username = $tu_correo;
-                $mail->Password = $tu_contraseña;
                 
                 // Configurar encriptación
                 $puerto = $config['port'] ?? 587;
                 $encryption = $config['encryption'] ?? 'tls';
+                $requiere_auth = $config['auth'] ?? true;
                 
                 if ($encryption === 'ssl') {
                     $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
@@ -153,18 +174,43 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
                 $mail->SMTPDebug = defined('SMTP_DEBUG') && SMTP_DEBUG ? 2 : 0;
                 $mail->Timeout = defined('SMTP_TIMEOUT') ? SMTP_TIMEOUT : 30;
                 
-                // SSL options
+                // Configurar autenticación
+                if ($requiere_auth && !empty($tu_correo) && !empty($tu_contraseña)) {
+                    $mail->SMTPAuth = true;
+                    $mail->Username = $tu_correo;
+                    $mail->Password = $tu_contraseña;
+                } else {
+                    $mail->SMTPAuth = false;
+                }
+                
+                // SSL options - Configuración mejorada para diferentes servidores
                 $verify_ssl = defined('SMTP_VERIFY_SSL') ? SMTP_VERIFY_SSL : false;
-                $mail->SMTPOptions = array(
-                    'ssl' => array(
-                        'verify_peer' => $verify_ssl,
-                        'verify_peer_name' => $verify_ssl,
-                        'allow_self_signed' => !$verify_ssl
-                    )
-                );
+                
+                // Para Office 365, necesitamos configuración especial
+                if (strpos($servidor, 'office365') !== false || strpos($servidor, 'outlook') !== false) {
+                    $mail->SMTPOptions = array(
+                        'ssl' => array(
+                            'verify_peer' => false,
+                            'verify_peer_name' => false,
+                            'allow_self_signed' => true
+                        )
+                    );
+                    $mail->SMTPKeepAlive = true;
+                    // Office 365 puede requerir autenticación moderna
+                    // Intentamos primero con contraseña normal, si falla necesitará contraseña de aplicación
+                } else {
+                    // Para otros servidores (TecNM), configuración más flexible
+                    $mail->SMTPOptions = array(
+                        'ssl' => array(
+                            'verify_peer' => $verify_ssl,
+                            'verify_peer_name' => $verify_ssl,
+                            'allow_self_signed' => !$verify_ssl
+                        )
+                    );
+                }
 
                 // Configurar correo
-                $from_name = defined('SMTP_FROM_NAME') ? SMTP_FROM_NAME : 'Sistema Insignias TecNM';
+                $from_name = defined('SMTP_FROM_NAME') ? SMTP_FROM_NAME : 'sistema insignias';
                 $mail->setFrom($tu_correo, $from_name);
                 $mail->addAddress($destinatario_email, $datos_insignia['estudiante'] ?? '');
 
@@ -183,8 +229,19 @@ function enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $da
                 break;
                 
             } catch (Exception $e) {
-                $ultimo_error = "Error con servidor $servidor:$puerto ($encryption) - " . $e->getMessage();
+                $mensaje_error = $e->getMessage();
+                $ultimo_error = "Error con servidor $servidor:$puerto ($encryption) - " . $mensaje_error;
                 error_log("❌ $ultimo_error");
+                
+                // Mensaje más específico para errores de autenticación
+                if (stripos($mensaje_error, 'authenticate') !== false || stripos($mensaje_error, 'authentication') !== false) {
+                    if (strpos($servidor, 'office365') !== false || strpos($servidor, 'outlook') !== false) {
+                        error_log("⚠️ Office 365 requiere contraseña de aplicación. Ve a: https://account.microsoft.com/security/app-passwords");
+                    } else {
+                        error_log("⚠️ Error de autenticación. Verifica credenciales en config_smtp.php");
+                    }
+                }
+                
                 continue;
             }
         }
@@ -412,7 +469,9 @@ function enviarCorreoSimuladoInterno($destinatario, $asunto, $mensaje_html, $dat
     $contenido .= str_repeat("=", 80) . "\n";
     $contenido .= "PARA: " . $destinatario . "\n";
     $contenido .= "ASUNTO: " . $asunto . "\n";
-    $contenido .= "DE: Sistema Insignias TecNM <211230001@smarcos.tecnm.mx>\n";
+    $from_email = defined('SMTP_FROM_EMAIL') ? SMTP_FROM_EMAIL : 'sistema.insignias@smarcos.tecnm.mx';
+    $from_name = defined('SMTP_FROM_NAME') ? SMTP_FROM_NAME : 'sistema insignias';
+    $contenido .= "DE: $from_name <$from_email>\n";
     $contenido .= str_repeat("-", 80) . "\n";
     
     if (!empty($datos_insignia)) {

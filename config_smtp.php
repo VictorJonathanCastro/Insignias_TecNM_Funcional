@@ -36,18 +36,22 @@
 //
 // ❌ NO usar: correos personales de estudiantes o administradores
 define('SMTP_FROM_EMAIL', 'sistema.insignias@smarcos.tecnm.mx'); // ✅ Correo del sistema
-define('SMTP_FROM_NAME', 'Sistema Insignias TecNM');
+define('SMTP_FROM_NAME', 'sistema insignias');
 
 // Credenciales SMTP del SERVIDOR/SISTEMA
 // ⚠️ Solo se usan si mail() nativo falla
 // ⚠️ Cuando te den el correo sistema.insignias@smarcos.tecnm.mx, actualiza la contraseña aquí
 define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ✅ Correo del sistema
-define('SMTP_PASSWORD', 'CONTRASEÑA_QUE_TE_DEN_PARA_ESTE_CORREO'); // ⚠️ Actualiza esto cuando te den el correo
+define('SMTP_PASSWORD', 'Sistema-Insignias2025'); // ✅ Contraseña configurada
 
 // Servidor SMTP principal (prueba primero este)
-define('SMTP_HOST', 'smtp.office365.com'); // Para Office 365
+// PRIORIDAD: Probar primero servidores de TecNM (pueden no requerir autenticación moderna)
+define('SMTP_HOST', 'smtp.tecnm.mx'); // Para servidor TecNM (RECOMENDADO - probar primero)
+// define('SMTP_HOST', 'mail.tecnm.mx'); // Alternativa TecNM
+// define('SMTP_HOST', 'smtp.smarcos.tecnm.mx'); // TecNM específico
+// define('SMTP_HOST', 'smtp-mail.outlook.com'); // Office 365 (puede requerir contraseña de aplicación)
+// define('SMTP_HOST', 'smtp.office365.com'); // Alternativa Office 365
 // define('SMTP_HOST', 'smtp.gmail.com'); // Para Gmail
-// define('SMTP_HOST', 'mail.tecnm.mx'); // Para servidor TecNM
 
 // Puerto SMTP
 define('SMTP_PORT', 587); // Para STARTTLS
@@ -60,12 +64,15 @@ define('SMTP_ENCRYPTION', 'tls'); // 'tls' o 'ssl'
 // SERVIDORES SMTP ALTERNATIVOS (si el principal falla)
 // ============================================
 define('SMTP_SERVERS_ALTERNATIVOS', [
-    'smtp.office365.com' => ['port' => 587, 'encryption' => 'tls'],
-    'smtp-mail.outlook.com' => ['port' => 587, 'encryption' => 'tls'],
-    'smtp.gmail.com' => ['port' => 587, 'encryption' => 'tls'],
-    'mail.tecnm.mx' => ['port' => 587, 'encryption' => 'tls'],
-    'smtp.tecnm.mx' => ['port' => 587, 'encryption' => 'tls'],
-    'smtp.smarcos.tecnm.mx' => ['port' => 587, 'encryption' => 'tls'],
+    // PRIORIDAD 1: Servidores de TecNM (probablemente más confiables y sin autenticación moderna)
+    'smtp.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+    'mail.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+    'smtp.smarcos.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+    // PRIORIDAD 2: Office 365 (puede requerir contraseña de aplicación)
+    'smtp-mail.outlook.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true], // Office 365 (más confiable)
+    'smtp.office365.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true], // Office 365 alternativo
+    // ÚLTIMO RECURSO
+    'smtp.gmail.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true], // Gmail como último recurso
 ]);
 
 // ============================================
@@ -76,7 +83,7 @@ define('SMTP_SERVERS_ALTERNATIVOS', [
 define('SMTP_TIMEOUT', 30);
 
 // Habilitar modo debug (muestra errores detallados)
-define('SMTP_DEBUG', false); // Cambia a true para ver errores detallados
+define('SMTP_DEBUG', false); // Deshabilitado - mail() nativo funciona correctamente
 
 // Verificar certificados SSL (cambiar a true en producción)
 define('SMTP_VERIFY_SSL', false);
