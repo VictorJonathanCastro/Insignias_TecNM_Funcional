@@ -56,6 +56,18 @@ $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision 
 $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
 $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
 
+// Verificar si existen las columnas de firma digital en insigniasotorgadas
+$tiene_firma_digital = false;
+if ($usar_tabla_i) {
+    $check_firma = $conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'firma_digital_base64'");
+    $tiene_firma_digital = ($check_firma && $check_firma->num_rows > 0);
+}
+
+// Construir la parte de la consulta SQL para las columnas de firma digital
+$campos_firma_digital = $tiene_firma_digital 
+    ? "io.firma_digital_base64, io.hash_verificacion, io.certificado_info, io.fecha_firma"
+    : "NULL as firma_digital_base64, NULL as hash_verificacion, NULL as certificado_info, NULL as fecha_firma";
+
 // Consulta básica para obtener las insignias otorgadas usando la estructura actual
 if (!empty($busqueda)) {
     // Modo búsqueda: mostrar solo lo que se busque
@@ -91,10 +103,7 @@ if (!empty($busqueda)) {
                 'Activo' as estatus,
                 COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
                 COALESCE(re.Cargo, 'Administrador') as cargo,
-                io.firma_digital_base64,
-                io.hash_verificacion,
-                io.certificado_info,
-                io.fecha_firma
+                " . $campos_firma_digital . "
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
@@ -170,10 +179,7 @@ if (!empty($busqueda)) {
                 'Activo' as estatus,
                 COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
                 COALESCE(re.Cargo, 'Administrador') as cargo,
-                io.firma_digital_base64,
-                io.hash_verificacion,
-                io.certificado_info,
-                io.fecha_firma
+                " . $campos_firma_digital . "
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
@@ -216,10 +222,7 @@ if (!empty($busqueda)) {
                 'Activo' as estatus,
                 COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
                 COALESCE(re.Cargo, 'Administrador') as cargo,
-                io.firma_digital_base64,
-                io.hash_verificacion,
-                io.certificado_info,
-                io.fecha_firma
+                " . $campos_firma_digital . "
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
@@ -293,10 +296,7 @@ if (!empty($busqueda)) {
                 'Activo' as estatus,
                 COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
                 COALESCE(re.Cargo, 'Administrador') as cargo,
-                io.firma_digital_base64,
-                io.hash_verificacion,
-                io.certificado_info,
-                io.fecha_firma
+                " . $campos_firma_digital . "
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
@@ -339,10 +339,7 @@ if (!empty($busqueda)) {
                 'Activo' as estatus,
                 COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
                 COALESCE(re.Cargo, 'Administrador') as cargo,
-                io.firma_digital_base64,
-                io.hash_verificacion,
-                io.certificado_info,
-                io.fecha_firma
+                " . $campos_firma_digital . "
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
@@ -418,10 +415,7 @@ if (!empty($busqueda)) {
                 'Activo' as estatus,
                 COALESCE(re.Nombre_Completo, 'Sistema') as responsable,
                 COALESCE(re.Cargo, 'Administrador') as cargo,
-                io.firma_digital_base64,
-                io.hash_verificacion,
-                io.certificado_info,
-                io.fecha_firma
+                " . $campos_firma_digital . "
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
