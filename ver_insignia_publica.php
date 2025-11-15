@@ -12,36 +12,15 @@ if (empty($codigo_insignia)) {
 $insignia = null;
 
 try {
-    // Verificar qué tabla existe
+    // Verificar qué tabla existe - PRIORIDAD: usar insigniasotorgadas primero (donde se guardan las nuevas insignias)
+    $tabla_existe_i = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+    $usar_tabla_i = ($tabla_existe_i && $tabla_existe_i->num_rows > 0);
+    
     $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
     $usar_tabla_t = ($tabla_existe_t && $tabla_existe_t->num_rows > 0);
     
-    if ($usar_tabla_t) {
-        // Usar T_insignias_otorgadas con JOIN a T_insignias
-        $sql = "
-            SELECT 
-                tio.id,
-                CONCAT(ti.id, '-', pe.Nombre_Periodo) as codigo,
-                tio.Fecha_Emision as fecha_emision,
-                d.Nombre_Completo as destinatario,
-                d.Curp as curp,
-                d.Matricula as matricula,
-                COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
-                CASE 
-                    WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
-                    WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
-                    WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
-                    ELSE 'Formación Integral'
-                END as categoria
-            FROM T_insignias_otorgadas tio
-            LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
-            LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
-            LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
-            LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
-            WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?
-        ";
-    } else {
-        // Usar insigniasotorgadas - verificar estructura dinámica de destinatario
+    if ($usar_tabla_i) {
+        // Usar insigniasotorgadas (donde se guardan las nuevas insignias)
         $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
         $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
         $campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
@@ -74,6 +53,33 @@ try {
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             WHERE io.Codigo_Insignia = ?
         ";
+    } elseif ($usar_tabla_t) {
+        // Usar T_insignias_otorgadas con JOIN a T_insignias
+        $sql = "
+            SELECT 
+                tio.id,
+                CONCAT(ti.id, '-', pe.Nombre_Periodo) as codigo,
+                tio.Fecha_Emision as fecha_emision,
+                d.Nombre_Completo as destinatario,
+                d.Curp as curp,
+                d.Matricula as matricula,
+                COALESCE(tin.Nombre_Insignia, 'Insignia TecNM') as nombre_insignia,
+                CASE 
+                    WHEN tin.Nombre_Insignia LIKE '%Deporte%' OR tin.Nombre_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
+                    WHEN tin.Nombre_Insignia LIKE '%Científico%' OR tin.Nombre_Insignia LIKE '%Innovación%' OR tin.Nombre_Insignia LIKE '%Formación%' THEN 'Desarrollo Académico'
+                    WHEN tin.Nombre_Insignia LIKE '%Arte%' OR tin.Nombre_Insignia LIKE '%Social%' OR tin.Nombre_Insignia LIKE '%Movilidad%' THEN 'Formación Integral'
+                    ELSE 'Formación Integral'
+                END as categoria
+            FROM T_insignias_otorgadas tio
+            LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+            LEFT JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id
+            LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
+            LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
+            WHERE CONCAT(ti.id, '-', pe.Nombre_Periodo) = ?
+        ";
+    } else {
+        // Si no existe ninguna tabla, mostrar error
+        die('Error: No se encontró ninguna tabla de insignias otorgadas. Verifica que exista T_insignias_otorgadas o insigniasotorgadas en la base de datos.');
     }
     
     $stmt = $conexion->prepare($sql);
