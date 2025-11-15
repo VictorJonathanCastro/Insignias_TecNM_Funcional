@@ -1758,48 +1758,6 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
               </div>
             </div>
           </div>
-          
-          <!-- Testimonio 5 - Estudiante -->
-          <div class="testimonial-item">
-            <div class="testimonial-card">
-              <div class="testimonial-icon">
-                <i class="fas fa-quote-left"></i>
-              </div>
-              <p class="testimonial-text">
-                "Es una herramienta moderna que refleja realmente el esfuerzo de los estudiantes. Poder compartir mis insignias en LinkedIn ha mejorado significativamente mi perfil profesional y visibilidad laboral."
-              </p>
-              <div class="testimonial-author">
-                <div class="testimonial-avatar">
-                  <span>LEHR</span>
-                </div>
-                <div class="testimonial-info">
-                  <h4>Luis Eduardo Hernández Ramírez</h4>
-                  <p>Estudiante de Ingeniería Industrial</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Testimonio 6 - Estudiante -->
-          <div class="testimonial-item">
-            <div class="testimonial-card">
-              <div class="testimonial-icon">
-                <i class="fas fa-quote-left"></i>
-              </div>
-              <p class="testimonial-text">
-                "La transparencia y verificación digital de las insignias es impresionante. Los empleadores pueden verificar fácilmente mis logros y competencias. Es el futuro del reconocimiento académico."
-              </p>
-              <div class="testimonial-author">
-                <div class="testimonial-avatar">
-                  <span>APMD</span>
-                </div>
-                <div class="testimonial-info">
-                  <h4>Alejandra Patricia Martínez Díaz</h4>
-                  <p>Estudiante de Contaduría</p>
-                </div>
-              </div>
-            </div>
-          </div>
             </div>
           </div>
           <button class="carousel-btn carousel-btn-next" onclick="moveTestimonials(1)">
