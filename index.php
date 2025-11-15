@@ -421,6 +421,7 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 2rem;
+      align-items: stretch;
     }
     
     .stat-card {
@@ -438,6 +439,11 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
         0 10px 40px rgba(0, 51, 102, 0.08),
         0 5px 20px rgba(0, 102, 204, 0.05),
         inset 0 1px 0 rgba(255,255,255,0.9);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 200px;
+      height: 100%;
     }
     
     .stat-card::before {
@@ -502,6 +508,9 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      hyphens: auto;
     }
     
     /* FEATURES SECTION CON PATRÓN GEOMÉTRICO */
@@ -1510,10 +1519,10 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
         <div class="stat-number">1000+</div>
         <div class="stat-label">Insignias Otorgadas</div>
       </div>
-      <a href="lista_instituciones.php" style="text-decoration: none; color: inherit; display: block;">
+      <a href="lista_instituciones.php" style="text-decoration: none; color: inherit; display: block; height: 100%;">
         <div class="stat-card" style="cursor: pointer;">
-          <div class="stat-number">254</div>
-          <div class="stat-label">Instituciones</div>
+          <div class="stat-number">255</div>
+          <div class="stat-label" style="font-size: 0.75rem; line-height: 1.3;">255 INSTITUTOS TECNOLÓGICOS, CENTROS Y OFICINAS CENTRALES CONFORMAN LA COMUNIDAD TECNM</div>
         </div>
       </a>
     </div>
@@ -1572,17 +1581,6 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
           <p>
             Los estudiantes pueden demostrar de forma más sencilla las habilidades adquiridas, 
             mejorando sus posibilidades en procesos de selección y desarrollo profesional.
-          </p>
-        </div>
-        
-        <div class="feature-card">
-          <div class="feature-icon">
-            <i class="fas fa-wallet"></i>
-          </div>
-          <h3>Billetera Digital</h3>
-          <p>
-            Los acreditados pueden almacenar todos sus reconocimientos en una sola billetera 
-            digital desde donde podrán compartirlos en redes sociales y LinkedIn.
           </p>
         </div>
         
