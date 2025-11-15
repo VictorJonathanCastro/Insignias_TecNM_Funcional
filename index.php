@@ -742,8 +742,8 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       overflow: hidden;
       width: 100%;
       position: relative;
-      margin: 0 -1rem;
-      padding: 0 1rem;
+      margin: 0;
+      padding: 0;
     }
     
     .carousel-track {
@@ -974,17 +974,18 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       flex-wrap: nowrap !important;
       gap: 1.25rem;
       transition: transform 0.5s ease-in-out;
-      align-items: flex-start;
+      align-items: stretch;
       will-change: transform;
       width: max-content;
     }
     
     .testimonial-item {
-      min-width: 280px;
+      min-width: 300px;
       max-width: 300px;
       flex-shrink: 0;
       flex-grow: 0;
       width: 300px;
+      display: flex;
     }
     
     .testimonial-item .testimonial-card {
@@ -1522,7 +1523,7 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       <a href="lista_instituciones.php" style="text-decoration: none; color: inherit; display: block; height: 100%;">
         <div class="stat-card" style="cursor: pointer;">
           <div class="stat-number">255</div>
-          <div class="stat-label" style="font-size: 0.75rem; line-height: 1.3;">255 INSTITUTOS TECNOLÓGICOS, CENTROS Y OFICINAS CENTRALES CONFORMAN LA COMUNIDAD TECNM</div>
+          <div class="stat-label" style="font-size: 0.75rem; line-height: 1.3;">INSTITUTOS TECNOLÓGICOS, CENTROS Y OFICINAS CENTRALES CONFORMAN LA COMUNIDAD TECNM</div>
         </div>
       </a>
     </div>
@@ -1940,8 +1941,17 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
     let testimonialsPerView = 3; // Número de testimonios visibles a la vez
     
     function calculateTestimonialsPerView() {
-      // Siempre mostrar 3 testimonios a la vez
-      return 3;
+      const container = document.querySelector('.testimonials-section .carousel-container');
+      if (!container) return 3;
+      
+      const containerWidth = container.offsetWidth;
+      const itemWidth = 300; // Ancho fijo de cada testimonio
+      const gap = 20; // Gap entre items
+      const availableWidth = containerWidth - 100; // Dejar espacio para botones
+      
+      // Calcular cuántos testimonios caben
+      const itemsThatFit = Math.floor(availableWidth / (itemWidth + gap));
+      return Math.max(1, Math.min(3, itemsThatFit)); // Mínimo 1, máximo 3
     }
     
     function moveTestimonials(direction) {
@@ -1977,7 +1987,9 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
       if (!track || items.length === 0) return;
       
       testimonialsPerView = calculateTestimonialsPerView();
-      const itemWidth = items[0].offsetWidth + 20; // item width + gap (1.25rem = 20px)
+      // Calcular el ancho correcto incluyendo el gap
+      const gap = 20; // 1.25rem = 20px
+      const itemWidth = items[0].offsetWidth + gap;
       const offset = currentTestimonialIndex * itemWidth;
       track.style.transform = `translateX(-${offset}px)`;
       
