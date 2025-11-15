@@ -14,6 +14,15 @@ if (empty($codigo_insignia)) {
 }
 
 try {
+    // Verificar estructura dinámica de las tablas para JOINs correctos
+    $check_destinatario_id = $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+    $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
+    $campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
+    
+    $check_responsable_id = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+    $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
+    $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
+    
     // Consulta para obtener los datos de la insignia - CORREGIDA
     $query = "SELECT 
             io.ID_otorgada as id,
@@ -49,8 +58,8 @@ try {
         'imagen/Insignias/insignia_default.png' as imagen_path,
             io.Responsable_Emision as responsable_id
         FROM insigniasotorgadas io
-        LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-        LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.ID_responsable
+        LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+        LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
     WHERE io.Codigo_Insignia = ?";
     
     $stmt = $conexion->prepare($query);
@@ -112,7 +121,7 @@ if (!empty($insignia_data['responsable_id'])) {
             // Verificar si el campo existe primero
             $check_field = $conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'firma_digital_base64'");
             if ($check_field && $check_field->num_rows > 0) {
-                $sql_firma = "SELECT firma_digital_base64 FROM responsable_emision WHERE ID_responsable = ? LIMIT 1";
+                $sql_firma = "SELECT firma_digital_base64 FROM responsable_emision WHERE " . $campo_id_responsable . " = ? LIMIT 1";
         $stmt_firma = $conexion->prepare($sql_firma);
         if ($stmt_firma) {
             $stmt_firma->bind_param("i", $insignia_data['responsable_id']);
