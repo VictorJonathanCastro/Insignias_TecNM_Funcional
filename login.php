@@ -1222,7 +1222,7 @@ if (isset($_GET['error']) && isset($_GET['error']) && $_GET['error'] === 'error_
       </div>
       
       <div class="logo-container">
-        <img src="imagen/logo.png" alt="" class="logo">
+        <img src="imagen/Insignia.png" alt="" class="logo">
       </div>
       
       <h2>Insignias TecNM</h2>
