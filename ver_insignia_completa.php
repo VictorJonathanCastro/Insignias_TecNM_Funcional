@@ -71,6 +71,11 @@ try {
         $tiene_id_destinatario = ($check_destinatario_id && $check_destinatario_id->num_rows > 0);
         $campo_id_destinatario = $tiene_id_destinatario ? 'id' : 'ID_destinatario';
         
+        // Verificar nombre de columna en tipo_insignia (puede ser Nombre_Insignia o Nombre_ins)
+        $check_nombre_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+        $tiene_nombre_insignia = ($check_nombre_tipo && $check_nombre_tipo->num_rows > 0);
+        $campo_nombre_tipo = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
+        
         $query = "SELECT 
             io.ID_otorgada as id,
             io.Codigo_Insignia as codigo,
@@ -108,13 +113,13 @@ try {
         LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
         LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.id
         LEFT JOIN tipo_insignia tin ON (
-            (io.Codigo_Insignia LIKE '%ART%' AND tin.Nombre_ins LIKE '%Arte%')
-            OR (io.Codigo_Insignia LIKE '%EMB%' AND tin.Nombre_ins LIKE '%Deporte%')
-            OR (io.Codigo_Insignia LIKE '%TAL%' AND tin.Nombre_ins LIKE '%Científico%')
-            OR (io.Codigo_Insignia LIKE '%INN%' AND tin.Nombre_ins LIKE '%Innovador%')
-            OR (io.Codigo_Insignia LIKE '%SOC%' AND tin.Nombre_ins LIKE '%Social%')
-            OR (io.Codigo_Insignia LIKE '%FOR%' AND tin.Nombre_ins LIKE '%Formación%')
-            OR (io.Codigo_Insignia LIKE '%MOV%' AND tin.Nombre_ins LIKE '%Movilidad%')
+            (io.Codigo_Insignia LIKE '%ART%' AND tin." . $campo_nombre_tipo . " LIKE '%Arte%')
+            OR (io.Codigo_Insignia LIKE '%EMB%' AND tin." . $campo_nombre_tipo . " LIKE '%Deporte%')
+            OR (io.Codigo_Insignia LIKE '%TAL%' AND tin." . $campo_nombre_tipo . " LIKE '%Científico%')
+            OR (io.Codigo_Insignia LIKE '%INN%' AND tin." . $campo_nombre_tipo . " LIKE '%Innovador%')
+            OR (io.Codigo_Insignia LIKE '%SOC%' AND tin." . $campo_nombre_tipo . " LIKE '%Social%')
+            OR (io.Codigo_Insignia LIKE '%FOR%' AND tin." . $campo_nombre_tipo . " LIKE '%Formación%')
+            OR (io.Codigo_Insignia LIKE '%MOV%' AND tin." . $campo_nombre_tipo . " LIKE '%Movilidad%')
         )
         LEFT JOIN T_insignias ti ON ti.Tipo_Insignia = tin.id
         WHERE io.Codigo_Insignia = ?
