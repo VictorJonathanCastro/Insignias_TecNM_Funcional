@@ -23,7 +23,8 @@ try {
     $tiene_id_responsable = ($check_responsable_id && $check_responsable_id->num_rows > 0);
     $campo_id_responsable = $tiene_id_responsable ? 'id' : 'ID_responsable';
     
-    // Consulta para obtener los datos de la insignia - CORREGIDA
+    // Consulta para obtener los datos de la insignia - CORREGIDA para obtener descripción de T_insignias
+    // Primero obtener el tipo de insignia del código para hacer JOIN con T_insignias
     $query = "SELECT 
             io.ID_otorgada as id,
         io.Codigo_Insignia as codigo,
@@ -44,23 +45,35 @@ try {
                 ELSE 'Formación Integral'
             END as categoria,
         d.Nombre_Completo as destinatario,
-        NULL as descripcion,
-        NULL as criterios,
+        COALESCE(ti.Descripcion, NULL) as descripcion,
+        COALESCE(ti.Criterio, NULL) as criterios,
         'Certificación oficial' as evidencias,
         COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable,
         COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
         io.Fecha_Emision as fecha_emision,
         'Tecnológico Nacional de México' as emisor,
             'Certificación oficial' as evidencia,
-        'insignia_default.png' as archivo_visual,
+        COALESCE(ti.Archivo_Visual, 'insignia_default.png') as archivo_visual,
         COALESCE(re.Nombre_Completo, 'Administrador') as responsable_captura,
         'ADMIN001' as codigo_responsable,
-        'imagen/Insignias/insignia_default.png' as imagen_path,
+        CONCAT('imagen/Insignias/', COALESCE(ti.Archivo_Visual, 'insignia_default.png')) as imagen_path,
             io.Responsable_Emision as responsable_id
         FROM insigniasotorgadas io
         LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
         LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
-    WHERE io.Codigo_Insignia = ?";
+        LEFT JOIN tipo_insignia tin ON (
+            (io.Codigo_Insignia LIKE '%ART%' AND tin.Nombre_ins LIKE '%Arte%')
+            OR (io.Codigo_Insignia LIKE '%EMB%' AND tin.Nombre_ins LIKE '%Deporte%')
+            OR (io.Codigo_Insignia LIKE '%TAL%' AND tin.Nombre_ins LIKE '%Científico%')
+            OR (io.Codigo_Insignia LIKE '%INN%' AND tin.Nombre_ins LIKE '%Innovador%')
+            OR (io.Codigo_Insignia LIKE '%SOC%' AND tin.Nombre_ins LIKE '%Social%')
+            OR (io.Codigo_Insignia LIKE '%FOR%' AND tin.Nombre_ins LIKE '%Formación%')
+            OR (io.Codigo_Insignia LIKE '%MOV%' AND tin.Nombre_ins LIKE '%Movilidad%')
+        )
+        LEFT JOIN T_insignias ti ON ti.Tipo_Insignia = tin.id
+    WHERE io.Codigo_Insignia = ?
+    ORDER BY ti.Fecha_Creacion DESC
+    LIMIT 1";
     
     $stmt = $conexion->prepare($query);
     if (!$stmt) {
@@ -140,31 +153,33 @@ if (!empty($insignia_data['responsable_id'])) {
     }
     }
     
-    // Obtener descripción y criterios dinámicamente desde la sesión o usar valores por defecto apropiados
-    if (isset($_SESSION['insignia_data']) && is_array($_SESSION['insignia_data'])) {
-        $sid = $_SESSION['insignia_data'];
-        if (!empty($sid['codigo']) && $sid['codigo'] === $codigo_insignia) {
-            if (!empty($sid['descripcion'])) {
+    // Obtener descripción y criterios: primero de la consulta SQL, luego de sesión, luego valores por defecto
+    if (empty($insignia_data['descripcion']) || $insignia_data['descripcion'] === null) {
+        // Si no hay descripción en la consulta SQL, intentar obtenerla de la sesión
+        if (isset($_SESSION['insignia_data']) && is_array($_SESSION['insignia_data'])) {
+            $sid = $_SESSION['insignia_data'];
+            if (!empty($sid['codigo']) && $sid['codigo'] === $codigo_insignia && !empty($sid['descripcion'])) {
                 $insignia_data['descripcion'] = $sid['descripcion'];
-            } else {
-                // Valor por defecto dinámico si no hay descripción en sesión
-                $insignia_data['descripcion'] = 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.';
             }
-            if (!empty($sid['criterios'])) {
-                $insignia_data['criterios'] = $sid['criterios'];
-            } else {
-                // Valor por defecto dinámico si no hay criterios en sesión
-                $insignia_data['criterios'] = 'Cumplimiento de los criterios establecidos para esta insignia.';
-            }
-        } else {
-            // Si la sesión no coincide con el código actual, usar valores por defecto
+        }
+        // Si aún no hay descripción, usar valor por defecto
+        if (empty($insignia_data['descripcion']) || $insignia_data['descripcion'] === null) {
             $insignia_data['descripcion'] = 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.';
+        }
+    }
+    
+    if (empty($insignia_data['criterios']) || $insignia_data['criterios'] === null) {
+        // Si no hay criterios en la consulta SQL, intentar obtenerlos de la sesión
+        if (isset($_SESSION['insignia_data']) && is_array($_SESSION['insignia_data'])) {
+            $sid = $_SESSION['insignia_data'];
+            if (!empty($sid['codigo']) && $sid['codigo'] === $codigo_insignia && !empty($sid['criterios'])) {
+                $insignia_data['criterios'] = $sid['criterios'];
+            }
+        }
+        // Si aún no hay criterios, usar valor por defecto
+        if (empty($insignia_data['criterios']) || $insignia_data['criterios'] === null) {
             $insignia_data['criterios'] = 'Cumplimiento de los criterios establecidos para esta insignia.';
         }
-    } else {
-        // Si no hay sesión, usar valores por defecto
-        $insignia_data['descripcion'] = 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.';
-        $insignia_data['criterios'] = 'Cumplimiento de los criterios establecidos para esta insignia.';
     }
 
     // Determinar la imagen dinámicamente
