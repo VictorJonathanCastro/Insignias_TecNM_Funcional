@@ -1,0 +1,37 @@
+<?php
+/**
+ * CONFIGURACIÓN SMTP PARA ENVÍO DE CORREOS
+ * 
+ * IMPORTANTE: Copia este archivo a config_smtp.php y completa las credenciales
+ * 
+ * ⚠️ NUNCA subas config_smtp.php a GitHub con credenciales reales
+ */
+
+// Correo del SISTEMA desde el cual se enviarán las notificaciones
+define('SMTP_FROM_EMAIL', 'sistema.insignias@smarcos.tecnm.mx');
+define('SMTP_FROM_NAME', 'sistema insignias');
+
+// Credenciales SMTP del SERVIDOR/SISTEMA
+// ⚠️ COMPLETA ESTAS CREDENCIALES EN config_smtp.php (NO en este archivo)
+define('SMTP_USERNAME', 'TU_CORREO@smarcos.tecnm.mx'); // ⚠️ Cambiar por tu correo
+define('SMTP_PASSWORD', 'TU_CONTRASEÑA'); // ⚠️ Cambiar por tu contraseña
+
+// Servidor SMTP principal
+define('SMTP_HOST', 'smtp-mail.outlook.com'); // Office 365
+define('SMTP_PORT', 587);
+define('SMTP_ENCRYPTION', 'tls');
+
+// Servidores SMTP alternativos
+define('SMTP_SERVERS_ALTERNATIVOS', [
+    'smtp-mail.outlook.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+    'smtp.office365.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+    'smtp.smarcos.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => false],
+    'mail.tecnm.mx' => ['port' => 587, 'encryption' => 'tls', 'auth' => false],
+    'smtp.gmail.com' => ['port' => 587, 'encryption' => 'tls', 'auth' => true],
+]);
+
+// Configuración adicional
+define('SMTP_TIMEOUT', 30);
+define('SMTP_DEBUG', false);
+define('SMTP_VERIFY_SSL', false);
+

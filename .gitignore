@@ -1,5 +1,6 @@
 # Archivos de configuración local (NO subir)
 conexion.php
+config_smtp.php
 
 # Archivos temporales
 *.tmp
