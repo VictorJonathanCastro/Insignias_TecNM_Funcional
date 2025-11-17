@@ -11,13 +11,16 @@ if (!file_exists('src/PHPMailer.php')) {
     return;
 }
 
-// Incluir PHPMailer
+// Incluir PHPMailer (usar require_once para evitar doble declaración)
+if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+    require_once 'src/Exception.php';
+    require_once 'src/PHPMailer.php';
+    require_once 'src/SMTP.php';
+}
+
+// Declarar uso de clases PHPMailer (debe estar al nivel superior)
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
-
-require 'src/Exception.php';
-require 'src/PHPMailer.php';
-require 'src/SMTP.php';
 
 // Variables globales para rastrear el método de correo usado
 $metodo_correo_usado = 'simulacion'; // Por defecto
@@ -94,11 +97,11 @@ function enviarConMailNativo($destinatario_email, $asunto, $mensaje_html) {
             SMTP_PASSWORD !== 'CONTRASEÑA_QUE_TE_DEN_PARA_ESTE_CORREO') {
             
             // Intentar usar PHPMailer con servidores de TecNM (sin autenticación primero)
-            if (file_exists('src/PHPMailer.php')) {
+            if (file_exists('src/PHPMailer.php') && !class_exists('PHPMailer\PHPMailer\PHPMailer')) {
                 try {
-                    require 'src/Exception.php';
-                    require 'src/PHPMailer.php';
-                    require 'src/SMTP.php';
+                    require_once 'src/Exception.php';
+                    require_once 'src/PHPMailer.php';
+                    require_once 'src/SMTP.php';
                     
                     // PHPMailer ya está incluido al inicio del archivo
                     
