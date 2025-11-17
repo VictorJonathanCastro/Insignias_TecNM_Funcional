@@ -28,7 +28,7 @@ $mail_nativo_usó_phpmailer = false; // Indica si mail() nativo usó PHPMailer i
  * Usa la configuración exitosa de prueba_simple.php
  */
 function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia) {
-    $asunto = "🎖️ Insignia Otorgada - " . $datos_insignia['nombre_insignia'];
+    $asunto = "🎖️ Insignia Otorgada - " . ($datos_insignia['nombre_insignia'] ?? 'Nueva Insignia');
     $mensaje_html = generarMensajeCorreo($datos_insignia);
     
     // Guardar método usado en variable global para que pueda ser consultado
@@ -36,23 +36,21 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
     $metodo_correo_usado = 'simulacion'; // Por defecto
     $mail_nativo_usó_phpmailer = false; // Resetear
     
-    // 1. PRIMERO: Intentar PHPMailer con SMTP (TIEMPO REAL - requiere credenciales del sistema)
-    // Esto garantiza entrega inmediata si las credenciales están correctas
+    // 1. INTENTAR PRIMERO PHPMailer (SMTP real)
     if (file_exists('config_smtp.php')) {
-        $enviado_real = enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
+        $enviadorSMTP = enviarConPHPMailerReal($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
         
-        if ($enviado_real) {
+        if ($enviadorSMTP === true) {
             $metodo_correo_usado = 'phpmailer';
             error_log("✅ Correo PHPMailer enviado exitosamente (TIEMPO REAL) a: " . $destinatario_email);
             return true;
         }
     }
     
-    // 2. Si PHPMailer falla, intentar mail() nativo como respaldo
-    // Si mail() nativo usa PHPMailer internamente, también es tiempo real
-    $enviado_nativo = enviarConMailNativo($destinatario_email, $asunto, $mensaje_html);
+    // 2. RESPALDO: función mail() nativa
+    $enviadorNativo = enviarConMailNativo($destinatario_email, $asunto, $mensaje_html);
     
-    if ($enviado_nativo) {
+    if ($enviadorNativo === true) {
         // Si mail() nativo usó PHPMailer internamente, marcar como phpmailer (tiempo real)
         if ($mail_nativo_usó_phpmailer) {
             $metodo_correo_usado = 'phpmailer';
@@ -64,7 +62,7 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
         return true;
     }
     
-    // 3. Si todo falla, usar simulación como último recurso (guarda en archivo)
+    // 3. ÚLTIMO RECURSO: simulación interna
     $metodo_correo_usado = 'simulacion';
     error_log("⚠️ Todos los métodos fallaron, usando simulación para: " . $destinatario_email);
     error_log("   SOLUCIÓN: Configura correctamente config_smtp.php o instala sendmail");

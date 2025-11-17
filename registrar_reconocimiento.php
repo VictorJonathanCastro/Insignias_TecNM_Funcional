@@ -98,31 +98,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $mensaje_exito = "Reconocimiento registrado exitosamente. <a href='ver_metadatos_insignia.php?id=" . $otorgada_id . "' style='color: white; text-decoration: underline;'>Ver insignia completa</a>";
                     
-                    // ENVIAR NOTIFICACIÓN POR CORREO si el destinatario tiene correo
+                    // ENVIAR NOTIFICACIÓN POR CORREO si el destinatario tiene correo válido
                     if (!empty($destinatario_data['Correo']) && filter_var($destinatario_data['Correo'], FILTER_VALIDATE_EMAIL)) {
                         $datos_correo = [
                             'estudiante' => $destinatario_data['Nombre_Completo'] ?? 'Estudiante',
                             'matricula' => $destinatario_data['Matricula'] ?? 'No especificada',
                             'curp' => $destinatario_data['Curp'] ?? 'No especificada',
-                            'nombre_insignia' => $nombre_insignia,
-                            'categoria' => 'Formación Integral', // Puedes obtenerla de la BD si es necesario
-                            'codigo_insignia' => $codigo_insignia,
-                            'periodo' => $nombre_periodo,
+                            'nombre_insignia' => $nombre_insignia ?? 'Insignia',
+                            'categoria' => 'Formación Integral',
+                            'codigo_insignia' => $codigo_insignia ?? '',
+                            'periodo' => $nombre_periodo ?? '',
                             'fecha_otorgamiento' => date('Y-m-d'),
-                            'responsable' => $_SESSION['nombre'] . ' ' . $_SESSION['apellido_paterno'],
-                            'descripcion' => $descripcion,
-                            'url_verificacion' => $url_verificacion
+                            'responsable' => ($_SESSION['nombre'] ?? '') . ' ' . ($_SESSION['apellido_paterno'] ?? ''),
+                            'descripcion' => $descripcion ?? '',
+                            'url_verificacion' => $url_verificacion ?? ''
                         ];
-                        
-                        $correo_enviado = enviarNotificacionInsigniaCompleta($destinatario_data['Correo'], $datos_correo);
-                        
+
+                        $correo_destino = $destinatario_data['Correo'];
+                        $correo_enviado = enviarNotificacionInsigniaCompleta($correo_destino, $datos_correo);
+
                         if ($correo_enviado) {
-                            $mensaje_exito .= " | ✅ Notificación enviada por correo a: " . htmlspecialchars($destinatario_data['Correo']);
+                            $mensaje_exito .= " | ✅ Notificación enviada al correo: " . htmlspecialchars($correo_destino);
                         } else {
-                            $mensaje_exito .= " | ⚠️ Error al enviar correo a: " . htmlspecialchars($destinatario_data['Correo']);
+                            $mensaje_exito .= " | ⚠️ Error al enviar correo a: " . htmlspecialchars($correo_destino);
                         }
                     } else {
-                        $mensaje_exito .= " | ⚠️ No se pudo enviar correo: el destinatario no tiene correo válido registrado";
+                        $mensaje_exito .= " | ⚠️ No se pudo enviar correo: el destinatario no tiene un correo válido";
                     }
                 } else {
                     $mensaje_error = "Error al registrar el reconocimiento: " . $stmt2->error;
