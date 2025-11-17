@@ -125,10 +125,19 @@ if (empty($server_ip) || $server_ip === '::1') {
     $server_ip = 'localhost';
 }
 $port = $_SERVER['SERVER_PORT'] ?? '80';
-$base_url = "http://" . $server_ip . ($port != '80' ? ':' . $port : '');
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$base_url = $protocol . "://" . $server_ip . ($port != '80' && $port != '443' ? ':' . $port : '');
+
+// Obtener la ruta del proyecto dinámicamente
+$script_dir = dirname($_SERVER['SCRIPT_NAME']);
+// Normalizar la ruta: eliminar barras iniciales y finales, pero mantener la estructura
+$project_path = trim($script_dir, '/');
+if (!empty($project_path)) {
+    $project_path = '/' . $project_path;
+}
 
 // URL de validación - Redirigir directamente al certificado completo (igual que el clic en la imagen)
-$url_validacion = $base_url . "/Insignias_TecNM_Funcional/ver_insignia_completa_publica.php?insignia=" . urlencode($insignia['codigo']) . "&solo=1";
+$url_validacion = $base_url . $project_path . "/ver_insignia_completa_publica.php?insignia=" . urlencode($insignia['codigo']) . "&solo=1";
 
 // Generar QR usando servicio alternativo (más confiable)
 $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($url_validacion);
@@ -144,8 +153,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
     <!-- Meta tags para redes sociales (Open Graph) -->
     <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia['nombre_insignia'] ?? 'Insignia TecNM'); ?>">
     <meta property="og:description" content="Insignia otorgada a <?php echo htmlspecialchars($insignia['destinatario'] ?? ''); ?>">
-    <meta property="og:image" content="<?php echo $base_url . '/' . $imagen_path; ?>">
-    <meta property="og:url" content="<?php echo $base_url; ?>/ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>">
+    <meta property="og:image" content="<?php echo $base_url . $project_path . '/' . $imagen_path; ?>">
+    <meta property="og:url" content="<?php echo $base_url . $project_path; ?>/ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="TecNM Insignias">
     
@@ -153,7 +162,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia['nombre_insignia'] ?? 'Insignia TecNM'); ?>">
     <meta name="twitter:description" content="Insignia otorgada a <?php echo htmlspecialchars($insignia['destinatario'] ?? ''); ?>">
-    <meta name="twitter:image" content="<?php echo $base_url . '/' . $imagen_path; ?>">
+    <meta name="twitter:image" content="<?php echo $base_url . $project_path . '/' . $imagen_path; ?>">
     
     <style>
         * {
@@ -376,13 +385,13 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                     📱 Compartir en Redes Sociales
                 </div>
                 <div class="action-buttons">
-                    <a href="https://wa.me/?text=<?php echo urlencode('🎖️ ¡He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM! 👨‍🎓 ' . htmlspecialchars($insignia['destinatario']) . ' 🏆 Ver mi insignia: ' . $base_url . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-success" target="_blank">
+                    <a href="https://wa.me/?text=<?php echo urlencode('🎖️ ¡He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM! 👨‍🎓 ' . htmlspecialchars($insignia['destinatario']) . ' 🏆 Ver mi insignia: ' . $base_url . $project_path . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-success" target="_blank">
                         💬 WhatsApp
                     </a>
-                    <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($base_url . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-primary" target="_blank">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($base_url . $project_path . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-primary" target="_blank">
                         🔵 Facebook
                     </a>
-                    <a href="https://twitter.com/intent/tweet?text=<?php echo urlencode('🎖️ ¡He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM! 👨‍🎓'); ?>&url=<?php echo urlencode($base_url . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-info" target="_blank">
+                    <a href="https://twitter.com/intent/tweet?text=<?php echo urlencode('🎖️ ¡He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM! 👨‍🎓'); ?>&url=<?php echo urlencode($base_url . $project_path . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-info" target="_blank">
                         🐤 Twitter
                     </a>
                 </div>
