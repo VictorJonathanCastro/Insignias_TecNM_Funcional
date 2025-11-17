@@ -195,13 +195,39 @@ if (!empty($insignia_data['responsable_id'])) {
     $hash_verificacion = null;
     
     // Generar URL de validación y código QR
-    $server_ip = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    if (empty($server_ip) || $server_ip === '::1') {
-        $server_ip = 'localhost';
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    if (empty($host) || $host === '::1') {
+        $host = 'localhost';
     }
-    $port = $_SERVER['SERVER_PORT'] ?? '80';
-    $base_url = "http://" . $server_ip . ($port != '80' ? ':' . $port : '');
-    $url_validacion = $base_url . "/Insignias_TecNM_Funcional/validacion.php?insignia=" . urlencode($codigo_insignia);
+    
+    // Obtener el directorio base del script para construir URLs correctas
+    $script_dir = dirname($_SERVER['SCRIPT_NAME']);
+    $base_path = '';
+    if ($script_dir !== '/' && $script_dir !== '.' && $script_dir !== '\\') {
+        $base_path = trim($script_dir, '/\\');
+    }
+    
+    // Construir base_url con el path del proyecto si existe
+    if (!empty($base_path)) {
+        $base_url = $protocol . '://' . $host . '/' . $base_path;
+    } else {
+        $base_url = $protocol . '://' . $host;
+    }
+    
+    // Construir URL completa de la página actual para Open Graph
+    $url_pagina_actual = $protocol . '://' . $host . $_SERVER['REQUEST_URI'];
+    
+    // Construir URL absoluta de la imagen de la insignia para Open Graph
+    // Asegurarse de que la ruta de la imagen sea relativa desde la raíz del proyecto
+    $imagen_path_clean = ltrim($insignia_data['imagen_path'], '/');
+    if (!empty($base_path)) {
+        $url_imagen_insignia = $protocol . '://' . $host . '/' . $base_path . '/' . $imagen_path_clean;
+    } else {
+        $url_imagen_insignia = $protocol . '://' . $host . '/' . $imagen_path_clean;
+    }
+    
+    $url_validacion = $base_url . "/validacion.php?insignia=" . urlencode($codigo_insignia);
     $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($url_validacion);
     
     // Función para formatear fecha en español
@@ -223,11 +249,33 @@ if (!empty($insignia_data['responsable_id'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" prefix="og: http://ogp.me/ns#">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?> - Público</title>
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<?php echo htmlspecialchars($url_pagina_actual); ?>">
+    <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
+    <meta property="og:description" content="Insignia otorgada a <?php echo htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante'); ?> - <?php echo htmlspecialchars($insignia_data['descripcion'] ?? 'Reconocimiento del Tecnológico Nacional de México'); ?>">
+    <meta property="og:image" content="<?php echo htmlspecialchars($url_imagen_insignia); ?>">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Sistema de Insignias TecNM">
+    <meta property="og:locale" content="es_MX">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="<?php echo htmlspecialchars($url_pagina_actual); ?>">
+    <meta name="twitter:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
+    <meta name="twitter:description" content="Insignia otorgada a <?php echo htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante'); ?> - <?php echo htmlspecialchars($insignia_data['descripcion'] ?? 'Reconocimiento del Tecnológico Nacional de México'); ?>">
+    <meta name="twitter:image" content="<?php echo htmlspecialchars($url_imagen_insignia); ?>">
+    
+    <!-- Meta tags adicionales -->
+    <meta name="description" content="Insignia otorgada a <?php echo htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante'); ?> - <?php echo htmlspecialchars($insignia_data['descripcion'] ?? 'Reconocimiento del Tecnológico Nacional de México'); ?>">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         <?php if ($solo_certificado): ?>
