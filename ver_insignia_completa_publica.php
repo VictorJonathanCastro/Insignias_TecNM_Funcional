@@ -227,6 +227,32 @@ if (!empty($insignia_data['responsable_id'])) {
         $url_imagen_insignia = $protocol . '://' . $host . '/' . $imagen_path_clean;
     }
     
+    // Limpiar barras dobles en la URL
+    $url_imagen_insignia = str_replace('//', '/', $url_imagen_insignia);
+    $url_imagen_insignia = str_replace('http:/', 'http://', $url_imagen_insignia);
+    $url_imagen_insignia = str_replace('https:/', 'https://', $url_imagen_insignia);
+    
+    // Verificar que la imagen existe, si no, usar una por defecto
+    $ruta_imagen_fisica = $_SERVER['DOCUMENT_ROOT'] . '/' . ltrim($insignia_data['imagen_path'], '/');
+    if (!empty($base_path)) {
+        $ruta_imagen_fisica = $_SERVER['DOCUMENT_ROOT'] . '/' . $base_path . '/' . ltrim($insignia_data['imagen_path'], '/');
+    }
+    
+    // Si la imagen no existe físicamente, usar una imagen por defecto
+    if (!file_exists($ruta_imagen_fisica)) {
+        // Intentar con imagen por defecto
+        $imagen_default = 'imagen/Insignias/EmbajadordelArte.png';
+        $imagen_path_clean = ltrim($imagen_default, '/');
+        if (!empty($base_path)) {
+            $url_imagen_insignia = $protocol . '://' . $host . '/' . $base_path . '/' . $imagen_path_clean;
+        } else {
+            $url_imagen_insignia = $protocol . '://' . $host . '/' . $imagen_path_clean;
+        }
+        $url_imagen_insignia = str_replace('//', '/', $url_imagen_insignia);
+        $url_imagen_insignia = str_replace('http:/', 'http://', $url_imagen_insignia);
+        $url_imagen_insignia = str_replace('https:/', 'https://', $url_imagen_insignia);
+    }
+    
     $url_validacion = $base_url . "/validacion.php?insignia=" . urlencode($codigo_insignia);
     $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" . urlencode($url_validacion);
     
@@ -255,14 +281,23 @@ if (!empty($insignia_data['responsable_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?> - Público</title>
     
+    <!-- DEBUG: URLs generadas para compartir en Facebook -->
+    <!-- base_url: <?php echo htmlspecialchars($base_url); ?> -->
+    <!-- imagen_path: <?php echo htmlspecialchars($insignia_data['imagen_path']); ?> -->
+    <!-- url_imagen_insignia: <?php echo htmlspecialchars($url_imagen_insignia); ?> -->
+    <!-- url_pagina_actual: <?php echo htmlspecialchars($url_pagina_actual); ?> -->
+    
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?php echo htmlspecialchars($url_pagina_actual); ?>">
     <meta property="og:title" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
     <meta property="og:description" content="Insignia otorgada a <?php echo htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante'); ?> - <?php echo htmlspecialchars($insignia_data['descripcion'] ?? 'Reconocimiento del Tecnológico Nacional de México'); ?>">
     <meta property="og:image" content="<?php echo htmlspecialchars($url_imagen_insignia); ?>">
+    <meta property="og:image:secure_url" content="<?php echo htmlspecialchars($url_imagen_insignia); ?>">
+    <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Insignia TecNM - <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
     <meta property="og:site_name" content="Sistema de Insignias TecNM">
     <meta property="og:locale" content="es_MX">
     
