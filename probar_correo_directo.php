@@ -107,9 +107,20 @@ if (function_exists('obtenerMetodoCorreoUsado')) {
     echo "<div class='info'>";
     echo "<p><strong>Método usado:</strong> $metodo</p>";
     if ($metodo === 'phpmailer') {
-        echo "<p>✅ Se usó PHPMailer con SMTP (tiempo real)</p>";
+        echo "<p>✅ <strong>Se usó PHPMailer con SMTP (TIEMPO REAL)</strong></p>";
+        echo "<p>El correo debería llegar en segundos.</p>";
     } elseif ($metodo === 'nativo') {
-        echo "<p>⚠️ Se usó mail() nativo (puede tener retrasos)</p>";
+        echo "<p>⚠️ <strong>Se usó mail() nativo (puede tener retrasos)</strong></p>";
+        echo "<p>Para envío en tiempo real, necesitas que PHPMailer funcione.</p>";
+        echo "<p><strong>Posibles razones por las que PHPMailer no se usó:</strong></p>";
+        echo "<ul>";
+        echo "<li>Credenciales SMTP incorrectas en config_smtp.php</li>";
+        echo "<li>Office 365 rechazó la autenticación</li>";
+        echo "<li>Se requiere contraseña de aplicación (si tienes 2FA activado)</li>";
+        echo "<li>Error de conexión al servidor SMTP</li>";
+        echo "</ul>";
+        echo "<p><strong>Para ver el error específico, ejecuta en PuTTY:</strong></p>";
+        echo "<pre>sudo tail -n 100 /var/log/apache2/error.log | grep -i 'phpmailer\|smtp'</pre>";
     } elseif ($metodo === 'simulacion') {
         echo "<p>⚠️ Se usó simulación (correo guardado en archivo, no enviado realmente)</p>";
         echo "<p>Revisa el archivo <code>correos_enviados.txt</code> en el servidor</p>";
