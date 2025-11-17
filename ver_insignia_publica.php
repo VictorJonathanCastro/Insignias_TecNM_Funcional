@@ -127,8 +127,8 @@ if (empty($server_ip) || $server_ip === '::1') {
 $port = $_SERVER['SERVER_PORT'] ?? '80';
 $base_url = "http://" . $server_ip . ($port != '80' ? ':' . $port : '');
 
-// URL de validación
-$url_validacion = $base_url . "/Insignias_TecNM_Funcional/verificar_insignia.php?clave=" . urlencode($insignia['codigo']);
+// URL de validación - Redirigir directamente al certificado completo (igual que el clic en la imagen)
+$url_validacion = $base_url . "/Insignias_TecNM_Funcional/ver_insignia_completa_publica.php?insignia=" . urlencode($insignia['codigo']) . "&solo=1";
 
 // Generar QR usando servicio alternativo (más confiable)
 $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . urlencode($url_validacion);
