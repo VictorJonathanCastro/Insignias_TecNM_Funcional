@@ -317,9 +317,9 @@ if (!empty($insignia_data['responsable_id'])) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         <?php if ($solo_certificado): ?>
-        /* Ocultar metadatos, acciones e imagen de insignia cuando solo se muestra el certificado */
+        /* Ocultar metadatos e imagen de insignia cuando solo se muestra el certificado */
+        /* PERO mantener los botones de acciones visibles para poder descargar */
         .metadata-section,
-        .actions,
         .insignia-hexagon {
             display: none !important;
         }
@@ -328,6 +328,10 @@ if (!empty($insignia_data['responsable_id'])) {
         }
         .insignia-preview {
             width: 100%;
+        }
+        /* Asegurar que los botones de acciones se muestren siempre */
+        .actions {
+            display: block !important;
         }
         <?php endif; ?>
         
@@ -526,6 +530,10 @@ if (!empty($insignia_data['responsable_id'])) {
         .actions {
             text-align: center;
             margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
         .btn {
@@ -536,12 +544,28 @@ if (!empty($insignia_data['responsable_id'])) {
             border-radius: 6px;
             cursor: pointer;
             font-size: 16px;
-            margin: 0 10px;
-            transition: background-color 0.3s;
+            margin: 8px;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         
         .btn:hover {
             background-color: #0f2a4a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
         
         .btn i {
