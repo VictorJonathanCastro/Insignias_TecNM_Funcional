@@ -312,6 +312,9 @@ if (!empty($insignia_data['responsable_id'])) {
     <meta name="description" content="Insignia otorgada a <?php echo htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante'); ?> - <?php echo htmlspecialchars($insignia_data['descripcion'] ?? 'Reconocimiento del Tecnológico Nacional de México'); ?>">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Librerías para descargar certificado como imagen y PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         <?php if ($solo_certificado): ?>
         /* Ocultar metadatos, acciones e imagen de insignia cuando solo se muestra el certificado */
@@ -817,6 +820,12 @@ if (!empty($insignia_data['responsable_id'])) {
         </div>
         
         <div class="actions">
+            <button onclick="descargarCertificado('imagen')" class="btn" id="btn-descargar-imagen" style="background-color: #28a745;">
+                <i class="fas fa-download"></i> Descargar como Imagen
+            </button>
+            <button onclick="descargarCertificado('pdf')" class="btn" id="btn-descargar-pdf" style="background-color: #dc3545;">
+                <i class="fas fa-file-pdf"></i> Descargar como PDF
+            </button>
             <button onclick="window.print()" class="btn">
                 <i class="fas fa-print"></i> Imprimir
             </button>
@@ -884,5 +893,146 @@ if (!empty($insignia_data['responsable_id'])) {
             </div>
         </div>
     </footer>
+    
+    <script>
+        // Función para descargar el certificado como imagen o PDF
+        async function descargarCertificado(formato) {
+            const certificado = document.querySelector('.document-preview');
+            const nombreArchivo = 'Certificado_<?php echo htmlspecialchars(str_replace(' ', '_', $insignia_data['destinatario'])); ?>_<?php echo htmlspecialchars($insignia_data['codigo']); ?>';
+            
+            // Deshabilitar botones mientras se procesa
+            const btnImagen = document.getElementById('btn-descargar-imagen');
+            const btnPdf = document.getElementById('btn-descargar-pdf');
+            const botones = [btnImagen, btnPdf];
+            
+            botones.forEach(btn => {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+                }
+            });
+            
+            try {
+                if (formato === 'imagen') {
+                    // Descargar como imagen PNG
+                    await descargarComoImagen(certificado, nombreArchivo);
+                } else if (formato === 'pdf') {
+                    // Descargar como PDF
+                    await descargarComoPDF(certificado, nombreArchivo);
+                }
+            } catch (error) {
+                console.error('Error al generar certificado:', error);
+                alert('Error al generar el certificado. Por favor, intenta nuevamente.');
+            } finally {
+                // Rehabilitar botones
+                botones.forEach(btn => {
+                    if (btn) {
+                        btn.disabled = false;
+                        if (btn === btnImagen) {
+                            btn.innerHTML = '<i class="fas fa-download"></i> Descargar como Imagen';
+                        } else if (btn === btnPdf) {
+                            btn.innerHTML = '<i class="fas fa-file-pdf"></i> Descargar como PDF';
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Función para descargar como imagen PNG
+        async function descargarComoImagen(elemento, nombreArchivo) {
+            // Esperar a que las imágenes se carguen
+            await esperarImagenes();
+            
+            const canvas = await html2canvas(elemento, {
+                scale: 2, // Mayor resolución
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width: elemento.offsetWidth,
+                height: elemento.offsetHeight,
+                windowWidth: elemento.scrollWidth,
+                windowHeight: elemento.scrollHeight
+            });
+            
+            // Convertir canvas a blob y descargar
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = nombreArchivo + '.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+        
+        // Función para descargar como PDF
+        async function descargarComoPDF(elemento, nombreArchivo) {
+            // Esperar a que las imágenes se carguen
+            await esperarImagenes();
+            
+            const canvas = await html2canvas(elemento, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                width: elemento.offsetWidth,
+                height: elemento.offsetHeight
+            });
+            
+            const imgData = canvas.toDataURL('image/png');
+            
+            // Calcular dimensiones del PDF (mantener proporción)
+            const imgWidth = 210; // A4 width in mm
+            const pageHeight = 297; // A4 height in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
+            
+            const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+            let position = 0;
+            
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+            
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+            
+            pdf.save(nombreArchivo + '.pdf');
+        }
+        
+        // Función para esperar a que todas las imágenes se carguen
+        function esperarImagenes() {
+            return new Promise((resolve) => {
+                const imagenes = document.querySelectorAll('.document-preview img');
+                let cargadas = 0;
+                const total = imagenes.length;
+                
+                if (total === 0) {
+                    resolve();
+                    return;
+                }
+                
+                imagenes.forEach(img => {
+                    if (img.complete) {
+                        cargadas++;
+                        if (cargadas === total) resolve();
+                    } else {
+                        img.onload = img.onerror = () => {
+                            cargadas++;
+                            if (cargadas === total) resolve();
+                        };
+                    }
+                });
+                
+                // Timeout de seguridad (5 segundos)
+                setTimeout(resolve, 5000);
+            });
+        }
+    </script>
 </body>
 </html>
