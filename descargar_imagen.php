@@ -18,6 +18,9 @@ $codigo_insignia = $insignia_data['codigo'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Descargar Imagen de Insignia</title>
     
+    <!-- Font Awesome para logos oficiales de redes sociales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
     <style>
         body {
             margin: 0;
@@ -184,13 +187,13 @@ $codigo_insignia = $insignia_data['codigo'];
                 📥 Descargar Imagen
             </button>
             <a href="javascript:void(0)" onclick="shareWhatsApp()" class="btn whatsapp">
-                💬 WhatsApp
+                <i class="fab fa-whatsapp"></i> WhatsApp
             </a>
             <a href="javascript:void(0)" onclick="shareFacebook()" class="btn facebook">
-                🔵 Facebook
+                <i class="fab fa-facebook-f"></i> Facebook
             </a>
             <a href="javascript:void(0)" onclick="shareTwitter()" class="btn twitter">
-                🐤 Twitter
+                <i class="fab fa-x-twitter"></i> Twitter
             </a>
         </div>
         

@@ -95,6 +95,9 @@ $image_url = $base_url . '/imagen/insignia_Responsabilidad Social.png';
     <meta name="twitter:image" content="<?php echo $image_url; ?>">
     <meta name="twitter:image:alt" content="Insignia TecNM de <?php echo htmlspecialchars($insignia_data['nombre']); ?>">
     
+    <!-- Font Awesome para logos oficiales de redes sociales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -256,13 +259,13 @@ $image_url = $base_url . '/imagen/insignia_Responsabilidad Social.png';
             <h3>Compartir en redes sociales</h3>
             <div class="share-buttons">
                 <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($validation_url); ?>" class="share-btn facebook" target="_blank">
-                    🔵 Facebook
+                    <i class="fab fa-facebook-f"></i> Facebook
                 </a>
                 <a href="https://wa.me/?text=<?php echo urlencode('Insignia TecNM - ' . $insignia_data['nombre'] . ' - ' . $validation_url); ?>" class="share-btn whatsapp" target="_blank">
-                    💬 WhatsApp
+                    <i class="fab fa-whatsapp"></i> WhatsApp
                 </a>
                 <a href="https://twitter.com/intent/tweet?text=<?php echo urlencode('Insignia TecNM - ' . $insignia_data['nombre']); ?>&url=<?php echo urlencode($validation_url); ?>" class="share-btn twitter" target="_blank">
-                    🐤 Twitter
+                    <i class="fab fa-x-twitter"></i> Twitter
                 </a>
             </div>
         </div>

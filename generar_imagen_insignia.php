@@ -17,6 +17,8 @@ $codigo_insignia = $insignia_data['codigo'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compartir Insignia - <?php echo htmlspecialchars($insignia_data['nombre']); ?></title>
+    <!-- Font Awesome para logos oficiales de redes sociales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -203,15 +205,15 @@ $codigo_insignia = $insignia_data['codigo'];
             <div class="share-buttons">
                 <a href="https://wa.me/?text=¡Mira mi insignia de <?php echo urlencode($insignia_data['nombre']); ?> del TecNM! Haz clic en la imagen para validarla: <?php echo urlencode('http://' . $_SERVER['HTTP_HOST'] . '/Insignias_TecNM_Funcional/validacion.php?insignia=' . $codigo_insignia); ?>" 
                    class="share-btn whatsapp" target="_blank">
-                    💬 WhatsApp
+                    <i class="fab fa-whatsapp"></i> WhatsApp
                 </a>
                 <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode('http://' . $_SERVER['HTTP_HOST'] . '/Insignias_TecNM_Funcional/validacion.php?insignia=' . $codigo_insignia); ?>" 
                    class="share-btn facebook" target="_blank">
-                    🔵 Facebook
+                    <i class="fab fa-facebook-f"></i> Facebook
                 </a>
                 <a href="https://twitter.com/intent/tweet?text=¡Mira mi insignia de <?php echo urlencode($insignia_data['nombre']); ?> del TecNM! Haz clic para validarla&url=<?php echo urlencode('http://' . $_SERVER['HTTP_HOST'] . '/Insignias_TecNM_Funcional/validacion.php?insignia=' . $codigo_insignia); ?>" 
                    class="share-btn twitter" target="_blank">
-                    🐤 Twitter
+                    <i class="fab fa-x-twitter"></i> Twitter
                 </a>
             </div>
         </div>

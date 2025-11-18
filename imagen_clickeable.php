@@ -360,6 +360,9 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="robots" content="index, follow">
     
+    <!-- Font Awesome para logos oficiales de redes sociales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
     <style>
         body {
             margin: 0;
@@ -626,13 +629,13 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
             
             <div class="share-buttons">
                 <a href="javascript:void(0)" onclick="shareWhatsApp()" class="share-btn whatsapp">
-                    💬 WhatsApp
+                    <i class="fab fa-whatsapp"></i> WhatsApp
                 </a>
                 <a href="javascript:void(0)" onclick="shareFacebook()" class="share-btn facebook">
-                    🔵 Facebook
+                    <i class="fab fa-facebook-f"></i> Facebook
                 </a>
                 <a href="javascript:void(0)" onclick="shareTwitter()" class="share-btn twitter">
-                    🐤 Twitter
+                    <i class="fab fa-x-twitter"></i> Twitter
                 </a>
                 <a href="javascript:void(0)" onclick="copyLink()" class="share-btn copy">
                     📋 Copiar Enlace

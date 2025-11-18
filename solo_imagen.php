@@ -25,6 +25,9 @@ $codigo_insignia = $insignia_data['codigo'];
     <meta property="og:url" content="<?php echo 'http://' . $_SERVER['HTTP_HOST'] . '/Insignias_TecNM_Funcional/validacion.php?insignia=' . $codigo_insignia; ?>">
     <meta property="og:type" content="website">
     
+    <!-- Font Awesome para logos oficiales de redes sociales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
     <style>
         body {
             margin: 0;
@@ -190,15 +193,15 @@ $codigo_insignia = $insignia_data['codigo'];
         <div class="share-buttons">
             <a href="https://wa.me/?text=🎖️ *Insignia TecNM*%0A%0A*<?php echo urlencode($insignia_data['nombre']); ?>*%0A%0AOtorgada a: <?php echo urlencode($insignia_data['destinatario']); ?>%0A%0A✅ *INSIGNIA VÁLIDA*%0AEsta insignia ha sido verificada y es auténtica%0A%0AHaz clic aquí para validar: <?php echo urlencode('http://' . $_SERVER['HTTP_HOST'] . '/Insignias_TecNM_Funcional/validacion.php?insignia=' . $codigo_insignia); ?>" 
                class="share-btn whatsapp" target="_blank">
-                💬 WhatsApp
+                <i class="fab fa-whatsapp"></i> WhatsApp
             </a>
             <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode('http://' . $_SERVER['HTTP_HOST'] . '/Insignias_TecNM_Funcional/validacion.php?insignia=' . $codigo_insignia); ?>" 
                class="share-btn facebook" target="_blank">
-                🔵 Facebook
+                <i class="fab fa-facebook-f"></i> Facebook
             </a>
             <a href="https://twitter.com/intent/tweet?text=🎖️ Insignia TecNM - <?php echo urlencode($insignia_data['nombre']); ?> otorgada a <?php echo urlencode($insignia_data['destinatario']); ?> ✅ VÁLIDA&url=<?php echo urlencode('http://' . $_SERVER['HTTP_HOST'] . '/Insignias_TecNM_Funcional/validacion.php?insignia=' . $codigo_insignia); ?>" 
                class="share-btn twitter" target="_blank">
-                🐤 Twitter
+                <i class="fab fa-x-twitter"></i> Twitter
             </a>
         </div>
         
