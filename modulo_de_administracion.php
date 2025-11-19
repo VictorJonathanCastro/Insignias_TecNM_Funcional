@@ -2462,6 +2462,7 @@ ob_clean();
         <button onclick="window.location.href='metadatos_formulario.php'">🎖️ Metadatos</button>
         <button onclick="mostrarTab('tab4')">Registro</button>
         <button onclick="window.location.href='historial_insignias.php'">Historial</button>
+        <button onclick="window.location.href='carga_masiva_excel.php'" style="background: linear-gradient(135deg, #28a745, #20c997);">📊 Carga Masiva</button>
         <?php if (esSuperUsuario()): ?>
           <button onclick="mostrarTab('tab5')" style="background: linear-gradient(135deg, #dc3545, #c82333);">🔧 Configuración</button>
           <button onclick="mostrarTab('tab6')" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);">👥 Gestión Admin</button>
