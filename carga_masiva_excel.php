@@ -14,6 +14,86 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'Admin') {
 }
 
 // Incluir librería para leer Excel
+if (!file_exists('vendor/autoload.php')) {
+    die('
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Error - Carga Masiva</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .error-container {
+                background: white;
+                padding: 40px;
+                border-radius: 15px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                max-width: 600px;
+                text-align: center;
+            }
+            .error-icon {
+                font-size: 64px;
+                margin-bottom: 20px;
+            }
+            h1 {
+                color: #dc3545;
+                margin-bottom: 20px;
+            }
+            p {
+                color: #666;
+                line-height: 1.6;
+                margin-bottom: 20px;
+            }
+            .code {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 5px;
+                font-family: monospace;
+                margin: 20px 0;
+                text-align: left;
+            }
+            .btn {
+                background: linear-gradient(135deg, #28a745, #20c997);
+                color: white;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                text-decoration: none;
+                display: inline-block;
+                margin-top: 20px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h1>Dependencias Faltantes</h1>
+            <p>Para usar la carga masiva de Excel, necesitas instalar las dependencias de Composer.</p>
+            <p><strong>Ejecuta en el servidor:</strong></p>
+            <div class="code">
+                composer install
+            </div>
+            <p>O si no tienes Composer instalado, ejecuta:</p>
+            <div class="code">
+                php composer.phar install
+            </div>
+            <a href="modulo_de_administracion.php" class="btn">← Volver al Panel</a>
+        </div>
+    </body>
+    </html>
+    ');
+}
+
 require_once 'vendor/autoload.php';
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
