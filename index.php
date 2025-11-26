@@ -13,6 +13,31 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
     }
     exit();
 }
+
+// Incluir conexión a la base de datos
+require_once 'conexion.php';
+
+// Contar insignias otorgadas dinámicamente
+$total_insignias_otorgadas = 0;
+if ($conexion && !$conexion->connect_errno) {
+    // Intentar primero con T_insignias_otorgadas (tabla principal)
+    $resultado = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+    if ($resultado && $resultado->num_rows > 0) {
+        $consulta = $conexion->query("SELECT COUNT(*) as total FROM T_insignias_otorgadas");
+        if ($consulta && $fila = $consulta->fetch_assoc()) {
+            $total_insignias_otorgadas = $fila['total'];
+        }
+    } else {
+        // Si no existe, intentar con insigniasotorgadas
+        $resultado = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        if ($resultado && $resultado->num_rows > 0) {
+            $consulta = $conexion->query("SELECT COUNT(*) as total FROM insigniasotorgadas");
+            if ($consulta && $fila = $consulta->fetch_assoc()) {
+                $total_insignias_otorgadas = $fila['total'];
+            }
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -1513,11 +1538,17 @@ if (isset($_SESSION['usuario_id']) && isset($_SESSION['rol'])) {
         <div class="stat-label">Tipos de Insignias</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">+6500</div>
+        <div class="stat-number">+570,000</div>
         <div class="stat-label">Estudiantes Activos</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number">1000+</div>
+        <div class="stat-number"><?php 
+          if ($total_insignias_otorgadas > 0) {
+            echo number_format($total_insignias_otorgadas, 0, '.', ',') . '+';
+          } else {
+            echo '0';
+          }
+        ?></div>
         <div class="stat-label">Insignias Otorgadas</div>
       </div>
       <a href="lista_instituciones.php" style="text-decoration: none; color: inherit; display: block; height: 100%;">
