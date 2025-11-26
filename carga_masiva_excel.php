@@ -1000,16 +1000,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </button>
                 </form>
                 
-                <div class="help-text">
-                    <h4>💡 Instrucciones para Plantillas:</h4>
-                    <ul>
-                        <li>Las plantillas incluyen las columnas necesarias</li>
-                        <li>La primera fila contiene los nombres de las columnas</li>
-                        <li>La segunda fila muestra un ejemplo de datos</li>
-                        <li>Complete los datos desde la tercera fila en adelante</li>
-                        <li>No modifique los nombres de las columnas</li>
-                    </ul>
-                </div>
             </div>
             
             <!-- Sección 2: Cargar Datos -->
@@ -1043,46 +1033,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </button>
                 </form>
                 
-                <div class="help-text">
-                    <h4>⚠️ Consideraciones Importantes:</h4>
-                    <ul>
-                        <li><strong>🚀 Carga Completa:</strong> Selecciona "TODAS LAS TABLAS" para procesar un Excel con múltiples hojas (una hoja por tabla)</li>
-                        <li><strong>📊 Formato Múltiples Hojas:</strong> Cada hoja debe tener el nombre de la tabla o los headers correctos</li>
-                        <li>El archivo debe tener el formato correcto según la plantilla</li>
-                        <li>Los datos se validarán antes de insertarse</li>
-                        <li>Se mostrarán errores detallados para cada fila problemática</li>
-                        <li>Los registros válidos se procesarán aunque haya errores</li>
-                        <li>Se recomienda hacer una copia de seguridad antes de cargar</li>
-                    </ul>
-                </div>
             </div>
             
-            <!-- Sección 3: Información Adicional -->
-            <div class="section">
-                <h2>ℹ️ Información del Sistema</h2>
-                <div class="help-text">
-                    <h4>📊 Tipos de Carga Disponibles:</h4>
-                    <ul>
-                        <li><strong>Insignias Otorgadas:</strong> Registro masivo de insignias entregadas</li>
-                        <li><strong>Destinatarios:</strong> Carga masiva de estudiantes y personal</li>
-                        <li><strong>Centros IT:</strong> Registro de institutos tecnológicos</li>
-                        <li><strong>Tipos de Insignia:</strong> Catálogo de tipos de insignias</li>
-                        <li><strong>Categorías de Insignia:</strong> Clasificación de insignias</li>
-                        <li><strong>Periodos de Emisión:</strong> Periodos escolares</li>
-                    </ul>
-                </div>
-                
-                <div class="help-text">
-                    <h4>🔧 Características Técnicas:</h4>
-                    <ul>
-                        <li>Soporte para archivos Excel (.xlsx, .xls)</li>
-                        <li>Validación automática de datos</li>
-                        <li>Procesamiento por lotes eficiente</li>
-                        <li>Reporte detallado de resultados</li>
-                        <li>Manejo de errores robusto</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     </div>
     
