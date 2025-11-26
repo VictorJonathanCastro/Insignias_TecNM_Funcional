@@ -292,6 +292,23 @@ if (isset($_POST['guardar_categoria'])) {
             throw new Exception("El nombre de la categoría no puede estar vacío");
         }
         
+        // Verificar si la categoría ya existe (evitar duplicados)
+        $check_stmt = $conexion->prepare("SELECT id, ID_cat, Nombre_cat FROM cat_insignias WHERE LOWER(TRIM(Nombre_cat)) = LOWER(TRIM(?))");
+        if (!$check_stmt) {
+            throw new Exception("Error al preparar consulta de verificación: " . $conexion->error);
+        }
+        
+        $check_stmt->bind_param("s", $nombre);
+        $check_stmt->execute();
+        $result = $check_stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $check_stmt->close();
+            throw new Exception("La categoría '$nombre' ya existe en la base de datos. Por favor, elige otro nombre.");
+        }
+        $check_stmt->close();
+        
+        // Si no existe, insertar la nueva categoría
         $stmt = $conexion->prepare("INSERT INTO cat_insignias (Nombre_cat) VALUES (?)");
         if (!$stmt) {
             throw new Exception("Error al preparar consulta: " . $conexion->error);
@@ -299,14 +316,16 @@ if (isset($_POST['guardar_categoria'])) {
         
         $stmt->bind_param("s", $nombre);
         if ($stmt->execute()) {
-            $mensaje_exito = "Categoría '$nombre' guardada exitosamente";
+            $mensaje_exito = "✅ Categoría '$nombre' guardada exitosamente en la base de datos";
+            // Recargar categorías para que aparezcan en el select de subcategorías
+            $categorias = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
         } else {
             throw new Exception("Error al ejecutar consulta: " . $stmt->error);
         }
         $stmt->close();
         
     } catch (Exception $e) {
-        $mensaje_error = "Error al guardar categoría: " . $e->getMessage();
+        $mensaje_error = "❌ Error al guardar categoría: " . $e->getMessage();
     }
 }
 
@@ -730,10 +749,20 @@ try {
         if (ob_get_level()) {
             ob_clean();
         }
-        $categorias = $conexion->query("SELECT * FROM cat_insignias");
+        // Consultar categorías existentes para el select
+        $categorias = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
     }
 } catch (Exception $e) {
     $categorias = null;
+}
+
+// Consultar categorías para el formulario de categorías (siempre, no solo después de guardar)
+if (!isset($categorias) || !$categorias) {
+    try {
+        $categorias = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
+    } catch (Exception $e) {
+        $categorias = null;
+    }
 }
 
 // Limpiar buffer de salida antes de mostrar HTML
@@ -2449,6 +2478,13 @@ ob_clean();
         echo htmlspecialchars($nombre_completo); 
       ?></div>
       
+      <?php if (!empty($mensaje_exito)): ?>
+        <div class="alert alert-success" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+          <i class="fas fa-check-circle"></i>
+          <strong>Éxito:</strong> <?php echo htmlspecialchars($mensaje_exito); ?>
+        </div>
+      <?php endif; ?>
+      
       <?php if (!empty($mensaje_error) && $mensaje_error !== "YA_EXISTE_RECONOCIMIENTO"): ?>
         <div class="alert alert-danger">
           <i class="fas fa-exclamation-triangle"></i>
@@ -2491,15 +2527,24 @@ ob_clean();
         <label>Nombre:</label>
         <input type="text" name="nombre" required>
         <label>Categoría:</label>
-        <select name="categoria_id">
-          <?php if ($categorias && $categorias->num_rows > 0): ?>
-            <?php while($row = $categorias->fetch_assoc()): ?>
-              <?php if (isset($row['ID_cat']) && isset($row['Nombre_cat'])): ?>
-                <option value="<?php echo htmlspecialchars($row['ID_cat']); ?>"><?php echo htmlspecialchars($row['Nombre_cat']); ?></option>
-              <?php endif; ?>
-            <?php endwhile; ?>
-          <?php else: ?>
-            <option value="">No hay categorías disponibles</option>
+        <select name="categoria_id" required>
+          <option value="">Selecciona una categoría...</option>
+          <?php 
+          // Consultar categorías para el select (asegurar que siempre esté disponible)
+          $categorias_select = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
+          if ($categorias_select && $categorias_select->num_rows > 0): 
+            // Reiniciar el puntero del resultado
+            $categorias_select->data_seek(0);
+            while($row = $categorias_select->fetch_assoc()): 
+              // Manejar ambas estructuras posibles (id o ID_cat)
+              $categoria_id = isset($row['ID_cat']) ? $row['ID_cat'] : (isset($row['id']) ? $row['id'] : null);
+              $categoria_nombre = isset($row['Nombre_cat']) ? $row['Nombre_cat'] : '';
+              if ($categoria_id && $categoria_nombre): ?>
+                <option value="<?php echo htmlspecialchars($categoria_id); ?>"><?php echo htmlspecialchars($categoria_nombre); ?></option>
+              <?php endif; 
+            endwhile; 
+          else: ?>
+            <option value="">No hay categorías disponibles. Primero registra una categoría.</option>
           <?php endif; ?>
         </select>
         <button type="submit" name="guardar_subcategoria">Guardar</button>
@@ -3021,3 +3066,4 @@ ob_clean();
   </footer>
 </body>
 </html>
+
