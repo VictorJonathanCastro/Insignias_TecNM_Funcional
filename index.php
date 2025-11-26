@@ -444,7 +444,7 @@ if ($conexion && !$conexion->connect_errno) {
       max-width: 1200px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 2rem;
       align-items: stretch;
     }
@@ -504,7 +504,7 @@ if ($conexion && !$conexion->connect_errno) {
     }
     
     .stat-number {
-      font-size: 3.5rem;
+      font-size: 2.5rem;
       font-weight: 800;
       background: 
         linear-gradient(135deg, 
@@ -520,6 +520,11 @@ if ($conexion && !$conexion->connect_errno) {
       margin-bottom: 0.5rem;
       animation: gradientShift 3s ease infinite;
       filter: drop-shadow(0 2px 4px rgba(0,102,204,0.3));
+      line-height: 1.2;
+      word-break: keep-all;
+      white-space: normal;
+      overflow: visible;
+      display: block;
     }
     
     @keyframes gradientShift {
