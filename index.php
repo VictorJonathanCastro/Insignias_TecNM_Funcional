@@ -1539,7 +1539,7 @@ if ($conexion && !$conexion->connect_errno) {
   <section class="stats">
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-number">7+</div>
+        <div class="stat-number">+7</div>
         <div class="stat-label">Tipos de Insignias</div>
       </div>
       <div class="stat-card">
@@ -1548,11 +1548,7 @@ if ($conexion && !$conexion->connect_errno) {
       </div>
       <div class="stat-card">
         <div class="stat-number"><?php 
-          if ($total_insignias_otorgadas > 0) {
-            echo number_format($total_insignias_otorgadas, 0, '.', ',') . '+';
-          } else {
-            echo '0';
-          }
+          echo number_format($total_insignias_otorgadas, 0, '.', ',');
         ?></div>
         <div class="stat-label">Insignias Otorgadas</div>
       </div>
