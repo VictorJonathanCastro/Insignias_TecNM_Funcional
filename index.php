@@ -441,10 +441,10 @@ if ($conexion && !$conexion->connect_errno) {
     }
     
     .stats-grid {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 2rem;
       align-items: stretch;
     }
