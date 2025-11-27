@@ -9,7 +9,7 @@ require_once 'funciones_correo_real.php';
 
 // Configuración de prueba
 $correo_destino = $_GET['correo'] ?? '211230001@smarcos.tecnm.mx';
-$correo_origen = '211230001@smarcos.tecnm.mx';
+$correo_origen = 'sistema.insignias@smarcos.tecnm.mx';
 
 echo "<h1>🧪 Prueba de Envío de Correo</h1>";
 echo "<p><strong>Enviando correo de prueba a:</strong> $correo_destino</p>";
@@ -36,8 +36,33 @@ echo $resultado_nativo ? "✅ mail() nativo funcionó" : "❌ mail() nativo fall
 echo "<br><br>";
 
 echo "<h2>2. Probando PHPMailer con SMTP...</h2>";
+// Capturar output del debug
+ob_start();
 $resultado_phpmailer = enviarConPHPMailerReal($correo_destino, "Prueba - Insignia Otorgada", generarMensajeCorreo($datos_prueba), $datos_prueba);
-echo $resultado_phpmailer ? "✅ PHPMailer funcionó" : "❌ PHPMailer falló";
+$debug_output = ob_get_clean();
+
+if ($resultado_phpmailer) {
+    echo "✅ PHPMailer funcionó";
+} else {
+    echo "❌ PHPMailer falló<br>";
+    if (!empty($debug_output)) {
+        echo "<div style='background: #f8d7da; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 12px; white-space: pre-wrap;'>";
+        echo "<strong>Detalles del error:</strong><br>";
+        echo htmlspecialchars($debug_output);
+        echo "</div>";
+    }
+    // Intentar leer los últimos logs de error
+    $error_log_file = ini_get('error_log');
+    if ($error_log_file && file_exists($error_log_file)) {
+        $ultimas_lineas = shell_exec("tail -n 20 " . escapeshellarg($error_log_file) . " 2>&1");
+        if ($ultimas_lineas) {
+            echo "<div style='background: #fff3cd; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; font-size: 12px; white-space: pre-wrap;'>";
+            echo "<strong>Últimas líneas del log de errores:</strong><br>";
+            echo htmlspecialchars($ultimas_lineas);
+            echo "</div>";
+        }
+    }
+}
 echo "<br><br>";
 
 echo "<h2>3. Probando función completa...</h2>";
@@ -78,12 +103,18 @@ if ($resultado_completo && !$usando_simulacion) {
     echo "⚠️ <strong>ATENCIÓN: El correo NO se envió realmente</strong><br><br>";
     echo "El sistema usó simulación porque ambos métodos de envío real fallaron:<br>";
     echo "• mail() nativo no está disponible (sendmail no instalado)<br>";
-    echo "• PHPMailer SMTP falló (falta configurar sistema.insignias@smarcos.tecnm.mx)<br><br>";
-    echo "<strong>SOLUCIÓN:</strong> Cuando tengas el correo sistema.insignias@smarcos.tecnm.mx:<br>";
-    echo "1. Edita config_smtp.php en el servidor<br>";
-    echo "2. Actualiza SMTP_PASSWORD con la contraseña real<br>";
-    echo "3. Vuelve a probar este script<br><br>";
-    echo "O instala sendmail: <code>sudo apt-get install sendmail</code>";
+    echo "• PHPMailer SMTP falló (revisa los errores arriba para ver el problema específico)<br><br>";
+    echo "<strong>SOLUCIONES POSIBLES:</strong><br><br>";
+    echo "<strong>Opción 1: Instalar sendmail (MÁS FÁCIL)</strong><br>";
+    echo "En el servidor, ejecuta:<br>";
+    echo "<code style='background: #f4f4f4; padding: 5px; border-radius: 3px;'>sudo apt-get update && sudo apt-get install -y sendmail</code><br><br>";
+    echo "<strong>Opción 2: Arreglar PHPMailer SMTP</strong><br>";
+    echo "Si PHPMailer falló, puede ser por:<br>";
+    echo "• Credenciales incorrectas (correo o contraseña)<br>";
+    echo "• Office 365 requiere autenticación de dos factores (necesitas contraseña de aplicación)<br>";
+    echo "• El servidor SMTP de TecNM puede ser diferente (no smtp.office365.com)<br>";
+    echo "• Problemas de firewall o conexión de red<br><br>";
+    echo "Revisa los errores detallados arriba para identificar el problema específico.";
     echo "</p>";
 } else {
     echo "<p style='color: red; font-weight: bold;'>❌ El correo no se pudo enviar. Revisa los logs de error.</p>";

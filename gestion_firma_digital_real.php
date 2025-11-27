@@ -6,9 +6,24 @@ require_once 'verificar_sesion.php';
 // Verificar sesión de administrador
 verificarRoles(['Admin', 'SuperUsuario']);
 
+// Inicializar firma digital (puede fallar si no hay certificados, pero no es crítico)
+try {
 $firma_digital = inicializarFirmaDigitalReal($conexion);
+} catch (Exception $e) {
+    $firma_digital = null;
+}
+
 $mensaje = '';
 $resultado_firma = null;
+
+// Verificar si hay certificados disponibles
+$certificados_disponibles = false;
+if (file_exists('certificados/') && is_dir('certificados/')) {
+    $archivos = scandir('certificados/');
+    $certificados_disponibles = count(array_filter($archivos, function($f) {
+        return preg_match('/\.(cer|key)$/i', $f);
+    })) > 0;
+}
 
 // Procesar acciones
 if ($_POST) {

@@ -104,9 +104,72 @@ class CargaMasivaExcel {
     private $errores = [];
     private $exitos = [];
     private $archivo_temporal;
+    private $id_historial = null;
+    private $estadisticas = [
+        'insertados' => 0,
+        'actualizados' => 0,
+        'errores' => 0
+    ];
     
     public function __construct($conexion) {
         $this->conexion = $conexion;
+    }
+    
+    /**
+     * Obtener estadísticas
+     */
+    public function getEstadisticas() {
+        return $this->estadisticas;
+    }
+    
+    /**
+     * Registrar carga en el historial
+     */
+    public function registrarHistorial($nombre_archivo, $tipo_carga, $usuario_id, $usuario_nombre, $tamanio_archivo, $total_registros, $registros_exitosos, $registros_actualizados, $registros_con_error, $estado) {
+        try {
+            // Verificar si la tabla existe
+            $check_table = $this->conexion->query("SHOW TABLES LIKE 'historial_cargas_masivas'");
+            if ($check_table->num_rows == 0) {
+                // La tabla no existe, no podemos registrar
+                return false;
+            }
+            
+            $sql = "INSERT INTO historial_cargas_masivas 
+                    (nombre_archivo, tipo_carga, usuario_id, usuario_nombre, tamanio_archivo, 
+                     total_registros, registros_exitosos, registros_actualizados, registros_con_error, estado) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bind_param("ssisiiiiis", 
+                $nombre_archivo,
+                $tipo_carga,
+                $usuario_id,
+                $usuario_nombre,
+                $tamanio_archivo,
+                $total_registros,
+                $registros_exitosos,
+                $registros_actualizados,
+                $registros_con_error,
+                $estado
+            );
+            
+            if ($stmt->execute()) {
+                $this->id_historial = $this->conexion->insert_id;
+                return $this->id_historial;
+            }
+            return false;
+        } catch (Exception $e) {
+            // Si hay error, no fallar la carga, solo loguear
+            error_log("Error al registrar historial: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Obtener ID del historial
+     */
+    public function getIdHistorial() {
+        return $this->id_historial;
     }
     
     /**
@@ -439,6 +502,8 @@ class CargaMasivaExcel {
         $this->exitos[] = "📋 Columnas detectadas: " . implode(', ', $headers);
         
         $procesados = 0;
+        $actualizados = 0;
+        $errores_count = 0;
         
         foreach ($data as $fila => $row) {
             if (empty(array_filter($row))) continue;
@@ -447,11 +512,19 @@ class CargaMasivaExcel {
                 $datos = $this->validarDatosCentroIT($row, $headers, $fila + 2);
                 if (!$datos) continue;
                 
+                // Verificar si ya existe un centro con la misma Clave_ct
+                $sql_check = "SELECT id FROM it_centros WHERE Clave_ct = ? LIMIT 1";
+                $stmt_check = $this->conexion->prepare($sql_check);
+                $stmt_check->bind_param("s", $datos['Clave_ct']);
+                $stmt_check->execute();
+                $resultado_check = $stmt_check->get_result();
+                $existe = $resultado_check->num_rows > 0;
+                $id_existente = $existe ? $resultado_check->fetch_assoc()['id'] : null;
+                
                 // Construir SQL dinámicamente según los campos disponibles
                 $campos_sql = ['Nombre_itc', 'Acron', 'Estado', 'Clave_ct', 'Tipo_itc'];
                 $valores_sql = [];
                 $tipos = '';
-                $parametros = [];
                 
                 // Campos básicos obligatorios
                 $valores_sql[] = $datos['Nombre_itc'];
@@ -471,27 +544,77 @@ class CargaMasivaExcel {
                     }
                 }
                 
-                $campos_str = implode(', ', $campos_sql);
-                $placeholders = implode(', ', array_fill(0, count($campos_sql), '?'));
-                
-                $sql = "INSERT INTO it_centros ($campos_str) VALUES ($placeholders)";
-                
-                $stmt = $this->conexion->prepare($sql);
-                $stmt->bind_param($tipos, ...$valores_sql);
-                
-                if ($stmt->execute()) {
-                    $procesados++;
-                    $this->exitos[] = "Fila " . ($fila + 2) . ": Centro IT registrado correctamente";
+                if ($existe) {
+                    // Si existe, hacer UPDATE
+                    // Construir campos para UPDATE (todos excepto Clave_ct que es el identificador)
+                    $campos_update = [];
+                    $valores_update = [];
+                    $tipos_update = '';
+                    
+                    // Reconstruir arrays sin Clave_ct
+                    $campos_sin_clave = [];
+                    $valores_sin_clave = [];
+                    foreach ($campos_sql as $index => $campo) {
+                        if ($campo !== 'Clave_ct') {
+                            $campos_sin_clave[] = $campo;
+                            $valores_sin_clave[] = $valores_sql[$index];
+                            $campos_update[] = "$campo = ?";
+                        }
+                    }
+                    
+                    // Construir string de tipos (todos son 's' para strings)
+                    $tipos_update = str_repeat('s', count($campos_update));
+                    
+                    // Agregar valores para UPDATE
+                    $valores_update = $valores_sin_clave;
+                    
+                    // Agregar Clave_ct al final para el WHERE
+                    $valores_update[] = $datos['Clave_ct'];
+                    $tipos_update .= 's';
+                    
+                    $campos_str = implode(', ', $campos_update);
+                    $sql = "UPDATE it_centros SET $campos_str WHERE Clave_ct = ?";
+                    $stmt = $this->conexion->prepare($sql);
+                    $stmt->bind_param($tipos_update, ...$valores_update);
+                    
+                    if ($stmt->execute()) {
+                        $actualizados++;
+                        $this->exitos[] = "Fila " . ($fila + 2) . ": Centro IT actualizado correctamente (Clave_ct: " . $datos['Clave_ct'] . ")";
+                    } else {
+                        $errores_count++;
+                        $this->errores[] = "Fila " . ($fila + 2) . ": Error al actualizar - " . $stmt->error;
+                    }
                 } else {
-                    $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar - " . $stmt->error;
+                    // Si no existe, hacer INSERT
+                    $campos_str = implode(', ', $campos_sql);
+                    $placeholders = implode(', ', array_fill(0, count($campos_sql), '?'));
+                    
+                    $sql = "INSERT INTO it_centros ($campos_str) VALUES ($placeholders)";
+                    $stmt = $this->conexion->prepare($sql);
+                    $stmt->bind_param($tipos, ...$valores_sql);
+                    
+                    if ($stmt->execute()) {
+                        $procesados++;
+                        $this->exitos[] = "Fila " . ($fila + 2) . ": Centro IT registrado correctamente";
+                    } else {
+                        $errores_count++;
+                        $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar - " . $stmt->error;
+                    }
                 }
                 
             } catch (Exception $e) {
+                $errores_count++;
                 $this->errores[] = "Fila " . ($fila + 2) . ": " . $e->getMessage();
             }
         }
         
-        return $procesados > 0;
+        // Guardar estadísticas
+        $this->estadisticas['insertados'] += $procesados;
+        $this->estadisticas['actualizados'] += $actualizados;
+        $this->estadisticas['errores'] += $errores_count;
+        
+        // Retornar booleano para compatibilidad
+        return ($procesados + $actualizados) > 0;
     }
     
     /**
@@ -891,11 +1014,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (isset($_POST['cargar_datos']) && isset($_FILES['archivo_excel'])) {
         $tipo_carga = $_POST['tipo_carga'];
+        $nombre_archivo = $_FILES['archivo_excel']['name'];
+        $tamanio_archivo = $_FILES['archivo_excel']['size'];
+        
+        // Obtener información del usuario
+        $usuario_id = $_SESSION['usuario_id'] ?? 0;
+        $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
+        
         $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
         
-        $mensaje = $resultado ? 'success' : 'error';
         $errores = $cargaMasiva->getErrores();
         $exitos = $cargaMasiva->getExitos();
+        
+        // Obtener estadísticas
+        $estadisticas = $cargaMasiva->getEstadisticas();
+        
+        // Contar registros
+        $total_registros = count($errores) + count($exitos);
+        $registros_exitosos = $estadisticas['insertados'];
+        $registros_actualizados = $estadisticas['actualizados'];
+        $registros_con_error = count($errores) + $estadisticas['errores'];
+        
+        // Determinar estado
+        $estado = 'completado';
+        if ($registros_con_error > 0 && $registros_exitosos == 0 && $registros_actualizados == 0) {
+            $estado = 'fallido';
+        } elseif ($registros_con_error > 0) {
+            $estado = 'con_errores';
+        }
+        
+        // Registrar en historial
+        $cargaMasiva->registrarHistorial(
+            $nombre_archivo,
+            $tipo_carga,
+            $usuario_id,
+            $usuario_nombre,
+            $tamanio_archivo,
+            $total_registros,
+            $registros_exitosos,
+            $registros_actualizados,
+            $registros_con_error,
+            $estado
+        );
+        
+        $mensaje = $resultado ? 'success' : 'error';
     }
 }
 ?>
@@ -1381,6 +1543,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </header>
     
     <a href="modulo_de_administracion.php" class="back-btn">← Volver al Panel</a>
+    <a href="historial_cargas_masivas.php" class="back-btn" style="left: 200px;">📋 Ver Historial</a>
     
     <div class="container">
         <div class="header">

@@ -818,9 +818,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $correo_enviado = false;
                     }
                     
+                    // Obtener método usado del envío
+                    $metodo_usado = obtenerMetodoCorreoUsado();
+                    
                     // Guardar resultado del correo en sesión para mostrar en la siguiente página
                     $_SESSION['correo_enviado'] = $correo_enviado;
                     $_SESSION['correo_destinatario'] = $correo;
+                    $_SESSION['correo_metodo'] = $metodo_usado; // Guardar método usado realmente
                     $_SESSION['correo_error'] = $correo_enviado ? null : "No se pudo enviar el correo. Verifica config_smtp.php y los logs.";
                 } else {
                     error_log("⚠️ Correo no válido: " . $correo);

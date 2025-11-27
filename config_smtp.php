@@ -41,8 +41,8 @@ define('SMTP_FROM_NAME', 'sistema insignias');
 // Credenciales SMTP del SERVIDOR/SISTEMA
 // ⚠️ Solo se usan si mail() nativo falla
 // ⚠️ Cuando te den el correo sistema.insignias@smarcos.tecnm.mx, actualiza la contraseña aquí
-define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ✅ Correo del sistema
-define('SMTP_PASSWORD', 'Sistema-Insignias2025'); // ✅ Contraseña configurada
+define('SMTP_USERNAME', 'sistema.insignias@smarcos.tecnm.mx'); // ⚠️ Cambiar por credenciales correctas
+define('SMTP_PASSWORD', 'CAMBIAR_POR_CONTRASEÑA_REAL'); // ⚠️ CAMBIAR: Usar contraseña real o contraseña de aplicación
 
 // Servidor SMTP principal (prueba primero este)
 // ⚠️ CAMBIO: Office 365 primero porque smtp.tecnm.mx no se resuelve en el servidor
