@@ -645,6 +645,46 @@ class CargaMasivaExcel {
     }
     
     /**
+     * Limpiar y validar correo electrónico
+     */
+    private function limpiarYValidarEmail($email) {
+        if (empty($email)) {
+            return ['valido' => false, 'email' => ''];
+        }
+        
+        // Limpiar el email
+        $email_limpio = trim($email);
+        $email_limpio = preg_replace('/[\r\n\t]+/', '', $email_limpio); // Quitar saltos de línea y tabs
+        $email_limpio = preg_replace('/\s+/', '', $email_limpio); // Quitar todos los espacios
+        $email_limpio = trim($email_limpio, " \t\n\r\0\x0B\"'`"); // Quitar comillas y espacios
+        
+        // Validar formato básico
+        if (empty($email_limpio)) {
+            return ['valido' => false, 'email' => $email_limpio];
+        }
+        
+        // Verificar que tenga @
+        if (strpos($email_limpio, '@') === false) {
+            return ['valido' => false, 'email' => $email_limpio];
+        }
+        
+        // Validar con filter_var
+        $email_validado = filter_var($email_limpio, FILTER_VALIDATE_EMAIL);
+        
+        if ($email_validado !== false) {
+            return ['valido' => true, 'email' => $email_validado];
+        }
+        
+        // Si filter_var falla, hacer validación manual más flexible
+        // Formato básico: algo@dominio.extension
+        if (preg_match('/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $email_limpio)) {
+            return ['valido' => true, 'email' => $email_limpio];
+        }
+        
+        return ['valido' => false, 'email' => $email_limpio];
+    }
+    
+    /**
      * Normalizar nombre de columna para búsqueda flexible
      */
     private function normalizarNombreColumna($nombre) {
@@ -750,13 +790,18 @@ class CargaMasivaExcel {
             $indice_columna = $this->buscarColumna($headers, $campo_db, $variaciones);
             
             if ($indice_columna !== false) {
-                $valor = trim($row[$indice_columna] ?? '');
-                // Validar formato de email si no está vacío
-                if (!empty($valor)) {
-                    if (filter_var($valor, FILTER_VALIDATE_EMAIL)) {
-                        $datos[$campo_db] = $valor;
+                $valor_original = $row[$indice_columna] ?? '';
+                
+                // Validar y limpiar el email
+                if (!empty($valor_original)) {
+                    $resultado_email = $this->limpiarYValidarEmail($valor_original);
+                    
+                    if ($resultado_email['valido']) {
+                        $datos[$campo_db] = $resultado_email['email'];
                     } else {
-                        $this->errores[] = "Fila $fila: El campo '$campo_db' contiene un correo electrónico inválido: $valor";
+                        // Mostrar el valor original para debugging
+                        $valor_mostrar = addslashes($valor_original);
+                        $this->errores[] = "Fila $fila: El campo '$campo_db' contiene un correo electrónico inválido: '$valor_mostrar'";
                         // No retornamos false, solo registramos el error pero continuamos
                     }
                 }
