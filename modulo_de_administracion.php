@@ -293,7 +293,7 @@ if (isset($_POST['guardar_categoria'])) {
         }
         
         // Verificar si la categoría ya existe (evitar duplicados)
-        $check_stmt = $conexion->prepare("SELECT id, ID_cat, Nombre_cat FROM cat_insignias WHERE LOWER(TRIM(Nombre_cat)) = LOWER(TRIM(?))");
+        $check_stmt = $conexion->prepare("SELECT id, Nombre_cat FROM cat_insignias WHERE LOWER(TRIM(Nombre_cat)) = LOWER(TRIM(?))");
         if (!$check_stmt) {
             throw new Exception("Error al preparar consulta de verificación: " . $conexion->error);
         }
@@ -318,7 +318,7 @@ if (isset($_POST['guardar_categoria'])) {
         if ($stmt->execute()) {
             $mensaje_exito = "✅ Categoría '$nombre' guardada exitosamente en la base de datos";
             // Recargar categorías para que aparezcan en el select de subcategorías
-            $categorias = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
+            $categorias = $conexion->query("SELECT id, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
         } else {
             throw new Exception("Error al ejecutar consulta: " . $stmt->error);
         }
@@ -750,7 +750,7 @@ try {
             ob_clean();
         }
         // Consultar categorías existentes para el select
-        $categorias = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
+        $categorias = $conexion->query("SELECT id, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
     }
 } catch (Exception $e) {
     $categorias = null;
@@ -759,7 +759,7 @@ try {
 // Consultar categorías para el formulario de categorías (siempre, no solo después de guardar)
 if (!isset($categorias) || !$categorias) {
     try {
-        $categorias = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
+        $categorias = $conexion->query("SELECT id, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
     } catch (Exception $e) {
         $categorias = null;
     }
@@ -2531,13 +2531,12 @@ ob_clean();
           <option value="">Selecciona una categoría...</option>
           <?php 
           // Consultar categorías para el select (asegurar que siempre esté disponible)
-          $categorias_select = $conexion->query("SELECT id, ID_cat, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
+          $categorias_select = $conexion->query("SELECT id, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
           if ($categorias_select && $categorias_select->num_rows > 0): 
             // Reiniciar el puntero del resultado
             $categorias_select->data_seek(0);
             while($row = $categorias_select->fetch_assoc()): 
-              // Manejar ambas estructuras posibles (id o ID_cat)
-              $categoria_id = isset($row['ID_cat']) ? $row['ID_cat'] : (isset($row['id']) ? $row['id'] : null);
+              $categoria_id = isset($row['id']) ? $row['id'] : null;
               $categoria_nombre = isset($row['Nombre_cat']) ? $row['Nombre_cat'] : '';
               if ($categoria_id && $categoria_nombre): ?>
                 <option value="<?php echo htmlspecialchars($categoria_id); ?>"><?php echo htmlspecialchars($categoria_nombre); ?></option>
