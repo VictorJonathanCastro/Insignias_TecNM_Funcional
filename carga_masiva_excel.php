@@ -425,6 +425,19 @@ class CargaMasivaExcel {
         } else {
             $headers = array_shift($data);
         }
+        
+        // Limpiar headers (quitar espacios, nulls, etc.)
+        $headers = array_map(function($h) {
+            return is_string($h) ? trim($h) : '';
+        }, $headers);
+        $headers = array_filter($headers, function($h) {
+            return !empty($h);
+        });
+        $headers = array_values($headers); // Reindexar
+        
+        // Mostrar información de debug
+        $this->exitos[] = "📋 Columnas detectadas: " . implode(', ', $headers);
+        
         $procesados = 0;
         
         foreach ($data as $fila => $row) {
@@ -613,27 +626,95 @@ class CargaMasivaExcel {
     }
     
     /**
+     * Normalizar nombre de columna para búsqueda flexible
+     */
+    private function normalizarNombreColumna($nombre) {
+        // Convertir a minúsculas, quitar espacios, guiones y caracteres especiales
+        $normalizado = strtolower(trim($nombre));
+        $normalizado = str_replace([' ', '-', '_', '.', 'á', 'é', 'í', 'ó', 'ú', 'ñ'], 
+                                   ['', '', '', '', 'a', 'e', 'i', 'o', 'u', 'n'], 
+                                   $normalizado);
+        return $normalizado;
+    }
+    
+    /**
+     * Buscar columna por nombre flexible
+     */
+    private function buscarColumna($headers, $nombre_buscado, $variaciones = []) {
+        $nombre_normalizado = $this->normalizarNombreColumna($nombre_buscado);
+        
+        // Agregar variaciones comunes
+        $todas_variaciones = array_merge(
+            [$nombre_buscado],
+            [strtolower($nombre_buscado), strtoupper($nombre_buscado), ucfirst(strtolower($nombre_buscado))],
+            $variaciones
+        );
+        
+        // Normalizar todas las variaciones
+        $variaciones_normalizadas = array_map([$this, 'normalizarNombreColumna'], $todas_variaciones);
+        
+        foreach ($headers as $index => $header) {
+            if (empty($header)) continue;
+            
+            $header_normalizado = $this->normalizarNombreColumna($header);
+            
+            // Comparación exacta normalizada
+            if ($header_normalizado === $nombre_normalizado) {
+                return $index;
+            }
+            
+            // Comparación con variaciones normalizadas
+            foreach ($variaciones_normalizadas as $variacion_norm) {
+                if ($header_normalizado === $variacion_norm) {
+                    return $index;
+                }
+            }
+            
+            // Búsqueda parcial (contiene) - solo si el nombre buscado tiene al menos 3 caracteres
+            if (strlen($nombre_normalizado) >= 3) {
+                if (stripos($header_normalizado, $nombre_normalizado) !== false || 
+                    stripos($nombre_normalizado, $header_normalizado) !== false) {
+                    return $index;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
      * Validar datos de centro IT
      */
     private function validarDatosCentroIT($row, $headers, $fila) {
         $datos = [];
-        $columnas = array_flip($headers);
         
-        $campos_requeridos = ['Nombre_itc', 'Acron', 'Estado', 'Clave_ct', 'Tipo_itc'];
+        // Mapeo de campos con sus posibles variaciones
+        $mapeo_campos = [
+            'Nombre_itc' => ['nombre_itc', 'nombre', 'nombre del centro', 'nombre centro', 'centro', 'instituto', 'nombre instituto'],
+            'Acron' => ['acron', 'acronimo', 'acrónimo', 'siglas', 'abreviatura'],
+            'Estado' => ['estado', 'estado del plantel', 'ubicacion', 'ubicación', 'localidad'],
+            'Clave_ct' => ['clave_ct', 'clave', 'clave centro', 'clave del centro', 'cct', 'clave cct'],
+            'Tipo_itc' => ['tipo_itc', 'tipo', 'tipo de centro', 'tipo centro', 'categoria', 'categoría']
+        ];
         
-        foreach ($campos_requeridos as $campo) {
-            if (!isset($columnas[$campo])) {
-                $this->errores[] = "Fila $fila: Columna '$campo' no encontrada";
+        // Buscar cada campo
+        foreach ($mapeo_campos as $campo_db => $variaciones) {
+            $indice_columna = $this->buscarColumna($headers, $campo_db, $variaciones);
+            
+            if ($indice_columna === false) {
+                // Mostrar las columnas disponibles para ayudar al usuario
+                $columnas_disponibles = implode(', ', array_filter($headers));
+                $this->errores[] = "Fila $fila: Columna '$campo_db' no encontrada. Columnas disponibles: $columnas_disponibles";
                 return false;
             }
             
-            $valor = trim($row[$columnas[$campo]] ?? '');
+            $valor = trim($row[$indice_columna] ?? '');
             if (empty($valor)) {
-                $this->errores[] = "Fila $fila: Campo '$campo' es requerido";
+                $this->errores[] = "Fila $fila: Campo '$campo_db' es requerido pero está vacío";
                 return false;
             }
             
-            $datos[$campo] = $valor;
+            $datos[$campo_db] = $valor;
         }
         
         return $datos;
