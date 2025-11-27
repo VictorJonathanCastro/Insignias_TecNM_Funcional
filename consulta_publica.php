@@ -913,40 +913,6 @@ function formatearFecha($fecha) {
             }
         }
     </style>
-    <script>
-        // Datos de insignias disponibles
-        const insigniasData = <?php echo json_encode($subcategorias_insignias); ?>;
-        
-        function updateSubcategorias() {
-            const categoriaSelect = document.getElementById('categoria');
-            const subcategoriaSelect = document.getElementById('subcategoria');
-            
-            // Limpiar subcategorías
-            subcategoriaSelect.innerHTML = '<option value="">Selecciona una subcategoría...</option>';
-            
-            if (categoriaSelect.value) {
-                const categoriaId = parseInt(categoriaSelect.value);
-                
-                // Filtrar subcategorías por categoría seleccionada
-                const subcategoriasFiltradas = insigniasData.filter(insignia => 
-                    insignia.categoria_id == categoriaId
-                );
-                
-                // Agregar opciones de subcategorías
-                subcategoriasFiltradas.forEach(insignia => {
-                    const option = document.createElement('option');
-                    option.value = insignia.id;
-                    option.textContent = insignia.nombre_insignia;
-                    subcategoriaSelect.appendChild(option);
-                });
-            }
-        }
-        
-        // Inicializar cuando se carga la página
-        document.addEventListener('DOMContentLoaded', function() {
-            updateSubcategorias();
-        });
-    </script>
 </head>
 <body>
     <header class="header">
@@ -983,53 +949,6 @@ function formatearFecha($fecha) {
                 </a>
                 <?php endif; ?>
             </form>
-            
-            <!-- Búsqueda por Categoría/Subcategoría -->
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                <h3 style="color: #1e3c72; margin-bottom: 15px; font-size: 1.1em;">🎯 Búsqueda por Categoría</h3>
-                <form method="GET" class="search-form" id="form-categoria">
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="display: block; margin-bottom: 8px; color: #1e3c72; font-weight: 600;">Categoría:</label>
-                            <select name="categoria" id="categoria" class="search-input" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px;" onchange="updateSubcategorias()">
-                                <option value="">Selecciona una categoría...</option>
-                                <?php foreach ($categorias_insignias as $categoria): ?>
-                                    <option value="<?php echo $categoria['id']; ?>" <?php echo ($categoria_id == $categoria['id']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($categoria['nombre_categoria']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="display: block; margin-bottom: 8px; color: #1e3c72; font-weight: 600;">Subcategoría:</label>
-                            <select name="subcategoria" id="subcategoria" class="search-input" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px;">
-                                <option value="">Selecciona una subcategoría...</option>
-                                <?php 
-                                if (!empty($categoria_id)) {
-                                    foreach ($subcategorias_insignias as $subcat) {
-                                        if ($subcat['categoria_id'] == $categoria_id) {
-                                            echo '<option value="' . $subcat['id'] . '" ' . (($subcategoria_id == $subcat['id']) ? 'selected' : '') . '>';
-                                            echo htmlspecialchars($subcat['nombre_insignia']);
-                                            echo '</option>';
-                                        }
-                                    }
-                                }
-                                ?>
-                            </select>
-                        </div>
-                        <div>
-                            <button type="submit" class="search-btn" style="margin-top: 0;">
-                                🎯 Buscar
-                            </button>
-                        </div>
-                    </div>
-                    <?php if (!empty($categoria_id) || !empty($subcategoria_id)): ?>
-                    <a href="consulta_publica.php" class="search-btn" style="background: #dc3545; margin-top: 15px; display: inline-block;">
-                        🗑️ Limpiar
-                    </a>
-                    <?php endif; ?>
-                </form>
-            </div>
             
             <!-- Búsqueda específica por código -->
             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
