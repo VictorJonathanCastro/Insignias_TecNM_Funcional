@@ -814,27 +814,23 @@ ob_clean();
     
     /* ========== HEADER AZUL PROFESIONAL (igual a login/index) ========== */
     header.header-principal {
-      background: 
-        linear-gradient(135deg, 
-          rgba(30, 60, 114, 0.95) 0%, 
-          rgba(42, 82, 152, 0.98) 30%,
-          rgba(30, 60, 114, 0.95) 60%,
-          rgba(26, 52, 100, 0.95) 100%);
-      backdrop-filter: blur(60px) saturate(200%);
-      -webkit-backdrop-filter: blur(60px) saturate(200%);
+      background: linear-gradient(135deg, 
+        #1e3c72 0%, 
+        #2a5298 50%, 
+        #1e3c72 100%);
+      backdrop-filter: blur(40px) saturate(180%);
       color: white;
       text-align: center;
-      padding: 35px 0;
-      position: sticky;
+      padding: 30px 0;
+      position: fixed;
       top: 0;
+      left: 0;
+      width: 100%;
       z-index: 1000;
       box-shadow: 
-        0 10px 50px rgba(0,0,0,0.4),
-        0 5px 25px rgba(0,0,0,0.2),
-        inset 0 2px 0 rgba(255,255,255,0.25),
-        inset 0 -1px 0 rgba(255,255,255,0.05);
-      border-bottom: 2px solid rgba(255,255,255,0.15);
-      border-top: 2px solid rgba(255,255,255,0.1);
+        0 8px 32px rgba(0,0,0,0.3),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     
     header.header-principal::before {
@@ -851,24 +847,15 @@ ob_clean();
     
     header.header-principal h1 {
       margin: 0;
-      font-size: 32px;
-      font-weight: 900;
+      font-size: 28px;
+      font-weight: 800;
       text-shadow: 
-        0 6px 12px rgba(0,0,0,0.5),
-        0 0 30px rgba(59, 130, 246, 0.4),
-        0 0 60px rgba(59, 130, 246, 0.2);
-      background: linear-gradient(135deg, #ffffff 0%, #e8f2fa 25%, #ffffff 50%, #e8f2fa 75%, #ffffff 100%);
-      background-size: 200% 200%;
+        0 4px 8px rgba(0,0,0,0.4),
+        0 0 20px rgba(59, 130, 246, 0.3);
+      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #ffffff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      animation: titleShimmer 4s ease infinite;
-      letter-spacing: -0.5px;
-    }
-    
-    @keyframes titleShimmer {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
     }
     
     .header-content-admin {
@@ -888,6 +875,8 @@ ob_clean();
       transform: translateY(-50%);
       height: 60px;
       width: auto;
+      max-width: none;
+      object-fit: contain;
       filter: brightness(0) invert(1);
       transition: all 0.3s ease;
     }
@@ -899,6 +888,7 @@ ob_clean();
     
     /* Ajuste para el contenedor principal */
     .main-container {
+      padding-top: 100px !important;
       padding-bottom: 150px !important;
     }
     
@@ -1237,6 +1227,9 @@ ob_clean();
       
       .header-logo-admin {
         height: 50px;
+        width: auto;
+        max-width: none;
+        object-fit: contain;
         left: -180px;
       }
       
@@ -1270,6 +1263,8 @@ ob_clean();
         transform: none;
         height: 45px;
         width: auto;
+        max-width: none;
+        object-fit: contain;
         display: block;
         margin: 0;
       }
@@ -1367,6 +1362,9 @@ ob_clean();
       
       .header-logo-admin {
         height: 35px;
+        width: auto;
+        max-width: none;
+        object-fit: contain;
       }
       
       .header-content-admin h1 {
@@ -1418,6 +1416,9 @@ ob_clean();
       
       .header-logo-admin {
         height: 30px;
+        width: auto;
+        max-width: none;
+        object-fit: contain;
       }
       
       .header-content-admin h1 {
