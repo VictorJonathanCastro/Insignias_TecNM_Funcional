@@ -447,18 +447,37 @@ class CargaMasivaExcel {
                 $datos = $this->validarDatosCentroIT($row, $headers, $fila + 2);
                 if (!$datos) continue;
                 
-                $sql = "INSERT INTO it_centros 
-                        (Nombre_itc, Acron, Estado, Clave_ct, Tipo_itc) 
-                        VALUES (?, ?, ?, ?, ?)";
+                // Construir SQL dinámicamente según los campos disponibles
+                $campos_sql = ['Nombre_itc', 'Acron', 'Estado', 'Clave_ct', 'Tipo_itc'];
+                $valores_sql = [];
+                $tipos = '';
+                $parametros = [];
+                
+                // Campos básicos obligatorios
+                $valores_sql[] = $datos['Nombre_itc'];
+                $valores_sql[] = $datos['Acron'];
+                $valores_sql[] = $datos['Estado'];
+                $valores_sql[] = $datos['Clave_ct'];
+                $valores_sql[] = $datos['Tipo_itc'];
+                $tipos = 'sssss';
+                
+                // Campos de correo opcionales
+                $campos_correo = ['CE_dir', 'CE_svin', 'CE_saca', 'CE_sadm', 'CE_dvin', 'CE_dcyd'];
+                foreach ($campos_correo as $campo_correo) {
+                    if (isset($datos[$campo_correo]) && !empty($datos[$campo_correo])) {
+                        $campos_sql[] = $campo_correo;
+                        $valores_sql[] = $datos[$campo_correo];
+                        $tipos .= 's';
+                    }
+                }
+                
+                $campos_str = implode(', ', $campos_sql);
+                $placeholders = implode(', ', array_fill(0, count($campos_sql), '?'));
+                
+                $sql = "INSERT INTO it_centros ($campos_str) VALUES ($placeholders)";
                 
                 $stmt = $this->conexion->prepare($sql);
-                $stmt->bind_param("sssss", 
-                    $datos['Nombre_itc'],
-                    $datos['Acron'],
-                    $datos['Estado'],
-                    $datos['Clave_ct'],
-                    $datos['Tipo_itc']
-                );
+                $stmt->bind_param($tipos, ...$valores_sql);
                 
                 if ($stmt->execute()) {
                     $procesados++;
@@ -692,9 +711,9 @@ class CargaMasivaExcel {
         $mapeo_campos = [
             'Nombre_itc' => ['nombre_itc', 'nombre', 'nombre del centro', 'nombre centro', 'centro', 'instituto', 'nombre instituto'],
             'Acron' => ['acron', 'acronimo', 'acrónimo', 'siglas', 'abreviatura'],
-            'Estado' => ['estado', 'estado del plantel', 'ubicacion', 'ubicación', 'localidad'],
-            'Clave_ct' => ['clave_ct', 'clave', 'clave centro', 'clave del centro', 'cct', 'clave cct'],
-            'Tipo_itc' => ['tipo_itc', 'tipo', 'tipo de centro', 'tipo centro', 'categoria', 'categoría']
+            'Estado' => ['estado', 'estado del plantel', 'ubicacion', 'ubicación', 'localidad', 'entidad', 'entidad federativa'],
+            'Clave_ct' => ['clave_ct', 'clave', 'clave centro', 'clave del centro', 'cct', 'clave cct', 'clave de institución', 'clave de institucion', 'clave institucion', 'clave institucion'],
+            'Tipo_itc' => ['tipo_itc', 'tipo', 'tipo de centro', 'tipo centro', 'categoria', 'categoría', 'tipo de plantel', 'tipo plantel', 'clasificación', 'clasificacion']
         ];
         
         // Buscar cada campo
@@ -715,6 +734,33 @@ class CargaMasivaExcel {
             }
             
             $datos[$campo_db] = $valor;
+        }
+        
+        // Campos de correo opcionales
+        $campos_correo = [
+            'CE_dir' => ['ce_dir', 'correo direccion', 'correo dirección', 'email direccion', 'email dirección', 'correo dir'],
+            'CE_svin' => ['ce_svin', 'correo subdireccion vinculacion', 'correo subdirección vinculación', 'email subdireccion vinculacion', 'correo svin'],
+            'CE_saca' => ['ce_saca', 'correo subdireccion academica', 'correo subdirección académica', 'email subdireccion academica', 'correo saca'],
+            'CE_sadm' => ['ce_sadm', 'correo subdireccion administrativa', 'correo subdirección administrativa', 'email subdireccion administrativa', 'correo sadm'],
+            'CE_dvin' => ['ce_dvin', 'correo departamento vinculacion', 'correo departamento vinculación', 'email departamento vinculacion', 'correo dvin'],
+            'CE_dcyd' => ['ce_dcyd', 'correo departamento comunicacion', 'correo departamento comunicación', 'correo departamento comunicacion y difusion', 'correo dcyd']
+        ];
+        
+        foreach ($campos_correo as $campo_db => $variaciones) {
+            $indice_columna = $this->buscarColumna($headers, $campo_db, $variaciones);
+            
+            if ($indice_columna !== false) {
+                $valor = trim($row[$indice_columna] ?? '');
+                // Validar formato de email si no está vacío
+                if (!empty($valor)) {
+                    if (filter_var($valor, FILTER_VALIDATE_EMAIL)) {
+                        $datos[$campo_db] = $valor;
+                    } else {
+                        $this->errores[] = "Fila $fila: El campo '$campo_db' contiene un correo electrónico inválido: $valor";
+                        // No retornamos false, solo registramos el error pero continuamos
+                    }
+                }
+            }
         }
         
         return $datos;
