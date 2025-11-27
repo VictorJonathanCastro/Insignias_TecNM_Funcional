@@ -316,7 +316,6 @@ if (isset($_POST['guardar_categoria'])) {
         
         $stmt->bind_param("s", $nombre);
         if ($stmt->execute()) {
-            $mensaje_exito = "✅ Categoría '$nombre' guardada exitosamente en la base de datos";
             // Recargar categorías para que aparezcan en el select de subcategorías
             $categorias = $conexion->query("SELECT id, Nombre_cat FROM cat_insignias ORDER BY Nombre_cat");
         } else {
@@ -339,15 +338,43 @@ if (isset($_POST['guardar_subcategoria'])) {
             throw new Exception("Datos de subcategoría inválidos");
         }
         
-        $stmt = $conexion->prepare("INSERT INTO tipo_insignia (Nombre_ins, Cat_ins) VALUES (?, ?)");
+        // Verificar estructura de la tabla tipo_insignia
+        $check_columns = $conexion->query("SHOW COLUMNS FROM tipo_insignia");
+        $has_nombre_ins = false;
+        $has_nombre_insignia = false;
+        $has_cat_ins = false;
+        
+        if ($check_columns) {
+            while ($col = $check_columns->fetch_assoc()) {
+                if ($col['Field'] == 'Nombre_ins') $has_nombre_ins = true;
+                if ($col['Field'] == 'Nombre_Insignia') $has_nombre_insignia = true;
+                if ($col['Field'] == 'Cat_ins') $has_cat_ins = true;
+            }
+        }
+        
+        // Construir la consulta según las columnas disponibles
+        if ($has_nombre_insignia && $has_cat_ins) {
+            $stmt = $conexion->prepare("INSERT INTO tipo_insignia (Nombre_Insignia, Cat_ins) VALUES (?, ?)");
+        } elseif ($has_nombre_ins && $has_cat_ins) {
+            $stmt = $conexion->prepare("INSERT INTO tipo_insignia (Nombre_ins, Cat_ins) VALUES (?, ?)");
+        } elseif ($has_nombre_insignia) {
+            $stmt = $conexion->prepare("INSERT INTO tipo_insignia (Nombre_Insignia) VALUES (?)");
+            $categoria_id = null; // No usar categoría si no existe la columna
+        } else {
+            throw new Exception("No se encontró la columna Nombre_ins o Nombre_Insignia en la tabla tipo_insignia");
+        }
+        
         if (!$stmt) {
             throw new Exception("Error al preparar consulta: " . $conexion->error);
         }
         
-        $stmt->bind_param("si", $nombre, $categoria_id);
-        if ($stmt->execute()) {
-            $mensaje_exito = "Subcategoría '$nombre' guardada exitosamente";
+        if ($has_cat_ins) {
+            $stmt->bind_param("si", $nombre, $categoria_id);
         } else {
+            $stmt->bind_param("s", $nombre);
+        }
+        
+        if (!$stmt->execute()) {
             throw new Exception("Error al ejecutar consulta: " . $stmt->error);
         }
         $stmt->close();
@@ -2477,13 +2504,6 @@ ob_clean();
         $nombre_completo = trim($usuario['Nombre'] . ' ' . $usuario['Apellido_Paterno'] . ' ' . $usuario['Apellido_Materno']);
         echo htmlspecialchars($nombre_completo); 
       ?></div>
-      
-      <?php if (!empty($mensaje_exito)): ?>
-        <div class="alert alert-success" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-          <i class="fas fa-check-circle"></i>
-          <strong>Éxito:</strong> <?php echo htmlspecialchars($mensaje_exito); ?>
-        </div>
-      <?php endif; ?>
       
       <?php if (!empty($mensaje_error) && $mensaje_error !== "YA_EXISTE_RECONOCIMIENTO"): ?>
         <div class="alert alert-danger">
