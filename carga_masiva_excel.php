@@ -734,6 +734,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Carga Masiva Excel - Insignias TecNM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -742,10 +745,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: 
+                radial-gradient(circle at 15% 25%, rgba(0, 102, 204, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 85% 75%, rgba(0, 51, 102, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 50% 15%, rgba(74, 144, 226, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 25% 85%, rgba(0, 102, 204, 0.1) 0%, transparent 45%),
+                linear-gradient(135deg, 
+                  #e8f0f8 0%, 
+                  #d5e3f0 20%, 
+                  #c5d8ec 40%, 
+                  #d5e3f0 60%, 
+                  #e8f0f8 80%, 
+                  #f0f5fa 100%);
+            background-attachment: fixed;
+            background-size: 100% 100%;
             min-height: 100vh;
-            padding: 20px;
+            padding-top: 100px;
+            padding-bottom: 20px;
         }
         
         .container {
@@ -755,6 +772,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             overflow: hidden;
+        }
+        
+        /* HEADER AZUL COMO LOGIN */
+        header {
+            background: linear-gradient(135deg, 
+                #1e3c72 0%, 
+                #2a5298 50%, 
+                #1e3c72 100%);
+            backdrop-filter: blur(40px) saturate(180%);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.3),
+                inset 0 1px 0 rgba(255,255,255,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+        }
+        
+        .header-logo {
+            position: absolute;
+            left: -260px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 60px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            transition: all 0.3s ease;
+        }
+        
+        .header-logo:hover {
+            transform: translateY(-50%) scale(1.1);
+            filter: brightness(0) invert(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+        }
+        
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 800;
+            text-shadow: 
+                0 4px 8px rgba(0,0,0,0.4),
+                0 0 20px rgba(59, 130, 246, 0.3);
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .header {
@@ -916,23 +993,221 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         .back-btn {
-            position: absolute;
-            top: 20px;
+            position: fixed;
+            top: 100px;
             left: 20px;
-            background: #6c757d;
+            background: linear-gradient(135deg, 
+                #003366 0%, 
+                #0066CC 50%, 
+                #003366 100%);
             color: white;
-            padding: 10px 20px;
+            padding: 12px 20px;
             text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
+            border-radius: 8px;
+            transition: all 0.3s;
+            z-index: 999;
+            box-shadow: 0 4px 12px rgba(0,51,102,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
         }
         
         .back-btn:hover {
-            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,51,102,0.4);
+        }
+        
+        /* FOOTER AZUL COMO LOGIN */
+        footer {
+            background: #1e3c72;
+            color: white;
+            padding: 40px 0;
+            margin-top: 50px;
+            text-align: center;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .footer-section {
+            margin-bottom: 25px;
+        }
+        
+        footer h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        
+        .footer-links a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: #a0c4ff;
+        }
+        
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 18px;
+        }
+        
+        .social-icon {
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .copyright {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            color: #a0c4ff;
+            font-size: 14px;
+        }
+        
+        footer p {
+            margin: 0;
+            opacity: 0.9;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        /* RESPONSIVE - Tablet */
+        @media (max-width: 1024px) {
+            header {
+                padding: 25px 0;
+            }
+            
+            .header-logo {
+                height: 50px;
+                left: -180px;
+            }
+            
+            header h1 {
+                font-size: 24px;
+            }
+            
+            body {
+                padding-top: 90px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles y tablets pequeñas */
+        @media (max-width: 768px) {
+            header {
+                padding: 20px 0;
+            }
+            
+            .header-content {
+                padding: 0 15px;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .header-logo {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                height: 45px;
+                width: auto;
+                display: block;
+                margin: 0;
+            }
+            
+            header h1 {
+                font-size: 20px;
+                margin: 0;
+            }
+            
+            body {
+                padding-top: 80px;
+            }
+            
+            .back-btn {
+                top: 90px;
+                left: 10px;
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles pequeños */
+        @media (max-width: 480px) {
+            header {
+                padding: 15px 0;
+            }
+            
+            .header-content {
+                padding: 0 10px;
+                gap: 8px;
+            }
+            
+            .header-logo {
+                height: 35px;
+            }
+            
+            header h1 {
+                font-size: 18px;
+            }
+            
+            body {
+                padding-top: 70px;
+            }
+            
+            .back-btn {
+                top: 80px;
+                left: 5px;
+                padding: 8px 12px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- HEADER AZUL -->
+    <header>
+        <div class="header-content">
+            <img src="imagen/logo.png" alt="TecNM Logo" class="header-logo">
+            <h1>Insignias TecNM</h1>
+        </div>
+    </header>
+    
     <a href="modulo_de_administracion.php" class="back-btn">← Volver al Panel</a>
     
     <div class="container">
@@ -1037,6 +1312,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
         </div>
     </div>
+    
+    <!-- FOOTER AZUL -->
+    <footer>
+        <div class="footer-content">
+            <div class="copyright">
+                <p>Copyright 2025 - TecNM</p>
+                <p>Ultima actualización - Octubre 2025</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Enlaces</h3>
+                <div class="footer-links">
+                    <a href="https://datos.gob.mx/" target="_blank">Datos</a>
+                    <a href="https://www.gob.mx/publicaciones" target="_blank">Publicaciones</a>
+                    <a href="https://consultapublicamx.plataformadetransparencia.org.mx/vut-web/faces/view/consultaPublica.xhtml?idEntidad=MzM=&idSujetoObligado=MTAwMDE=#inicio" target="_blank">Portal de Obligaciones de Transparencia</a>
+                    <a href="https://www.gob.mx/pnt" target="_blank">PNT</a>
+                    <a href="https://www.inai.org.mx/" target="_blank">INAI</a>
+                    <a href="https://www.gob.mx/alerta" target="_blank">Alerta</a>
+                    <a href="https://www.gob.mx/denuncia" target="_blank">Denuncia</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>¿Qué es gob.mx?</h3>
+                <p>Es el portal único de trámites, información y participación ciudadana.</p>
+                <a href="https://www.gob.mx/" target="_blank">Leer más</a>
+            </div>
+            
+            <div class="footer-section">
+                <div class="footer-links">
+                    <a href="https://www.gob.mx/administraciones-anteriores" target="_blank">Administraciones anteriores</a>
+                    <a href="https://www.gob.mx/accesibilidad" target="_blank">Declaración de Accesibilidad</a>
+                    <a href="https://www.gob.mx/privacidad" target="_blank">Aviso de privacidad</a>
+                    <a href="https://www.gob.mx/privacidad-simplificado" target="_blank">Aviso de privacidad simplificado</a>
+                    <a href="https://www.gob.mx/terminos" target="_blank">Términos y Condiciones</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <div class="footer-links">
+                    <a href="https://www.gob.mx/politica-seguridad" target="_blank">Política de seguridad</a>
+                    <a href="https://www.gob.mx/denuncia-servidores" target="_blank">Denuncia contra servidores públicos</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Síguenos en</h3>
+                <div class="footer-social">
+                    <a href="https://www.facebook.com/TecNacionalMexico" target="_blank" class="social-icon">f</a>
+                    <a href="https://twitter.com/TecNacionalMex" target="_blank" class="social-icon">X</a>
+                    <a href="https://www.youtube.com/user/TecNacionalMexico" target="_blank" class="social-icon">▶</a>
+                    <a href="https://www.instagram.com/tecnacionalmexico/" target="_blank" class="social-icon">📷</a>
+                </div>
+            </div>
+        </div>
+    </footer>
     
     <script>
         // Validación del lado del cliente
