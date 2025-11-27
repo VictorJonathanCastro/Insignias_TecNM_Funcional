@@ -1587,6 +1587,25 @@ ob_clean();
       margin-bottom:15px;
       box-sizing:border-box;
       font-size:16px;
+      color: #000;
+      background-color: #fff;
+    }
+    
+    /* Estilos específicos para formulario de categorías */
+    .form-label {
+      color: #000 !important;
+      font-weight: bold;
+      display: block;
+      margin: 10px 0 5px;
+    }
+    
+    .form-control {
+      color: #000 !important;
+      background-color: #fff !important;
+    }
+    
+    .form-control::placeholder {
+      color: #999;
     }
     textarea {
       min-height:80px;
