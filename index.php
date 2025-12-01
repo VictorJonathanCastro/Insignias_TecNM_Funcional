@@ -1528,6 +1528,9 @@ if ($conexion && !$conexion->connect_errno) {
         <a href="login.php" class="btn-primary">
           <i class="fas fa-rocket"></i> Acceder al Sistema
         </a>
+        <a href="consulta_publica.php" class="btn-secondary">
+          <i class="fas fa-search"></i> Consultar Insignia
+        </a>
         <a href="#informacion" class="btn-secondary">
           <i class="fas fa-info-circle"></i> Más Información
         </a>
