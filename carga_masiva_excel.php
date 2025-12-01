@@ -938,46 +938,67 @@ class CargaMasivaExcel {
      * Generar plantilla Excel
      */
     public function generarPlantilla($tipo) {
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        
-        switch ($tipo) {
-            case 'insignias_otorgadas':
-                $headers = ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'];
-                $ejemplos = [1, 1, '2024-01-15', 1, 1];
-                break;
-            case 'destinatarios':
-                $headers = ['Id_Centro', 'Nombre_Completo', 'Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Genero', 'Curp', 'Matricula', 'Correo', 'Telefono', 'Rol'];
-                $ejemplos = [1, 'Juan Pérez Gómez', 'Juan', 'Pérez', 'Gómez', 'Masculino', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '5551234567', 'Estudiante'];
-                break;
-            case 'centros_it':
-                $headers = ['Nombre_itc', 'Acron', 'Estado', 'Clave_ct', 'Tipo_itc'];
-                $ejemplos = ['Instituto Tecnológico de Celaya', 'ITC', 'Guanajuato', '11DIT0001A', 'Federal'];
-                break;
-            default:
-                return false;
+        try {
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            
+            switch ($tipo) {
+                case 'insignias_otorgadas':
+                    $headers = ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'];
+                    $ejemplos = [1, 1, '2024-01-15', 1, 1];
+                    break;
+                case 'destinatarios':
+                    $headers = ['Id_Centro', 'Nombre_Completo', 'Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Genero', 'Curp', 'Matricula', 'Correo', 'Telefono', 'Rol'];
+                    $ejemplos = [1, 'Juan Pérez Gómez', 'Juan', 'Pérez', 'Gómez', 'Masculino', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '5551234567', 'Estudiante'];
+                    break;
+                case 'centros_it':
+                    $headers = ['Nombre_itc', 'Acron', 'Estado', 'Clave_ct', 'Tipo_itc'];
+                    $ejemplos = ['Instituto Tecnológico de Celaya', 'ITC', 'Guanajuato', '11DIT0001A', 'Federal'];
+                    break;
+                case 'tipos_insignia':
+                    $headers = ['Nombre_Insignia', 'Descripcion', 'Id_Categoria'];
+                    $ejemplos = ['Responsabilidad Social', 'Insignia por participación en actividades de responsabilidad social', 1];
+                    break;
+                case 'categorias_insignia':
+                    $headers = ['Nombre_Cat', 'Descripcion'];
+                    $ejemplos = ['Formación Integral', 'Categoría para insignias de formación integral', 'Categoría para insignias de formación integral'];
+                    break;
+                case 'periodos_emision':
+                    $headers = ['Periodo', 'Anio', 'Fecha_Inicio', 'Fecha_Fin'];
+                    $ejemplos = ['Enero-Junio 2024', 2024, '2024-01-01', '2024-06-30'];
+                    break;
+                default:
+                    $this->errores[] = "Tipo de plantilla no válido: $tipo";
+                    return false;
+            }
+            
+            // Escribir headers
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '1', $header);
+                $col++;
+            }
+            
+            // Escribir ejemplo
+            $col = 'A';
+            foreach ($ejemplos as $ejemplo) {
+                $sheet->setCellValue($col . '2', $ejemplo);
+                $col++;
+            }
+            
+            // Usar directorio temporal
+            $temp_dir = sys_get_temp_dir();
+            $filename = $temp_dir . DIRECTORY_SEPARATOR . "plantilla_$tipo_" . uniqid() . ".xlsx";
+            
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save($filename);
+            
+            return $filename;
+        } catch (Exception $e) {
+            $this->errores[] = "Error al generar plantilla: " . $e->getMessage();
+            error_log("Error al generar plantilla Excel: " . $e->getMessage());
+            return false;
         }
-        
-        // Escribir headers
-        $col = 'A';
-        foreach ($headers as $header) {
-            $sheet->setCellValue($col . '1', $header);
-            $col++;
-        }
-        
-        // Escribir ejemplo
-        $col = 'A';
-        foreach ($ejemplos as $ejemplo) {
-            $sheet->setCellValue($col . '2', $ejemplo);
-            $col++;
-        }
-        
-        // Guardar archivo
-        $filename = "plantilla_$tipo.xlsx";
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save($filename);
-        
-        return $filename;
     }
     
     /**
@@ -997,22 +1018,61 @@ class CargaMasivaExcel {
 
 // Procesar formulario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $cargaMasiva = new CargaMasivaExcel($conexion);
-    
     if (isset($_POST['generar_plantilla'])) {
-        $tipo = $_POST['tipo_plantilla'];
-        $archivo = $cargaMasiva->generarPlantilla($tipo);
-        
-        if ($archivo) {
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment; filename="' . $archivo . '"');
-            readfile($archivo);
-            unlink($archivo);
+        try {
+            $tipo = $_POST['tipo_plantilla'] ?? '';
+            
+            if (empty($tipo)) {
+                throw new Exception("Tipo de plantilla no especificado");
+            }
+            
+            $cargaMasiva = new CargaMasivaExcel($conexion);
+            $archivo = $cargaMasiva->generarPlantilla($tipo);
+            
+            if ($archivo && file_exists($archivo)) {
+                // Limpiar cualquier salida previa
+                if (ob_get_level()) {
+                    ob_end_clean();
+                }
+                
+                // Nombres amigables para el archivo
+                $nombres_amigables = [
+                    'insignias_otorgadas' => 'Plantilla_Insignias_Otorgadas',
+                    'destinatarios' => 'Plantilla_Destinatarios',
+                    'centros_it' => 'Plantilla_Centros_IT',
+                    'tipos_insignia' => 'Plantilla_Tipos_Insignia',
+                    'categorias_insignia' => 'Plantilla_Categorias_Insignia',
+                    'periodos_emision' => 'Plantilla_Periodos_Emision'
+                ];
+                
+                $nombre_descarga = ($nombres_amigables[$tipo] ?? "plantilla_$tipo") . ".xlsx";
+                
+                // Enviar headers
+                header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                header('Content-Disposition: attachment; filename="' . $nombre_descarga . '"');
+                header('Content-Length: ' . filesize($archivo));
+                header('Cache-Control: must-revalidate');
+                header('Pragma: public');
+                
+                // Leer y enviar archivo
+                readfile($archivo);
+                
+                // Eliminar archivo temporal
+                @unlink($archivo);
+                exit();
+            } else {
+                throw new Exception("No se pudo generar el archivo de plantilla");
+            }
+        } catch (Exception $e) {
+            error_log("Error al descargar plantilla: " . $e->getMessage());
+            // Redirigir con mensaje de error
+            header('Location: carga_masiva_excel.php?error=' . urlencode("Error al generar plantilla: " . $e->getMessage()));
             exit();
         }
     }
     
     if (isset($_POST['cargar_datos']) && isset($_FILES['archivo_excel'])) {
+        $cargaMasiva = new CargaMasivaExcel($conexion);
         $tipo_carga = $_POST['tipo_carga'];
         $nombre_archivo = $_FILES['archivo_excel']['name'];
         $tamanio_archivo = $_FILES['archivo_excel']['size'];
@@ -1584,6 +1644,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </ul>
                     </div>
                 <?php endif; ?>
+            <?php endif; ?>
+            
+            <?php if (isset($_GET['error'])): ?>
+                <div class="alert alert-error">
+                    <strong>❌ Error:</strong> <?php echo htmlspecialchars(urldecode($_GET['error'])); ?>
+                </div>
             <?php endif; ?>
             
             <!-- Sección 1: Generar Plantillas -->
