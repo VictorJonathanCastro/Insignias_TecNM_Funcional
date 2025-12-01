@@ -241,53 +241,25 @@ if (isset($_GET['error']) && isset($_GET['error']) && $_GET['error'] === 'error_
     .login-box img.logo {
       width: 140px;
       height: 140px;
-      border-radius: 50%;
-      border: 5px solid transparent;
-      background: 
-        linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.9) 100%),
-        linear-gradient(135deg, var(--tecnm-azul-principal) 0%, var(--tecnm-azul-secundario) 50%, var(--tecnm-azul-claro) 100%);
-      background-origin: border-box;
-      background-clip: padding-box, border-box;
-      padding: 15px;
+      border-radius: 0;
+      border: none;
+      background: transparent;
+      padding: 0;
       transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
       box-shadow: 
         0 30px 60px rgba(0, 51, 102, 0.2),
         0 15px 30px rgba(0, 51, 102, 0.15),
-        0 5px 15px rgba(0, 51, 102, 0.1),
-        inset 0 2px 0 rgba(255, 255, 255, 0.9);
+        0 5px 15px rgba(0, 51, 102, 0.1);
       position: relative;
       z-index: 2;
-    }
-
-    .login-box img.logo::before {
-      content: '';
-      position: absolute;
-      top: -8px;
-      left: -8px;
-      right: -8px;
-      bottom: -8px;
-      border-radius: 50%;
-      background: linear-gradient(45deg, 
-        var(--tecnm-azul-principal), 
-        var(--tecnm-azul-secundario), 
-        var(--tecnm-dorado), 
-        var(--tecnm-azul-secundario), 
-        var(--tecnm-azul-principal));
-      z-index: -1;
-      animation: rotate 3s linear infinite;
-    }
-
-    @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      object-fit: contain;
     }
 
     .login-box img.logo:hover {
       transform: scale(1.1) rotate(5deg);
       box-shadow: 
         0 32px 64px rgba(0, 51, 102, 0.2),
-        0 16px 32px rgba(0, 51, 102, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        0 16px 32px rgba(0, 51, 102, 0.15);
     }
 
     /* -------- FLECHA DE NAVEGACIÓN ULTRA-PROFESIONAL -------- */
