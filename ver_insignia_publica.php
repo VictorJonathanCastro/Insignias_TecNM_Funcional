@@ -394,7 +394,17 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                     📱 Compartir en Redes Sociales
                 </div>
                 <div class="action-buttons">
-                    <a href="https://wa.me/?text=<?php echo urlencode('🎖️ ¡He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM! 👨‍🎓 ' . htmlspecialchars($insignia['destinatario']) . ' 🏆 Ver mi insignia: ' . $base_url . $project_path . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-success" target="_blank">
+                    <?php
+                    // Construir URL completa de la insignia
+                    $url_insignia = $base_url . $project_path . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo']);
+                    
+                    // Crear mensaje sin emojis ni símbolos especiales
+                    $mensaje_whatsapp = 'He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM. ' . htmlspecialchars($insignia['destinatario']) . '. Ver mi insignia: ' . $url_insignia;
+                    
+                    // Codificar todo el mensaje para WhatsApp
+                    $whatsapp_url = 'https://wa.me/?text=' . rawurlencode($mensaje_whatsapp);
+                    ?>
+                    <a href="<?php echo $whatsapp_url; ?>" class="btn btn-success" target="_blank">
                         <i class="fab fa-whatsapp"></i> WhatsApp
                     </a>
                     <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($base_url . $project_path . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo'])); ?>" class="btn btn-primary" target="_blank">
