@@ -231,8 +231,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
         }
 
         .insignia-image {
-            width: 250px;
-            height: 250px;
+            width: 300px;
+            height: 300px;
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
