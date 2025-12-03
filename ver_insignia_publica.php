@@ -395,8 +395,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                 </div>
                 <div class="action-buttons">
                     <?php
-                    // Construir URL completa de la insignia
-                    $url_insignia = $base_url . $project_path . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo']);
+                    // Construir URL completa de la insignia (sin project_path para que sea la URL directa)
+                    $url_insignia = $base_url . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo']);
                     
                     // Crear mensaje sin emojis ni símbolos especiales
                     $mensaje_whatsapp = 'He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM. ' . htmlspecialchars($insignia['destinatario']) . '. Ver mi insignia: ' . $url_insignia;
