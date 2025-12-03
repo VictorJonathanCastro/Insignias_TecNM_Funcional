@@ -396,12 +396,12 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                 <div class="action-buttons">
                     <?php
                     // Construir URL completa de la insignia (sin project_path para que sea la URL directa)
-                    // La URL debe estar correctamente formateada para que WhatsApp la reconozca como enlace
                     $url_insignia = $base_url . '/ver_insignia_publica.php?insignia=' . urlencode($insignia['codigo']);
                     
                     // Crear mensaje sin emojis ni símbolos especiales
-                    // La URL al final del mensaje será reconocida automáticamente por WhatsApp como enlace clickeable
-                    $mensaje_whatsapp = 'He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM. ' . htmlspecialchars($insignia['destinatario']) . '. Ver mi insignia: ' . $url_insignia;
+                    // La URL debe estar en una línea separada o con espacios para que WhatsApp la reconozca como enlace
+                    // Usar salto de línea (\n) para separar la URL y que WhatsApp la detecte como enlace clickeable
+                    $mensaje_whatsapp = 'He recibido una insignia de ' . $insignia['nombre_insignia'] . ' del TecNM. ' . htmlspecialchars($insignia['destinatario']) . '. Ver mi insignia:' . "\n" . $url_insignia;
                     
                     // Codificar todo el mensaje para WhatsApp (rawurlencode codifica correctamente la URL dentro del mensaje)
                     $whatsapp_url = 'https://wa.me/?text=' . rawurlencode($mensaje_whatsapp);
