@@ -955,18 +955,20 @@ try {
         <div class="content">
             <!-- Vista previa del certificado estilo imagen 2 -->
             <div style="background: white; border-radius: 12px; padding: 40px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 800px; margin-left: auto; margin-right: auto;">
-                <!-- Badge hexagonal con insignia -->
+                <!-- Imagen de la insignia -->
                 <div style="text-align: center; margin-bottom: 30px;">
-                    <div style="width: 200px; height: 200px; margin: 0 auto; background-image: url('<?php echo $insignia_data['imagen_path']; ?>'); background-size: contain; background-repeat: no-repeat; background-position: center; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                        <!-- Badge hexagonal con gradiente -->
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #6a1b9a 0%, #1a237e 100%); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); opacity: 0.9; z-index: 1;"></div>
-                        <div style="position: relative; z-index: 2; color: white; text-align: center; padding: 20px;">
-                            <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px;">TECNOLÓGICO NACIONAL DE MÉXICO</div>
-                            <div style="font-size: 18px; font-weight: bold; margin: 10px 0;"><?php echo htmlspecialchars($insignia_data['nombre']); ?></div>
-                            <div style="font-size: 12px; margin-top: 10px;"><?php echo htmlspecialchars($insignia_data['categoria']); ?></div>
-                        </div>
+                    <div style="width: 200px; height: 200px; margin: 0 auto; background-image: url('<?php echo $insignia_data['imagen_path']; ?>'); background-size: contain; background-repeat: no-repeat; background-position: center;">
                     </div>
-                    <div style="margin-top: 10px; font-size: 12px; color: #666;">InsigniaTecNM</div>
+                </div>
+                
+                <!-- Título y categoría -->
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: #1e3c72; margin-bottom: 10px;">
+                        <?php echo htmlspecialchars($insignia_data['nombre']); ?>
+                    </div>
+                    <div style="display: inline-block; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 8px 18px; border-radius: 25px; font-size: 0.9rem; font-weight: 600;">
+                        <?php echo htmlspecialchars($insignia_data['categoria']); ?>
+                    </div>
                 </div>
                 
                 <!-- Información del destinatario en dos columnas -->
