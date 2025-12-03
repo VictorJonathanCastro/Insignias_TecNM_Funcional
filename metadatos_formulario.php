@@ -153,6 +153,27 @@ try {
         }
     }
     
+    // Consultar instituciones (it_centros) y estados
+    $instituciones = [];
+    $estados = [];
+    $sql_estados = "SELECT DISTINCT Estado FROM it_centros WHERE Estado IS NOT NULL AND Estado != '' ORDER BY Estado";
+    $result_estados = $conexion->query($sql_estados);
+    
+    if ($result_estados && $result_estados->num_rows > 0) {
+        while ($row = $result_estados->fetch_assoc()) {
+            $estados[] = $row['Estado'];
+        }
+    }
+    
+    $sql_instituciones = "SELECT id, Nombre_itc, Acron, Estado FROM it_centros ORDER BY Estado, Nombre_itc";
+    $result_instituciones = $conexion->query($sql_instituciones);
+    
+    if ($result_instituciones && $result_instituciones->num_rows > 0) {
+        while ($row = $result_instituciones->fetch_assoc()) {
+            $instituciones[] = $row;
+        }
+    }
+    
 } catch (Exception $e) {
     // Si hay error, usar arrays vacíos
     $categorias_insignias = [];
@@ -574,21 +595,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             
+            // Obtener institución seleccionada
+            $institucion_id = isset($_POST['institucion']) ? intval($_POST['institucion']) : 1;
+            
+            // Obtener nombre de la institución desde la base de datos
+            $nombre_institucion = 'TecNM';
+            if ($institucion_id > 0) {
+                $sql_institucion = "SELECT Nombre_itc FROM it_centros WHERE id = ? LIMIT 1";
+                $stmt_institucion = $conexion->prepare($sql_institucion);
+                if ($stmt_institucion) {
+                    $stmt_institucion->bind_param("i", $institucion_id);
+                    $stmt_institucion->execute();
+                    $result_institucion = $stmt_institucion->get_result();
+                    if ($result_institucion && $result_institucion->num_rows > 0) {
+                        $row_institucion = $result_institucion->fetch_assoc();
+                        $nombre_institucion = $row_institucion['Nombre_itc'] ?? 'TecNM';
+                    }
+                    $stmt_institucion->close();
+                }
+            }
+            
             // Si existe el destinatario, actualizar todos los datos
             if ($destinatario_id) {
-                $sql_update = "UPDATE destinatario SET Nombre_Completo = ?, Curp = ?, Correo = ?, Matricula = ? WHERE ID_destinatario = ?";
+                $sql_update = "UPDATE destinatario SET Nombre_Completo = ?, Curp = ?, Correo = ?, Matricula = ?, ITCentro = ? WHERE ID_destinatario = ?";
                 $stmt_update = $conexion->prepare($sql_update);
                 if ($stmt_update) {
-                    $stmt_update->bind_param("ssssi", $estudiante, $curp, $correo, $matricula, $destinatario_id);
+                    $stmt_update->bind_param("ssssii", $estudiante, $curp, $correo, $matricula, $institucion_id, $destinatario_id);
                     $stmt_update->execute();
                     $stmt_update->close();
                 }
             } else {
                 // Crear nuevo destinatario con todos los datos
-                $sql_insert = "INSERT INTO destinatario (Nombre_Completo, Curp, Correo, Matricula, ITCentro) VALUES (?, ?, ?, ?, 1)";
+                $sql_insert = "INSERT INTO destinatario (Nombre_Completo, Curp, Correo, Matricula, ITCentro) VALUES (?, ?, ?, ?, ?)";
                 $stmt_insert = $conexion->prepare($sql_insert);
                 if ($stmt_insert) {
-                    $stmt_insert->bind_param("ssss", $estudiante, $curp, $correo, $matricula);
+                    $stmt_insert->bind_param("ssssi", $estudiante, $curp, $correo, $matricula, $institucion_id);
                     if ($stmt_insert->execute()) {
                         $destinatario_id = $conexion->insert_id;
                     } else {
@@ -744,7 +785,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'descripcion' => $descripcion_real,
                     'criterios' => "Para obtener esta insignia de " . ($tipo_insignia_nombre ?: $insignia) . ", el estudiante debe haber demostrado competencias específicas.",
                     'fecha_emision' => $fecha_otorgamiento,
-                    'emisor' => 'TecNM / Instituto Tecnológico de San Marcos',
+                    'emisor' => $nombre_institucion,
                     'evidencia' => $evidencia,
                     'archivo_visual' => "Insig_" . $clave . ".jpg",
                     'responsable' => $responsable,
@@ -1561,6 +1602,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Datos de insignias disponibles
         const insigniasData = <?php echo json_encode($subcategorias_insignias); ?>;
         
+        // Datos de instituciones para filtrado
+        const institucionesData = <?php echo json_encode($instituciones); ?>;
+        
+        // Función para filtrar instituciones por estado
+        function filtrarInstituciones() {
+            const estadoSelect = document.getElementById('estado');
+            const institucionSelect = document.getElementById('institucion');
+            const estadoSeleccionado = estadoSelect.value;
+            
+            // Limpiar opciones actuales
+            institucionSelect.innerHTML = '<option value="">Selecciona una institución...</option>';
+            
+            if (estadoSeleccionado) {
+                // Filtrar instituciones por estado
+                const institucionesFiltradas = institucionesData.filter(inst => inst.Estado === estadoSeleccionado);
+                
+                if (institucionesFiltradas.length > 0) {
+                    institucionesFiltradas.forEach(inst => {
+                        const option = document.createElement('option');
+                        option.value = inst.id;
+                        option.textContent = inst.Nombre_itc + ' (' + inst.Acron + ')';
+                        option.setAttribute('data-estado', inst.Estado);
+                        institucionSelect.appendChild(option);
+                    });
+                } else {
+                    institucionSelect.innerHTML = '<option value="">No hay instituciones en este estado</option>';
+                }
+            } else {
+                institucionSelect.innerHTML = '<option value="">Primero selecciona un estado...</option>';
+            }
+        }
+        
         function updateSubcategorias() {
             const categoriaSelect = document.getElementById('categoria');
             const subcategoriaSelect = document.getElementById('subcategoria');
@@ -1881,6 +1954,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label>Matrícula:</label>
                 <input type="text" name="matricula" placeholder="Ej: 2024001" value="<?php echo isset($_SESSION['formulario_datos']['matricula']) ? htmlspecialchars($_SESSION['formulario_datos']['matricula']) : ''; ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label>Estado:</label>
+                <select name="estado" id="estado" onchange="filtrarInstituciones()" required>
+                    <option value="">Selecciona un estado...</option>
+                    <?php foreach ($estados as $estado): ?>
+                        <option value="<?php echo htmlspecialchars($estado); ?>" <?php echo (isset($_SESSION['formulario_datos']['estado']) && $_SESSION['formulario_datos']['estado'] == $estado) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($estado); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Institución:</label>
+                <select name="institucion" id="institucion" required>
+                    <option value="">Primero selecciona un estado...</option>
+                    <?php 
+                    $estado_seleccionado = isset($_SESSION['formulario_datos']['estado']) ? $_SESSION['formulario_datos']['estado'] : '';
+                    foreach ($instituciones as $institucion): 
+                        if (empty($estado_seleccionado) || $institucion['Estado'] == $estado_seleccionado):
+                    ?>
+                        <option value="<?php echo htmlspecialchars($institucion['id']); ?>" 
+                                data-estado="<?php echo htmlspecialchars($institucion['Estado']); ?>"
+                                <?php echo (isset($_SESSION['formulario_datos']['institucion']) && $_SESSION['formulario_datos']['institucion'] == $institucion['id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($institucion['Nombre_itc']); ?> (<?php echo htmlspecialchars($institucion['Acron']); ?>)
+                        </option>
+                    <?php 
+                        endif;
+                    endforeach; 
+                    ?>
+                </select>
             </div>
 
             <div class="form-group">

@@ -157,13 +157,14 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                         WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
                         ELSE 'Formación Integral'
                     END as categoria,
-                    'TecNM' as institucion,
+                    COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
                     '2025-1' as periodo,
                     'Activo' as estatus,
                     'Sistema' as responsable,
                     'Administrador' as cargo
                 FROM insigniasotorgadas io
                 LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+                LEFT JOIN it_centros itc ON d.ITCentro = itc.id
                 WHERE d.Nombre_Completo LIKE ? OR d.Curp LIKE ? OR d.Matricula LIKE ?
                 " . (!empty($codigo_filtro) ? "AND io.Codigo_Insignia LIKE '%$codigo_filtro%'" : "") . "
                 ORDER BY io.Fecha_Emision DESC
@@ -296,13 +297,14 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                         WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
                         ELSE 'Formación Integral'
                     END as categoria,
-                    'TecNM' as institucion,
+                    COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
                     '2025-1' as periodo,
                     'Activo' as estatus,
                     'Sistema' as responsable,
                     'Administrador' as cargo
                 FROM insigniasotorgadas io
                 LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+                LEFT JOIN it_centros itc ON d.ITCentro = itc.id
                 WHERE io.Codigo_Insignia = ?
                 ORDER BY io.Fecha_Emision DESC
             ";
@@ -398,13 +400,14 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                         WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
                         ELSE 'Formación Integral'
                     END as categoria,
-                    'TecNM' as institucion,
+                    COALESCE(itc.Nombre_itc, 'TecNM') as institucion,
                     '2025-1' as periodo,
                     'Activo' as estatus,
                     'Sistema' as responsable,
                     'Administrador' as cargo
                 FROM insigniasotorgadas io
                 LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+                LEFT JOIN it_centros itc ON d.ITCentro = itc.id
                 WHERE 1=1
                 " . (!empty($codigo_filtro) ? "AND io.Codigo_Insignia LIKE '%$codigo_filtro%'" : "") . "
                 ORDER BY io.Fecha_Emision DESC
@@ -444,6 +447,41 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
 function formatearFecha($fecha) {
     if (empty($fecha)) return 'No especificada';
     return date('d/m/Y', strtotime($fecha));
+}
+
+// Función para determinar la imagen de la insignia dinámicamente
+function determinarImagenInsignia($codigo_insignia, $nombre_insignia) {
+    $mapeo_codigos = [
+        'ART' => 'Embajador del Arte',
+        'EMB' => 'Embajador del Deporte', 
+        'TAL' => 'Talento Científico',
+        'INN' => 'Talento Innovador',
+        'SOC' => 'Responsabilidad Social',
+        'FOR' => 'Formación y Actualización',
+        'MOV' => 'Movilidad e Intercambio'
+    ];
+    
+    $mapeo_imagenes = [
+        'Movilidad e Intercambio' => 'MovilidadeIntercambio.png',
+        'Embajador del Deporte' => 'EmbajadordelDeporte.png',
+        'Embajador del Arte' => 'EmbajadordelArte.png',
+        'Formación y Actualización' => 'FormacionyActualizacion.png',
+        'Talento Científico' => 'TalentoCientifico.png',
+        'Talento Innovador' => 'TalentoInnovador.png',
+        'Responsabilidad Social' => 'ResponsabilidadSocial.png'
+    ];
+    
+    foreach ($mapeo_codigos as $codigo => $tipo) {
+        if (strpos($codigo_insignia, $codigo) !== false) {
+            return 'imagen/Insignias/' . ($mapeo_imagenes[$tipo] ?? 'EmbajadordelArte.png');
+        }
+    }
+    
+    if (isset($mapeo_imagenes[$nombre_insignia])) {
+        return 'imagen/Insignias/' . $mapeo_imagenes[$nombre_insignia];
+    }
+    
+    return 'imagen/Insignias/EmbajadordelArte.png';
 }
 ?>
 
@@ -996,45 +1034,47 @@ function formatearFecha($fecha) {
             </div>
 
             <div class="insignias-grid">
-                <?php foreach ($resultados as $insignia): ?>
+                <?php foreach ($resultados as $insignia): 
+                    $imagen_insignia = determinarImagenInsignia($insignia['clave_insignia'], $insignia['nombre_insignia']);
+                ?>
                 <div class="insignia-card">
-                    <div class="insignia-header">
-                        <div>
-                            <div class="insignia-title"><?php echo htmlspecialchars($insignia['nombre_insignia']); ?></div>
+                    <!-- Badge hexagonal con insignia -->
+                    <div style="text-align: center; margin-bottom: 25px;">
+                        <div style="width: 180px; height: 180px; margin: 0 auto; background-image: url('<?php echo $imagen_insignia; ?>'); background-size: contain; background-repeat: no-repeat; background-position: center; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <!-- Badge hexagonal con gradiente -->
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #6a1b9a 0%, #1a237e 100%); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); opacity: 0.9; z-index: 1;"></div>
+                            <div style="position: relative; z-index: 2; color: white; text-align: center; padding: 15px;">
+                                <div style="font-size: 9px; font-weight: bold; margin-bottom: 5px;">TECNOLÓGICO NACIONAL DE MÉXICO</div>
+                                <div style="font-size: 16px; font-weight: bold; margin: 8px 0;"><?php echo htmlspecialchars($insignia['nombre_insignia']); ?></div>
+                                <div style="font-size: 11px; margin-top: 8px;"><?php echo htmlspecialchars($insignia['categoria']); ?></div>
+                            </div>
                         </div>
-                        <div class="insignia-category"><?php echo htmlspecialchars($insignia['categoria']); ?></div>
+                        <div style="margin-top: 8px; font-size: 11px; color: #666;">InsigniaTecNM</div>
                     </div>
 
-                    <div class="insignia-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Destinatario:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($insignia['destinatario']); ?></span>
+                    <!-- Información del destinatario en dos columnas -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+                        <div>
+                            <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Destinatario:</div>
+                            <div style="color: #666; font-size: 15px;"><?php echo htmlspecialchars($insignia['destinatario']); ?></div>
                         </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Matrícula:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($insignia['Matricula'] ?? $insignia['matricula'] ?? 'No especificada'); ?></span>
+                        <div>
+                            <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Matrícula:</div>
+                            <div style="color: #666; font-size: 15px;"><?php echo htmlspecialchars($insignia['Matricula'] ?? $insignia['matricula'] ?? 'No especificada'); ?></div>
                         </div>
                         <?php if (!empty($insignia['curp'])): ?>
-                        <div class="detail-row">
-                            <span class="detail-label">CURP:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($insignia['curp']); ?></span>
+                        <div>
+                            <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">CURP:</div>
+                            <div style="color: #666; font-size: 15px;"><?php echo htmlspecialchars($insignia['curp']); ?></div>
                         </div>
                         <?php endif; ?>
-                        <div class="detail-row">
-                            <span class="detail-label">Fecha de Emisión:</span>
-                            <span class="detail-value"><?php echo formatearFecha($insignia['fecha_otorgamiento']); ?></span>
+                        <div>
+                            <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Fecha de Emisión:</div>
+                            <div style="color: #666; font-size: 15px;"><?php echo formatearFecha($insignia['fecha_otorgamiento']); ?></div>
                         </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Programa:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($insignia['Programa']); ?></span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Institución:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($insignia['institucion']); ?></span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Estado:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($insignia['estatus']); ?></span>
+                        <div style="grid-column: 1 / -1;">
+                            <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Institución:</div>
+                            <div style="color: #666; font-size: 15px;"><?php echo htmlspecialchars($insignia['institucion']); ?></div>
                         </div>
                     </div>
 

@@ -96,13 +96,15 @@ try {
                 ELSE 'Formación Integral'
             END as categoria,
             d.Nombre_Completo as destinatario,
+            d.Curp as curp,
+            d.Matricula as matricula,
             COALESCE(ti.Descripcion, NULL) as descripcion,
             COALESCE(ti.Criterio, NULL) as criterios,
             'Certificación oficial' as evidencias,
             COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable,
             COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
             io.Fecha_Emision as fecha_emision,
-            'Tecnológico Nacional de México' as emisor,
+            COALESCE(itc.Nombre_itc, 'Tecnológico Nacional de México') as emisor,
             'Certificación oficial' as evidencia,
             COALESCE(ti.Archivo_Visual, 'insignia_default.png') as archivo_visual,
             COALESCE(re.Nombre_Completo, 'Administrador') as responsable_captura,
@@ -111,6 +113,7 @@ try {
             io.Responsable_Emision as responsable_id
         FROM insigniasotorgadas io
         LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+        LEFT JOIN it_centros itc ON d.ITCentro = itc.id
         LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.id
         LEFT JOIN tipo_insignia tin ON (
             (io.Codigo_Insignia LIKE '%ART%' AND tin." . $campo_nombre_tipo . " LIKE '%Arte%')
@@ -950,6 +953,57 @@ try {
             ?>
         <?php endif; ?>
         <div class="content">
+            <!-- Vista previa del certificado estilo imagen 2 -->
+            <div style="background: white; border-radius: 12px; padding: 40px; margin-bottom: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 800px; margin-left: auto; margin-right: auto;">
+                <!-- Badge hexagonal con insignia -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <div style="width: 200px; height: 200px; margin: 0 auto; background-image: url('<?php echo $insignia_data['imagen_path']; ?>'); background-size: contain; background-repeat: no-repeat; background-position: center; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                        <!-- Badge hexagonal con gradiente -->
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #6a1b9a 0%, #1a237e 100%); clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); opacity: 0.9; z-index: 1;"></div>
+                        <div style="position: relative; z-index: 2; color: white; text-align: center; padding: 20px;">
+                            <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px;">TECNOLÓGICO NACIONAL DE MÉXICO</div>
+                            <div style="font-size: 18px; font-weight: bold; margin: 10px 0;"><?php echo htmlspecialchars($insignia_data['nombre']); ?></div>
+                            <div style="font-size: 12px; margin-top: 10px;"><?php echo htmlspecialchars($insignia_data['categoria']); ?></div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">InsigniaTecNM</div>
+                </div>
+                
+                <!-- Información del destinatario en dos columnas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                    <div>
+                        <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Destinatario:</div>
+                        <div style="color: #666; font-size: 16px;"><?php echo htmlspecialchars($insignia_data['destinatario'] ?? 'No especificado'); ?></div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Matrícula:</div>
+                        <div style="color: #666; font-size: 16px;"><?php echo htmlspecialchars($insignia_data['matricula'] ?? 'No especificada'); ?></div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">CURP:</div>
+                        <div style="color: #666; font-size: 16px;"><?php echo htmlspecialchars($insignia_data['curp'] ?? 'No especificada'); ?></div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Fecha de Emisión:</div>
+                        <div style="color: #666; font-size: 16px;"><?php echo date('d/m/Y', strtotime($insignia_data['fecha_emision'])); ?></div>
+                    </div>
+                    <div style="grid-column: 1 / -1;">
+                        <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Institución:</div>
+                        <div style="color: #666; font-size: 16px;"><?php echo htmlspecialchars($insignia_data['emisor'] ?? 'Tecnológico Nacional de México'); ?></div>
+                    </div>
+                </div>
+                
+                <!-- Botones de acción -->
+                <div style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                    <a href="ver_insignia_completa.php?codigo=<?php echo urlencode($codigo_insignia); ?>&solo=1" class="btn" style="background: #28a745; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-trophy"></i> Ver Certificado
+                    </a>
+                    <a href="validacion.php?insignia=<?php echo urlencode($codigo_insignia); ?>" class="btn" style="background: #007bff; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-search"></i> Ver Validación
+                    </a>
+                </div>
+            </div>
+            
             <div class="insignia-section">
                 <div class="insignia-preview">
                     <div class="insignia-hexagon" style="background-image: url(<?php echo $insignia_data['imagen_path']; ?>);">
