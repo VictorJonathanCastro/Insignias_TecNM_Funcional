@@ -2125,7 +2125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="btn-primary" style="background:#0d6efd; border:none;" onclick="abrirModalFirmaSAT()">
+            <button type="button" class="btn-primary" style="background:#ffc107; border:none; color:#000;" onclick="abrirModalFirmaSAT()">
                 <i class="fas fa-file-signature"></i>
                 Firma electrónica (SAT)
             </button>
