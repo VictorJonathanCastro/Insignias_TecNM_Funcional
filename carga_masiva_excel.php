@@ -108,11 +108,31 @@ class CargaMasivaExcel {
     private $estadisticas = [
         'insertados' => 0,
         'actualizados' => 0,
-        'errores' => 0
+        'errores' => 0,
+        'firmadas' => 0
     ];
+    private $firmar_insignias = false;
+    private $certificado_path = null;
+    private $clave_privada_path = null;
+    private $contrasena_firma = null;
+    private $firma_digital = null;
     
     public function __construct($conexion) {
         $this->conexion = $conexion;
+    }
+    
+    /**
+     * Configurar firma digital para las insignias
+     */
+    public function configurarFirmaDigital($certificado_path, $clave_privada_path, $contrasena) {
+        $this->firmar_insignias = true;
+        $this->certificado_path = $certificado_path;
+        $this->clave_privada_path = $clave_privada_path;
+        $this->contrasena_firma = $contrasena;
+        
+        // Inicializar clase de firma digital
+        require_once 'firma_digital_real.php';
+        $this->firma_digital = new FirmaDigitalReal($this->conexion);
     }
     
     /**
@@ -410,8 +430,21 @@ class CargaMasivaExcel {
                 );
                 
                 if ($stmt->execute()) {
+                    $insignia_id = $this->conexion->insert_id;
                     $procesados++;
-                    $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada correctamente";
+                    
+                    // Si está habilitada la firma digital, firmar la insignia
+                    if ($this->firmar_insignias && $this->firma_digital) {
+                        $resultado_firma = $this->firmarInsignia($insignia_id, $datos);
+                        if ($resultado_firma['success']) {
+                            $this->estadisticas['firmadas']++;
+                            $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada y firmada correctamente";
+                        } else {
+                            $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada correctamente (error al firmar: " . $resultado_firma['error'] . ")";
+                        }
+                    } else {
+                        $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada correctamente";
+                    }
                 } else {
                     $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar - " . $stmt->error;
                 }
@@ -422,6 +455,81 @@ class CargaMasivaExcel {
         }
         
         return $procesados > 0;
+    }
+    
+    /**
+     * Firmar una insignia después de insertarla
+     */
+    private function firmarInsignia($insignia_id, $datos_insignia) {
+        try {
+            // Obtener datos completos de la insignia para la firma
+            $sql = "SELECT 
+                        tio.Id_Insignia,
+                        tio.Id_Destinatario,
+                        tio.Fecha_Emision,
+                        d.Nombre_Completo as destinatario,
+                        COALESCE(tipo_ins.Nombre_Insignia, ti.Descripcion, 'Insignia') as nombre_insignia,
+                        tio.Id_Estatus
+                    FROM T_insignias_otorgadas tio
+                    LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
+                    LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
+                    LEFT JOIN tipo_insignia tipo_ins ON ti.Tipo_Insignia = tipo_ins.id
+                    WHERE tio.id = ?";
+            
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bind_param("i", $insignia_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows == 0) {
+                return ['success' => false, 'error' => 'No se encontró la insignia'];
+            }
+            
+            $insignia_data = $result->fetch_assoc();
+            
+            // Generar código de insignia único si no existe
+            $codigo_insignia = 'TECNM-' . date('Y') . '-' . str_pad($insignia_id, 6, '0', STR_PAD_LEFT);
+            
+            // Obtener responsable (usar el de sesión o uno por defecto)
+            $responsable = $_SESSION['nombre'] ?? 'Responsable de Emisión';
+            
+            // Preparar datos para la firma
+            $datos_firma = [
+                'destinatario' => $insignia_data['destinatario'] ?? 'N/A',
+                'nombre_insignia' => $insignia_data['nombre_insignia'] ?? 'Insignia',
+                'codigo_insignia' => $codigo_insignia,
+                'fecha_emision' => date('d/m/Y', strtotime($insignia_data['Fecha_Emision'])),
+                'responsable' => $responsable
+            ];
+            
+            // Generar texto para firmar
+            $texto_firma = $this->firma_digital->generarTextoInsignia($datos_firma);
+            
+            // Generar firma digital
+            $resultado = $this->firma_digital->generarFirmaDigitalReal(
+                $texto_firma,
+                $this->certificado_path,
+                $this->clave_privada_path,
+                $this->contrasena_firma
+            );
+            
+            if (!$resultado['success']) {
+                return $resultado;
+            }
+            
+            // Guardar la firma en la base de datos (actualizar la tabla T_insignias_otorgadas si tiene campo de firma)
+            // O guardar en responsable_emision si es necesario
+            // Por ahora, solo retornamos éxito ya que la firma se puede usar después
+            
+            return [
+                'success' => true,
+                'firma_base64' => $resultado['firma_base64'],
+                'codigo_insignia' => $codigo_insignia
+            ];
+            
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
     }
     
     /**
@@ -1077,23 +1185,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nombre_archivo = $_FILES['archivo_excel']['name'];
         $tamanio_archivo = $_FILES['archivo_excel']['size'];
         
-        // Obtener información del usuario
-        $usuario_id = $_SESSION['usuario_id'] ?? 0;
-        $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
+        // Verificar si se desea firmar las insignias
+        $firmar_insignias = isset($_POST['firmar_insignias']) && $_POST['firmar_insignias'] === '1';
         
-        $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
+        // Si se desea firmar, procesar archivos de certificado
+        if ($firmar_insignias && $tipo_carga === 'insignias_otorgadas') {
+            if (empty($_FILES['certificado']['tmp_name']) || empty($_FILES['clave_privada']['tmp_name'])) {
+                $mensaje = 'error';
+                $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las insignias'];
+                $exitos = [];
+            } else {
+                $contrasena_firma = $_POST['contrasena_firma'] ?? '';
+                if (empty($contrasena_firma)) {
+                    $mensaje = 'error';
+                    $errores = ['Debes proporcionar la contraseña de la e.firma'];
+                    $exitos = [];
+                } else {
+                    // Crear archivos temporales para el certificado y la clave
+                    $tempDir = sys_get_temp_dir();
+                    $cerPath = tempnam($tempDir, 'cert_masivo_') . '.cer';
+                    $keyPath = tempnam($tempDir, 'key_masivo_') . '.key';
+                    
+                    // Copiar archivos subidos a ubicaciones temporales
+                    if (!copy($_FILES['certificado']['tmp_name'], $cerPath)) {
+                        $mensaje = 'error';
+                        $errores = ['No se pudo procesar el archivo .cer'];
+                        $exitos = [];
+                    } elseif (!copy($_FILES['clave_privada']['tmp_name'], $keyPath)) {
+                        @unlink($cerPath);
+                        $mensaje = 'error';
+                        $errores = ['No se pudo procesar el archivo .key'];
+                        $exitos = [];
+                    } else {
+                        // Configurar firma digital en la clase
+                        $cargaMasiva->configurarFirmaDigital($cerPath, $keyPath, $contrasena_firma);
+                        
+                        // Obtener información del usuario
+                        $usuario_id = $_SESSION['usuario_id'] ?? 0;
+                        $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
+                        
+                        // Procesar archivo
+                        $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
+                        
+                        // Limpiar archivos temporales después de procesar
+                        @unlink($cerPath);
+                        @unlink($keyPath);
+                    }
+                }
+            }
+        } else {
+            // Obtener información del usuario
+            $usuario_id = $_SESSION['usuario_id'] ?? 0;
+            $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
+            
+            $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
+        }
+        
+        if (!isset($errores)) {
+            $errores = $cargaMasiva->getErrores();
+            $exitos = $cargaMasiva->getExitos();
+        }
         
         $errores = $cargaMasiva->getErrores();
         $exitos = $cargaMasiva->getExitos();
         
         // Obtener estadísticas
-        $estadisticas = $cargaMasiva->getEstadisticas();
+        if (!isset($estadisticas)) {
+            $estadisticas = $cargaMasiva->getEstadisticas();
+        }
         
         // Contar registros
         $total_registros = count($errores) + count($exitos);
         $registros_exitosos = $estadisticas['insertados'];
         $registros_actualizados = $estadisticas['actualizados'];
         $registros_con_error = count($errores) + $estadisticas['errores'];
+        $registros_firmados = $estadisticas['firmadas'] ?? 0;
         
         // Determinar estado
         $estado = 'completado';
@@ -1616,6 +1782,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php if ($mensaje === 'success'): ?>
                     <div class="alert alert-success">
                         <strong>✅ Carga completada!</strong> Los datos se han procesado correctamente.
+                        <?php if (isset($registros_firmados) && $registros_firmados > 0): ?>
+                            <br><strong>✍️ Insignias firmadas:</strong> <?php echo $registros_firmados; ?> de <?php echo $registros_exitosos; ?>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="alert alert-error">
@@ -1704,6 +1873,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                accept=".xlsx,.xls" required>
                     </div>
                     
+                    <!-- Opción de Firma Digital (solo para Insignias Otorgadas) -->
+                    <div class="form-group" id="firma-group" style="display: none;">
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3; margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; cursor: pointer; font-weight: 600; color: #1976d2;">
+                                <input type="checkbox" name="firmar_insignias" id="firmar_insignias" value="1" style="margin-right: 10px; width: 20px; height: 20px;">
+                                <span>✍️ ¿Deseas firmar las insignias digitalmente?</span>
+                            </label>
+                            <p style="margin: 10px 0 0 30px; color: #666; font-size: 14px;">
+                                Si marcas esta opción, todas las insignias se firmarán automáticamente con tu e.firma (SAT)
+                            </p>
+                        </div>
+                        
+                        <div id="campos-firma" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #dee2e6;">
+                            <h4 style="color: #2c3e50; margin-bottom: 15px;">📋 Datos de Firma Digital (e.firma SAT)</h4>
+                            
+                            <div class="form-group">
+                                <label for="certificado">Certificado (.cer): <span style="color: red;">*</span></label>
+                                <input type="file" name="certificado" id="certificado" accept=".cer" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+                                <small style="color: #666; display: block; margin-top: 5px;">Archivo de certificado digital (.cer) de tu e.firma</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="clave_privada">Clave Privada (.key): <span style="color: red;">*</span></label>
+                                <input type="file" name="clave_privada" id="clave_privada" accept=".key" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+                                <small style="color: #666; display: block; margin-top: 5px;">Archivo de clave privada (.key) de tu e.firma</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="contrasena_firma">Contraseña de la e.firma: <span style="color: red;">*</span></label>
+                                <input type="password" name="contrasena_firma" id="contrasena_firma" 
+                                       placeholder="Ingresa la contraseña de tu e.firma" 
+                                       style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
+                                <small style="color: #666; display: block; margin-top: 5px;">Contraseña que usas para acceder a tu e.firma en el portal del SAT</small>
+                            </div>
+                            
+                            <div style="background: #fff3cd; padding: 12px; border-radius: 5px; border-left: 4px solid #ffc107; margin-top: 15px;">
+                                <strong>⚠️ Importante:</strong> Los archivos .cer y .key se procesan temporalmente y se eliminan inmediatamente después de generar las firmas. No se almacenan en el servidor.
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button type="submit" name="cargar_datos" class="btn btn-success">
                         🚀 Procesar Archivo
                     </button>
@@ -1789,10 +1999,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         });
         
+        // Mostrar/ocultar campos de firma según el tipo de carga
+        document.getElementById('tipo_carga').addEventListener('change', function(e) {
+            const tipoCarga = e.target.value;
+            const firmaGroup = document.getElementById('firma-group');
+            const camposFirma = document.getElementById('campos-firma');
+            const firmarCheckbox = document.getElementById('firmar_insignias');
+            
+            if (tipoCarga === 'insignias_otorgadas') {
+                firmaGroup.style.display = 'block';
+                // Si el checkbox está marcado, mostrar campos
+                if (firmarCheckbox.checked) {
+                    camposFirma.style.display = 'block';
+                }
+            } else {
+                firmaGroup.style.display = 'none';
+                camposFirma.style.display = 'none';
+                firmarCheckbox.checked = false;
+            }
+        });
+        
+        // Mostrar/ocultar campos de certificado según el checkbox
+        document.getElementById('firmar_insignias').addEventListener('change', function(e) {
+            const camposFirma = document.getElementById('campos-firma');
+            if (e.target.checked) {
+                camposFirma.style.display = 'block';
+            } else {
+                camposFirma.style.display = 'none';
+                // Limpiar campos
+                document.getElementById('certificado').value = '';
+                document.getElementById('clave_privada').value = '';
+                document.getElementById('contrasena_firma').value = '';
+            }
+        });
+        
         // Confirmación antes de procesar
         document.querySelector('form[enctype="multipart/form-data"]').addEventListener('submit', function(e) {
             const tipoCarga = document.getElementById('tipo_carga').value;
             const archivo = document.getElementById('archivo_excel').files[0];
+            const firmarInsignias = document.getElementById('firmar_insignias').checked;
             
             if (!tipoCarga || !archivo) {
                 e.preventDefault();
@@ -1800,7 +2045,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return;
             }
             
-            if (!confirm(`¿Está seguro de procesar el archivo "${archivo.name}" para ${tipoCarga}?`)) {
+            // Validar campos de firma si está habilitada
+            if (firmarInsignias && tipoCarga === 'insignias_otorgadas') {
+                const certificado = document.getElementById('certificado').files[0];
+                const clavePrivada = document.getElementById('clave_privada').files[0];
+                const contrasena = document.getElementById('contrasena_firma').value;
+                
+                if (!certificado || !clavePrivada || !contrasena) {
+                    e.preventDefault();
+                    alert('Para firmar las insignias, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña.');
+                    return;
+                }
+            }
+            
+            let mensaje = `¿Está seguro de procesar el archivo "${archivo.name}" para ${tipoCarga}?`;
+            if (firmarInsignias && tipoCarga === 'insignias_otorgadas') {
+                mensaje += '\n\n⚠️ Las insignias se firmarán digitalmente con tu e.firma.';
+            }
+            
+            if (!confirm(mensaje)) {
                 e.preventDefault();
             }
         });

@@ -795,7 +795,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ];
                 
                 // ENVIAR NOTIFICACIÓN POR CORREO
+                // USAR EL MISMO MÉTODO QUE FUNCIONÓ EN probar_correo_tiempo_real.php
                 $correo_enviado = false;
+                $metodo_usado = 'desconocido';
+                
                 if (validarCorreo($correo)) {
                     try {
                         // Generar URL de la imagen de la insignia
@@ -844,29 +847,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'url_imagen' => $url_imagen_insignia
                         ];
                         
-                        $correo_enviado = enviarNotificacionInsigniaCompleta($correo, $datos_correo);
+                        // Log antes de enviar
+                        error_log("📧 INTENTANDO ENVIAR CORREO desde metadatos_formulario.php");
+                        error_log("   Destinatario: " . $correo);
+                        error_log("   Código insignia: " . $clave);
                         
-                        // Log del resultado del correo
+                        // MÉTODO QUE FUNCIONÓ EN probar_correo_tiempo_real.php:
+                        // 1. PRIMERO intentar PHPMailer directamente (igual que en la prueba)
+                        $asunto = "🎖️ Insignia Otorgada - " . ($datos_correo['nombre_insignia'] ?? 'Nueva Insignia');
+                        $mensaje_html = generarMensajeCorreo($datos_correo);
+                        
+                        if (file_exists('config_smtp.php')) {
+                            // Intentar PHPMailer primero (igual que en probar_correo_tiempo_real.php línea 82)
+                            $resultado_phpmailer = enviarConPHPMailerReal($correo, $asunto, $mensaje_html, $datos_correo);
+                            
+                            if ($resultado_phpmailer === true) {
+                                $correo_enviado = true;
+                                $metodo_usado = 'phpmailer';
+                                error_log("✅ Correo PHPMailer enviado exitosamente (TIEMPO REAL) a: " . $correo);
+                            } else {
+                                // Si PHPMailer falla, intentar mail() nativo (igual que en la prueba)
+                                $resultado_nativo = enviarConMailNativo($correo, $asunto, $mensaje_html);
+                                
+                                if ($resultado_nativo === true) {
+                                    global $mail_nativo_usó_phpmailer;
+                                    if (isset($mail_nativo_usó_phpmailer) && $mail_nativo_usó_phpmailer) {
+                                        $correo_enviado = true;
+                                        $metodo_usado = 'phpmailer';
+                                        error_log("✅ Correo NATIVO (usando PHPMailer internamente) enviado en TIEMPO REAL a: " . $correo);
+                                    } else {
+                                        $correo_enviado = true;
+                                        $metodo_usado = 'nativo';
+                                        error_log("✅ Correo NATIVO enviado (puede tener retrasos) a: " . $correo);
+                                    }
+                                } else {
+                                    // Ambos métodos fallaron
+                                    $correo_enviado = false;
+                                    $metodo_usado = 'fallo';
+                                    error_log("❌ Error: Tanto PHPMailer como mail() nativo fallaron para: " . $correo);
+                                }
+                            }
+                        } else {
+                            // No hay config_smtp.php, intentar solo mail() nativo
+                            $resultado_nativo = enviarConMailNativo($correo, $asunto, $mensaje_html);
+                            
+                            if ($resultado_nativo === true) {
+                                global $mail_nativo_usó_phpmailer;
+                                if (isset($mail_nativo_usó_phpmailer) && $mail_nativo_usó_phpmailer) {
+                                    $correo_enviado = true;
+                                    $metodo_usado = 'phpmailer';
+                                    error_log("✅ Correo NATIVO (usando PHPMailer internamente) enviado en TIEMPO REAL a: " . $correo);
+                                } else {
+                                    $correo_enviado = true;
+                                    $metodo_usado = 'nativo';
+                                    error_log("✅ Correo NATIVO enviado (puede tener retrasos) a: " . $correo);
+                                }
+                            } else {
+                                $correo_enviado = false;
+                                $metodo_usado = 'fallo';
+                                error_log("❌ Error: mail() nativo falló para: " . $correo);
+                            }
+                        }
+                        
+                        // Log del resultado final
                         if ($correo_enviado) {
                             error_log("✅ Correo enviado exitosamente a: " . $correo);
+                            error_log("   Método usado: " . $metodo_usado);
+                            if ($metodo_usado === 'phpmailer') {
+                                error_log("   ✅ Enviado en TIEMPO REAL con PHPMailer");
+                            } elseif ($metodo_usado === 'nativo') {
+                                error_log("   ⚠️ Enviado con mail() nativo - Puede tardar 1-5 minutos");
+                            }
                         } else {
                             error_log("❌ Error: No se pudo enviar el correo a: " . $correo);
+                            error_log("   Método intentado: " . $metodo_usado);
                             error_log("   Revisa config_smtp.php y los logs de error para más detalles");
                         }
                     } catch (Exception $e) {
                         error_log("❌ Excepción al enviar correo: " . $e->getMessage());
                         error_log("   Stack trace: " . $e->getTraceAsString());
                         $correo_enviado = false;
+                        $metodo_usado = 'error';
                     }
-                    
-                    // Obtener método usado del envío
-                    $metodo_usado = obtenerMetodoCorreoUsado();
                     
                     // Guardar resultado del correo en sesión para mostrar en la siguiente página
                     $_SESSION['correo_enviado'] = $correo_enviado;
                     $_SESSION['correo_destinatario'] = $correo;
                     $_SESSION['correo_metodo'] = $metodo_usado; // Guardar método usado realmente
-                    $_SESSION['correo_error'] = $correo_enviado ? null : "No se pudo enviar el correo. Verifica config_smtp.php y los logs.";
+                    
+                    // Mensaje de error más descriptivo
+                    if (!$correo_enviado) {
+                        $_SESSION['correo_error'] = "No se pudo enviar el correo. Método usado: " . $metodo_usado . ". Revisa los logs de error para más detalles.";
+                    } else {
+                        $_SESSION['correo_error'] = null;
+                    }
                 } else {
                     error_log("⚠️ Correo no válido: " . $correo);
                     $_SESSION['correo_enviado'] = false;

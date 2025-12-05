@@ -67,8 +67,15 @@ function enviarNotificacionInsigniaCompleta($destinatario_email, $datos_insignia
     
     // 3. ÚLTIMO RECURSO: simulación interna
     $metodo_correo_usado = 'simulacion';
-    error_log("⚠️ Todos los métodos fallaron, usando simulación para: " . $destinatario_email);
-    error_log("   SOLUCIÓN: Configura correctamente config_smtp.php o instala sendmail");
+    error_log("⚠️⚠️⚠️ ADVERTENCIA: Todos los métodos de envío real fallaron");
+    error_log("   Se está usando SIMULACIÓN para: " . $destinatario_email);
+    error_log("   ⚠️ EL CORREO NO SE ENVIÓ REALMENTE - Solo se guardó en archivo");
+    error_log("   POSIBLES SOLUCIONES:");
+    error_log("   1. Si el servidor de TecNM permite envío sin credenciales, verifica la conexión de red");
+    error_log("   2. Si el servidor requiere autenticación, configura SMTP_PASSWORD en config_smtp.php");
+    error_log("   3. Si usas Office 365/Gmail, necesitas credenciales y contraseña de aplicación");
+    error_log("   4. Revisa el archivo correos_enviados.txt para ver el correo simulado");
+    error_log("   5. Revisa los logs anteriores para ver el error específico que causó el fallo");
     return enviarCorreoSimuladoInterno($destinatario_email, $asunto, $mensaje_html, $datos_insignia);
 }
 
