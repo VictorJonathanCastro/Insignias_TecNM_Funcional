@@ -207,6 +207,7 @@ class CargaMasivaExcel {
             
             // Si es carga completa, procesar todas las hojas
             if ($tipo_carga === 'todas_las_tablas') {
+                // Si hay firma digital configurada, se usará solo para insignias otorgadas
                 return $this->procesarTodasLasHojas($spreadsheet);
             }
             
@@ -293,6 +294,7 @@ class CargaMasivaExcel {
             $resultado = false;
             switch ($tipo_detectado) {
                 case 'insignias_otorgadas':
+                    // Si hay firma digital configurada (viene de todas_las_tablas), se aplicará aquí
                     $resultado = $this->cargarInsigniasOtorgadas($data_sin_headers, $headers_originales);
                     break;
                 case 'destinatarios':
@@ -1464,10 +1466,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $firmar_insignias = isset($_POST['firmar_insignias']) && $_POST['firmar_insignias'] === '1';
         
         // Si se desea firmar, procesar archivos de certificado
-        if ($firmar_insignias && $tipo_carga === 'insignias_otorgadas') {
+        // Aplicar para "insignias_otorgadas" o "todas_las_tablas" 
+        // NOTA: Si es "todas_las_tablas", la firma solo se aplicará a las hojas de "Insignias Otorgadas"
+        if ($firmar_insignias && ($tipo_carga === 'insignias_otorgadas' || $tipo_carga === 'todas_las_tablas')) {
             if (empty($_FILES['certificado']['tmp_name']) || empty($_FILES['clave_privada']['tmp_name'])) {
                 $mensaje = 'error';
-                $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las insignias'];
+                if ($tipo_carga === 'todas_las_tablas') {
+                    $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las Insignias Otorgadas (las demás tablas no se verán afectadas)'];
+                } else {
+                    $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las insignias'];
+                }
                 $exitos = [];
             } else {
                 $contrasena_firma = $_POST['contrasena_firma'] ?? '';
@@ -1499,7 +1507,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $usuario_id = $_SESSION['usuario_id'] ?? 0;
                         $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
                         
-                        // Procesar archivo
+                        // Procesar archivo (la firma se aplicará solo a insignias otorgadas si es todas_las_tablas)
                         $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
                         
                         // Limpiar archivos temporales después de procesar
@@ -2156,14 +2164,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                accept=".xlsx,.xls" required>
                     </div>
                     
-                    <!-- Opción de Firma Digital (solo para Insignias Otorgadas) -->
+                    <!-- Opción de Firma Digital (para Insignias Otorgadas o Todas las Tablas) -->
                     <div class="form-group" id="firma-group" style="display: none;">
                         <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3; margin-bottom: 15px;">
                             <label style="display: flex; align-items: center; cursor: pointer; font-weight: 600; color: #1976d2;">
                                 <input type="checkbox" name="firmar_insignias" id="firmar_insignias" value="1" style="margin-right: 10px; width: 20px; height: 20px;">
                                 <span>✍️ ¿Deseas firmar las insignias digitalmente?</span>
                             </label>
-                            <p style="margin: 10px 0 0 30px; color: #666; font-size: 14px;">
+                            <p id="texto-explicativo-firma" style="margin: 10px 0 0 30px; color: #666; font-size: 14px;">
                                 Si marcas esta opción, todas las insignias se firmarán automáticamente con tu e.firma (SAT)
                             </p>
                         </div>
@@ -2289,11 +2297,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const camposFirma = document.getElementById('campos-firma');
             const firmarCheckbox = document.getElementById('firmar_insignias');
             
-            if (tipoCarga === 'insignias_otorgadas') {
+            // Mostrar opción de firma si es "Insignias Otorgadas" o "Todas las Tablas"
+            if (tipoCarga === 'insignias_otorgadas' || tipoCarga === 'todas_las_tablas') {
                 firmaGroup.style.display = 'block';
                 // Si el checkbox está marcado, mostrar campos
                 if (firmarCheckbox.checked) {
                     camposFirma.style.display = 'block';
+                }
+                // Actualizar texto explicativo según el tipo
+                const textoExplicativo = document.getElementById('texto-explicativo-firma');
+                if (textoExplicativo) {
+                    if (tipoCarga === 'todas_las_tablas') {
+                        textoExplicativo.textContent = 'Si marcas esta opción, solo las Insignias Otorgadas se firmarán automáticamente con tu e.firma (SAT). Las demás tablas no se verán afectadas.';
+                    } else {
+                        textoExplicativo.textContent = 'Si marcas esta opción, todas las insignias se firmarán automáticamente con tu e.firma (SAT)';
+                    }
                 }
             } else {
                 firmaGroup.style.display = 'none';
@@ -2328,15 +2346,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return;
             }
             
-            // Validar campos de firma si está habilitada
-            if (firmarInsignias && tipoCarga === 'insignias_otorgadas') {
+            // Validar campos de firma si está habilitada (para insignias otorgadas o todas las tablas)
+            if (firmarInsignias && (tipoCarga === 'insignias_otorgadas' || tipoCarga === 'todas_las_tablas')) {
                 const certificado = document.getElementById('certificado').files[0];
                 const clavePrivada = document.getElementById('clave_privada').files[0];
                 const contrasena = document.getElementById('contrasena_firma').value;
                 
                 if (!certificado || !clavePrivada || !contrasena) {
                     e.preventDefault();
-                    alert('Para firmar las insignias, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña.');
+                    if (tipoCarga === 'todas_las_tablas') {
+                        alert('Para firmar las Insignias Otorgadas, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña. Las demás tablas no se verán afectadas.');
+                    } else {
+                        alert('Para firmar las insignias, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña.');
+                    }
                     return;
                 }
             }
