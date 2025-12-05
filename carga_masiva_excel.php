@@ -4,13 +4,26 @@
 // Proyecto Insignias TecNM
 // ========================================
 
-session_start();
-require_once 'conexion.php';
+// Iniciar sesión solo si no está ya iniciada
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Verificar sesión de administrador
-if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'Admin') {
-    header('Location: login.php');
-    exit();
+// Solo ejecutar el código principal si el archivo se accede directamente
+// (no cuando se incluye desde otro archivo)
+if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
+    require_once 'conexion.php';
+    
+    // Verificar sesión de administrador
+    if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'Admin') {
+        header('Location: login.php');
+        exit();
+    }
+} else {
+    // Si se está incluyendo, solo cargar la conexión si no está definida
+    if (!isset($conexion)) {
+        require_once 'conexion.php';
+    }
 }
 
 // Incluir librería para leer Excel
@@ -1669,8 +1682,8 @@ class CargaMasivaExcel {
     }
 }
 
-// Procesar formulario
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// Procesar formulario (solo si se accede directamente)
+if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['generar_plantilla'])) {
         try {
             $tipo = $_POST['tipo_plantilla'] ?? '';
@@ -1855,6 +1868,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+// Solo mostrar HTML si se accede directamente
+if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
 ?>
 
 <!DOCTYPE html>
@@ -2658,3 +2674,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
+<?php
+} // Fin del if que verifica acceso directo
+?>
