@@ -259,9 +259,7 @@ class CargaMasivaExcel {
             'categorias_insignia' => ['categorias', 'categorías', 'categorias insignia'],
             'periodos_emision' => ['periodos', 'periodos emision', 'periodos de emision'],
             'estatus' => ['estatus', 'estados', 'status'],
-            'responsables_emision' => ['responsables', 'responsables emision', 'responsables de emision'],
-            'insignias_maestras' => ['insignias maestras', 't_insignias', 'insignias maestra'],
-            'usuarios' => ['usuarios', 'users', 'usuario']
+            'responsables_emision' => ['responsables', 'responsables emision', 'responsables de emision']
         ];
         
         // Procesar cada hoja
@@ -317,12 +315,6 @@ class CargaMasivaExcel {
                     break;
                 case 'responsables_emision':
                     $resultado = $this->cargarResponsablesEmision($data_sin_headers, $headers_originales);
-                    break;
-                case 'insignias_maestras':
-                    $resultado = $this->cargarInsigniasMaestras($data_sin_headers, $headers_originales);
-                    break;
-                case 'usuarios':
-                    $resultado = $this->cargarUsuarios($data_sin_headers, $headers_originales);
                     break;
             }
             
@@ -398,16 +390,6 @@ class CargaMasivaExcel {
             if (!in_array('matricula', $headers) && !in_array('curp', $headers)) {
                 return 'responsables_emision';
             }
-        }
-        
-        // Insignias Maestras (T_insignias)
-        if (in_array('tipo_insignia', $headers) && in_array('propone_insignia', $headers) && in_array('descripcion', $headers)) {
-            return 'insignias_maestras';
-        }
-        
-        // Usuarios
-        if (in_array('correo', $headers) && in_array('contrasena', $headers) && (in_array('rol', $headers) || in_array('nombre', $headers))) {
-            return 'usuarios';
         }
         
         return false;
@@ -1417,36 +1399,6 @@ class CargaMasivaExcel {
                         [1, 'Luis Hernández Campos', 'Luis', 'Hernández', 'Campos', 'Masculino', 'HECL900930HDFRGN10', '2024010', 'luis.hernandez@tecnm.mx', '5551234576', 'Estudiante']
                     ]
                 ],
-                'Usuarios' => [
-                    'headers' => ['Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Correo', 'Contrasena', 'Rol', 'Estado', 'It_Centro_Id'],
-                    'datos' => [
-                        ['Juan', 'Pérez', 'García', 'admin@tecnm.mx', 'admin123', 'Admin', 'Activo', 1],
-                        ['María', 'González', 'López', 'maria.admin@tecnm.mx', 'admin123', 'SuperUsuario', 'Activo', 1],
-                        ['Carlos', 'Ramírez', 'Martínez', 'carlos.ramirez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
-                        ['Ana', 'Sánchez', 'Hernández', 'ana.sanchez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
-                        ['Roberto', 'Torres', 'Díaz', 'roberto.torres@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Laura', 'Morales', 'Silva', 'laura.morales@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Fernando', 'Jiménez', 'Ruiz', 'fernando.jimenez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Patricia', 'Castro', 'Moreno', 'patricia.castro@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Gabriel', 'Mendoza', 'Vega', 'gabriel.mendoza@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Luis', 'Hernández', 'Campos', 'luis.hernandez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1]
-                    ]
-                ],
-                'Insignias Maestras' => [
-                    'headers' => ['Tipo_Insignia', 'Propone_Insignia', 'Programa', 'Descripcion', 'Criterio', 'Fecha_Creacion', 'Fecha_Autorizacion', 'Nombre_gen_ins', 'Estatus', 'Archivo_Visual'],
-                    'datos' => [
-                        [1, 1, 'Ingeniería en Sistemas', 'Insignia por excelencia académica', 'Tener promedio mayor a 9.0 durante el semestre', '2024-01-15', '2024-01-20', 'Insignia de Excelencia Académica', 1, 'excelencia.jpg'],
-                        [2, 1, 'Ingeniería Industrial', 'Insignia por participación en actividades artísticas', 'Participar en al menos 3 eventos culturales', '2024-01-15', '2024-01-20', 'Insignia de Arte y Cultura', 1, 'arte.jpg'],
-                        [3, 1, 'Ingeniería Mecánica', 'Insignia por excelencia deportiva', 'Ganar competencia deportiva a nivel regional', '2024-01-15', '2024-01-20', 'Insignia Deportiva', 1, 'deporte.jpg'],
-                        [4, 1, 'Ingeniería en Sistemas', 'Insignia por proyecto científico', 'Desarrollar proyecto de investigación aprobado', '2024-01-15', '2024-01-20', 'Insignia Científica', 1, 'cientifico.jpg'],
-                        [5, 1, 'Ingeniería Industrial', 'Insignia por innovación tecnológica', 'Desarrollar solución tecnológica innovadora', '2024-01-15', '2024-01-20', 'Insignia de Innovación', 1, 'innovacion.jpg'],
-                        [6, 1, 'Ingeniería Mecánica', 'Insignia por responsabilidad social', 'Participar en 50 horas de servicio social', '2024-01-15', '2024-01-20', 'Insignia de Responsabilidad Social', 1, 'social.jpg'],
-                        [7, 1, 'Ingeniería en Sistemas', 'Insignia por formación continua', 'Completar 3 cursos de actualización', '2024-01-15', '2024-01-20', 'Insignia de Formación', 1, 'formacion.jpg'],
-                        [8, 1, 'Ingeniería Industrial', 'Insignia por movilidad estudiantil', 'Participar en programa de intercambio', '2024-01-15', '2024-01-20', 'Insignia de Movilidad', 1, 'movilidad.jpg'],
-                        [9, 1, 'Ingeniería Mecánica', 'Insignia por liderazgo estudiantil', 'Ser representante estudiantil activo', '2024-01-15', '2024-01-20', 'Insignia de Liderazgo', 1, 'liderazgo.jpg'],
-                        [10, 1, 'Ingeniería en Sistemas', 'Insignia por emprendimiento', 'Desarrollar proyecto emprendedor viable', '2024-01-15', '2024-01-20', 'Insignia de Emprendimiento', 1, 'emprendimiento.jpg']
-                    ]
-                ],
                 'Insignias Otorgadas' => [
                     'headers' => ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'],
                     'datos' => [
@@ -1658,36 +1610,6 @@ class CargaMasivaExcel {
                         ['Dr. Luis Hernández Campos', 1, 'Director de Posgrado', 'TECNM-DIR-003', 'luis.hernandez@tecnm.mx', '5551234576']
                     ];
                     break;
-                case 'insignias_maestras':
-                    $headers = ['Tipo_Insignia', 'Propone_Insignia', 'Programa', 'Descripcion', 'Criterio', 'Fecha_Creacion', 'Fecha_Autorizacion', 'Nombre_gen_ins', 'Estatus', 'Archivo_Visual'];
-                    $datos_ejemplo = [
-                        [1, 1, 'Ingeniería en Sistemas', 'Insignia por excelencia académica', 'Tener promedio mayor a 9.0 durante el semestre', '2024-01-15', '2024-01-20', 'Insignia de Excelencia Académica', 1, 'excelencia.jpg'],
-                        [2, 1, 'Ingeniería Industrial', 'Insignia por participación en actividades artísticas', 'Participar en al menos 3 eventos culturales', '2024-01-15', '2024-01-20', 'Insignia de Arte y Cultura', 1, 'arte.jpg'],
-                        [3, 1, 'Ingeniería Mecánica', 'Insignia por excelencia deportiva', 'Ganar competencia deportiva a nivel regional', '2024-01-15', '2024-01-20', 'Insignia Deportiva', 1, 'deporte.jpg'],
-                        [4, 1, 'Ingeniería en Sistemas', 'Insignia por proyecto científico', 'Desarrollar proyecto de investigación aprobado', '2024-01-15', '2024-01-20', 'Insignia Científica', 1, 'cientifico.jpg'],
-                        [5, 1, 'Ingeniería Industrial', 'Insignia por innovación tecnológica', 'Desarrollar solución tecnológica innovadora', '2024-01-15', '2024-01-20', 'Insignia de Innovación', 1, 'innovacion.jpg'],
-                        [6, 1, 'Ingeniería Mecánica', 'Insignia por responsabilidad social', 'Participar en 50 horas de servicio social', '2024-01-15', '2024-01-20', 'Insignia de Responsabilidad Social', 1, 'social.jpg'],
-                        [7, 1, 'Ingeniería en Sistemas', 'Insignia por formación continua', 'Completar 3 cursos de actualización', '2024-01-15', '2024-01-20', 'Insignia de Formación', 1, 'formacion.jpg'],
-                        [8, 1, 'Ingeniería Industrial', 'Insignia por movilidad estudiantil', 'Participar en programa de intercambio', '2024-01-15', '2024-01-20', 'Insignia de Movilidad', 1, 'movilidad.jpg'],
-                        [9, 1, 'Ingeniería Mecánica', 'Insignia por liderazgo estudiantil', 'Ser representante estudiantil activo', '2024-01-15', '2024-01-20', 'Insignia de Liderazgo', 1, 'liderazgo.jpg'],
-                        [10, 1, 'Ingeniería en Sistemas', 'Insignia por emprendimiento', 'Desarrollar proyecto emprendedor viable', '2024-01-15', '2024-01-20', 'Insignia de Emprendimiento', 1, 'emprendimiento.jpg']
-                    ];
-                    break;
-                case 'usuarios':
-                    $headers = ['Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Correo', 'Contrasena', 'Rol', 'Estado', 'It_Centro_Id'];
-                    $datos_ejemplo = [
-                        ['Juan', 'Pérez', 'García', 'admin@tecnm.mx', 'admin123', 'Admin', 'Activo', 1],
-                        ['María', 'González', 'López', 'maria.admin@tecnm.mx', 'admin123', 'SuperUsuario', 'Activo', 1],
-                        ['Carlos', 'Ramírez', 'Martínez', 'carlos.ramirez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
-                        ['Ana', 'Sánchez', 'Hernández', 'ana.sanchez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
-                        ['Roberto', 'Torres', 'Díaz', 'roberto.torres@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Laura', 'Morales', 'Silva', 'laura.morales@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Fernando', 'Jiménez', 'Ruiz', 'fernando.jimenez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Patricia', 'Castro', 'Moreno', 'patricia.castro@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Gabriel', 'Mendoza', 'Vega', 'gabriel.mendoza@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
-                        ['Luis', 'Hernández', 'Campos', 'luis.hernandez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1]
-                    ];
-                    break;
                 default:
                     $this->errores[] = "Tipo de plantilla no válido: $tipo";
                     return false;
@@ -1776,9 +1698,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'categorias_insignia' => 'Plantilla_Categorias_Insignia',
                     'periodos_emision' => 'Plantilla_Periodos_Emision',
                     'estatus' => 'Plantilla_Estatus',
-                    'responsables_emision' => 'Plantilla_Responsables_Emision',
-                    'insignias_maestras' => 'Plantilla_Insignias_Maestras',
-                    'usuarios' => 'Plantilla_Usuarios'
+                    'responsables_emision' => 'Plantilla_Responsables_Emision'
                 ];
                 
                 $nombre_descarga = ($nombres_amigables[$tipo] ?? "plantilla_$tipo") . ".xlsx";
@@ -2474,8 +2394,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="periodos_emision">Periodos de Emisión</option>
                             <option value="estatus">Estatus</option>
                             <option value="responsables_emision">Responsables de Emisión</option>
-                            <option value="insignias_maestras">Insignias Maestras (T_insignias)</option>
-                            <option value="usuarios">Usuarios</option>
                         </select>
                     </div>
                     
@@ -2505,8 +2423,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="periodos_emision">Periodos de Emisión</option>
                             <option value="estatus">Estatus</option>
                             <option value="responsables_emision">Responsables de Emisión</option>
-                            <option value="insignias_maestras">Insignias Maestras (T_insignias)</option>
-                            <option value="usuarios">Usuarios</option>
                         </select>
                     </div>
                     
