@@ -173,6 +173,9 @@ class CargaMasivaExcel {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $this->conexion->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta de historial: " . $this->conexion->error);
+            }
             $stmt->bind_param("ssisiiiiis", 
                 $nombre_archivo,
                 $tipo_carga,
@@ -457,6 +460,9 @@ class CargaMasivaExcel {
                         VALUES (?, ?, ?, ?, ?)";
                 
                 $stmt = $this->conexion->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Error al preparar consulta de insignia otorgada: " . $this->conexion->error);
+                }
                 $stmt->bind_param("iisii", 
                     $datos['Id_Insignia'],
                     $datos['Id_Destinatario'],
@@ -513,6 +519,9 @@ class CargaMasivaExcel {
                     WHERE tio.id = ?";
             
             $stmt = $this->conexion->prepare($sql);
+            if (!$stmt) {
+                throw new Exception("Error al preparar consulta de firma: " . $this->conexion->error);
+            }
             $stmt->bind_param("i", $insignia_id);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -593,6 +602,9 @@ class CargaMasivaExcel {
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 
                 $stmt = $this->conexion->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Error al preparar consulta de destinatario: " . $this->conexion->error);
+                }
                 $stmt->bind_param("issssssssss", 
                     $datos['Id_Centro'],
                     $datos['Nombre_Completo'],
@@ -659,6 +671,9 @@ class CargaMasivaExcel {
                 // Verificar si ya existe un centro con la misma Clave_ct
                 $sql_check = "SELECT id FROM it_centros WHERE Clave_ct = ? LIMIT 1";
                 $stmt_check = $this->conexion->prepare($sql_check);
+                if (!$stmt_check) {
+                    throw new Exception("Error al preparar consulta de verificación de centro: " . $this->conexion->error);
+                }
                 $stmt_check->bind_param("s", $datos['Clave_ct']);
                 $stmt_check->execute();
                 $resultado_check = $stmt_check->get_result();
@@ -719,6 +734,9 @@ class CargaMasivaExcel {
                     $campos_str = implode(', ', $campos_update);
                     $sql = "UPDATE it_centros SET $campos_str WHERE Clave_ct = ?";
                     $stmt = $this->conexion->prepare($sql);
+                    if (!$stmt) {
+                        throw new Exception("Error al preparar consulta de actualización de centro: " . $this->conexion->error);
+                    }
                     $stmt->bind_param($tipos_update, ...$valores_update);
                     
                     if ($stmt->execute()) {
@@ -735,6 +753,9 @@ class CargaMasivaExcel {
                     
                     $sql = "INSERT INTO it_centros ($campos_str) VALUES ($placeholders)";
                     $stmt = $this->conexion->prepare($sql);
+                    if (!$stmt) {
+                        throw new Exception("Error al preparar consulta de inserción de centro: " . $this->conexion->error);
+                    }
                     $stmt->bind_param($tipos, ...$valores_sql);
                     
                     if ($stmt->execute()) {
@@ -847,6 +868,9 @@ class CargaMasivaExcel {
                 
                 $sql = "INSERT INTO estatus (Nombre_Estatus, Acron_Estatus) VALUES (?, ?)";
                 $stmt = $this->conexion->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Error al preparar consulta de estatus: " . $this->conexion->error);
+                }
                 $stmt->bind_param("ss", $nombre_estatus, $acron);
                 
                 if ($stmt->execute()) {
@@ -903,10 +927,16 @@ class CargaMasivaExcel {
                 if ($tiene_adscripcion) {
                     $sql = "INSERT INTO responsable_emision (Nombre_Completo, Adscripcion, Cargo, Codigo_Identificacion, Correo, Telefono) VALUES (?, ?, ?, ?, ?, ?)";
                     $stmt = $this->conexion->prepare($sql);
+                    if (!$stmt) {
+                        throw new Exception("Error al preparar consulta de responsable (con adscripción): " . $this->conexion->error);
+                    }
                     $stmt->bind_param("sissss", $nombre_completo, $adscripcion, $cargo, $codigo, $correo, $telefono);
                 } else {
                     $sql = "INSERT INTO responsable_emision (Nombre_Completo, Cargo, Codigo_Identificacion, Correo, Telefono) VALUES (?, ?, ?, ?, ?)";
                     $stmt = $this->conexion->prepare($sql);
+                    if (!$stmt) {
+                        throw new Exception("Error al preparar consulta de responsable (sin adscripción): " . $this->conexion->error);
+                    }
                     $stmt->bind_param("sssss", $nombre_completo, $cargo, $codigo, $correo, $telefono);
                 }
                 
@@ -963,6 +993,9 @@ class CargaMasivaExcel {
                 
                 $sql = "INSERT INTO T_insignias (Tipo_Insignia, Propone_Insignia, Programa, Descripcion, Criterio, Fecha_Creacion, Fecha_Autorizacion, Nombre_gen_ins, Estatus, Archivo_Visual) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $this->conexion->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Error al preparar consulta de tipo de insignia: " . $this->conexion->error);
+                }
                 $estatus_int = (int)$estatus;
                 $stmt->bind_param("iissssssis", $tipo_insignia, $propone_insignia, $programa, $descripcion, $criterio, $fecha_creacion, $fecha_autorizacion, $nombre_gen_ins, $estatus_int, $archivo_visual);
                 
@@ -1020,6 +1053,9 @@ class CargaMasivaExcel {
                 
                 $sql = "INSERT INTO Usuario (Nombre, Apellido_Paterno, Apellido_Materno, Correo, Contrasena, Rol, Estado, It_Centro_Id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $this->conexion->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Error al preparar consulta de usuario: " . $this->conexion->error);
+                }
                 $it_centro_id_val = !empty($it_centro_id) && is_numeric($it_centro_id) ? $it_centro_id : null;
                 $stmt->bind_param("sssssssi", $nombre, $apellido_paterno, $apellido_materno, $correo, $contrasena_hash, $rol, $estado, $it_centro_id_val);
                 
