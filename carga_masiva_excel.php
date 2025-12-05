@@ -1302,69 +1302,413 @@ class CargaMasivaExcel {
     /**
      * Generar plantilla Excel
      */
-    public function generarPlantilla($tipo) {
+    /**
+     * Generar plantilla con todas las tablas en un solo Excel
+     */
+    public function generarTodasLasPlantillas() {
         try {
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $spreadsheet->removeSheetByIndex(0); // Eliminar hoja por defecto
+            
+            // Definir todas las plantillas con datos de ejemplo
+            // ORDEN IMPORTANTE: Debe coincidir con el orden recomendado de carga
+            $plantillas = [
+                'Centros IT' => [
+                    'headers' => ['Nombre_itc', 'Acron', 'Estado', 'Clave_ct', 'Tipo_itc'],
+                    'datos' => [
+                        ['Instituto Tecnológico de San Marcos', 'ITSM', 'Coahuila', '05DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Celaya', 'ITC', 'Guanajuato', '11DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Morelia', 'ITM', 'Michoacán', '16DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Durango', 'ITD', 'Durango', '10DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Tijuana', 'ITT', 'Baja California', '02DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Chihuahua', 'ITCH', 'Chihuahua', '08DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Puebla', 'ITP', 'Puebla', '21DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Veracruz', 'ITV', 'Veracruz', '30DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Mérida', 'ITM', 'Yucatán', '31DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Cancún', 'ITC', 'Quintana Roo', '23DIT0001A', 'Federal']
+                    ]
+                ],
+                'Categorías de Insignia' => [
+                    'headers' => ['Nombre_Cat', 'Descripcion'],
+                    'datos' => [
+                        ['Formación Integral', 'Categoría para insignias de formación integral del estudiante'],
+                        ['Desarrollo Académico', 'Categoría para insignias de excelencia académica'],
+                        ['Desarrollo Personal', 'Categoría para insignias de desarrollo personal'],
+                        ['Responsabilidad Social', 'Categoría para insignias de responsabilidad social'],
+                        ['Liderazgo', 'Categoría para insignias de liderazgo estudiantil'],
+                        ['Emprendimiento', 'Categoría para insignias de emprendimiento'],
+                        ['Investigación', 'Categoría para insignias de investigación'],
+                        ['Innovación', 'Categoría para insignias de innovación tecnológica'],
+                        ['Sustentabilidad', 'Categoría para insignias de sustentabilidad'],
+                        ['Internacionalización', 'Categoría para insignias de movilidad internacional']
+                    ]
+                ],
+                'Tipos de Insignia' => [
+                    'headers' => ['Nombre_Insignia', 'Descripcion', 'Id_Categoria'],
+                    'datos' => [
+                        ['Embajador del Arte', 'Reconocimiento por destacar en actividades artísticas y culturales', 1],
+                        ['Embajador del Deporte', 'Reconocimiento por excelencia en actividades deportivas', 3],
+                        ['Talento Científico', 'Reconocimiento por participación destacada en proyectos científicos', 2],
+                        ['Talento Innovador', 'Reconocimiento por innovación tecnológica', 2],
+                        ['Responsabilidad Social', 'Reconocimiento por participación en actividades de responsabilidad social', 1],
+                        ['Formación y Actualización', 'Reconocimiento por formación continua y actualización', 2],
+                        ['Movilidad e Intercambio', 'Reconocimiento por participación en programas de movilidad', 1],
+                        ['Liderazgo Estudiantil', 'Reconocimiento por liderazgo en actividades estudiantiles', 1],
+                        ['Emprendimiento', 'Reconocimiento por proyectos emprendedores', 1],
+                        ['Sustentabilidad', 'Reconocimiento por proyectos de sustentabilidad ambiental', 1]
+                    ]
+                ],
+                'Estatus' => [
+                    'headers' => ['Nombre_Estatus', 'Acron_Estatus'],
+                    'datos' => [
+                        ['Activo', 'ACT'],
+                        ['Pendiente', 'PEND'],
+                        ['Autorizado', 'AUT'],
+                        ['Rechazado', 'REC'],
+                        ['Vencido', 'VEN'],
+                        ['En Revisión', 'REV'],
+                        ['Aprobado', 'APR'],
+                        ['Cancelado', 'CAN'],
+                        ['Suspendido', 'SUS'],
+                        ['Finalizado', 'FIN']
+                    ]
+                ],
+                'Periodos de Emisión' => [
+                    'headers' => ['Periodo', 'Anio', 'Fecha_Inicio', 'Fecha_Fin'],
+                    'datos' => [
+                        ['Enero-Junio 2024', 2024, '2024-01-01', '2024-06-30'],
+                        ['Agosto-Diciembre 2024', 2024, '2024-08-01', '2024-12-31'],
+                        ['Enero-Junio 2025', 2025, '2025-01-01', '2025-06-30'],
+                        ['Agosto-Diciembre 2025', 2025, '2025-08-01', '2025-12-31'],
+                        ['Enero-Junio 2026', 2026, '2026-01-01', '2026-06-30'],
+                        ['Agosto-Diciembre 2026', 2026, '2026-08-01', '2026-12-31'],
+                        ['Enero-Junio 2027', 2027, '2027-01-01', '2027-06-30'],
+                        ['Agosto-Diciembre 2027', 2027, '2027-08-01', '2027-12-31'],
+                        ['Enero-Junio 2028', 2028, '2028-01-01', '2028-06-30'],
+                        ['Agosto-Diciembre 2028', 2028, '2028-08-01', '2028-12-31']
+                    ]
+                ],
+                'Responsables de Emisión' => [
+                    'headers' => ['Nombre_Completo', 'Adscripcion', 'Cargo', 'Codigo_Identificacion', 'Correo', 'Telefono'],
+                    'datos' => [
+                        ['Dr. Juan Pérez García', 1, 'Director', 'TECNM-DIR-001', 'juan.perez@tecnm.mx', '5551234567'],
+                        ['Mtra. María González López', 1, 'Subdirectora Académica', 'TECNM-SUB-001', 'maria.gonzalez@tecnm.mx', '5551234568'],
+                        ['Lic. Carlos Ramírez Martínez', 1, 'Coordinador de Vinculación', 'TECNM-COORD-001', 'carlos.ramirez@tecnm.mx', '5551234569'],
+                        ['Ing. Ana Sánchez Hernández', 1, 'Jefa de Departamento', 'TECNM-JEFE-001', 'ana.sanchez@tecnm.mx', '5551234570'],
+                        ['Mtra. Laura Torres Díaz', 1, 'Coordinadora de Extensión', 'TECNM-COORD-002', 'laura.torres@tecnm.mx', '5551234571'],
+                        ['Dr. Roberto Morales Silva', 1, 'Director de Investigación', 'TECNM-DIR-002', 'roberto.morales@tecnm.mx', '5551234572'],
+                        ['Mtra. Patricia Jiménez Ruiz', 1, 'Coordinadora de Servicios', 'TECNM-COORD-003', 'patricia.jimenez@tecnm.mx', '5551234573'],
+                        ['Ing. Fernando Castro Moreno', 1, 'Jefe de División', 'TECNM-JEFE-002', 'fernando.castro@tecnm.mx', '5551234574'],
+                        ['Mtra. Gabriela Mendoza Vega', 1, 'Coordinadora Académica', 'TECNM-COORD-004', 'gabriela.mendoza@tecnm.mx', '5551234575'],
+                        ['Dr. Luis Hernández Campos', 1, 'Director de Posgrado', 'TECNM-DIR-003', 'luis.hernandez@tecnm.mx', '5551234576']
+                    ]
+                ],
+                'Destinatarios' => [
+                    'headers' => ['Id_Centro', 'Nombre_Completo', 'Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Genero', 'Curp', 'Matricula', 'Correo', 'Telefono', 'Rol'],
+                    'datos' => [
+                        [1, 'Juan Pérez Gómez', 'Juan', 'Pérez', 'Gómez', 'Masculino', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '5551234567', 'Estudiante'],
+                        [1, 'María González López', 'María', 'González', 'López', 'Femenino', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '5551234568', 'Estudiante'],
+                        [1, 'Carlos Ramírez Martínez', 'Carlos', 'Ramírez', 'Martínez', 'Masculino', 'RAMC850320HDFRGN03', '2024003', 'carlos.ramirez@tecnm.mx', '5551234569', 'Estudiante'],
+                        [1, 'Ana Sánchez Hernández', 'Ana', 'Sánchez', 'Hernández', 'Femenino', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '5551234570', 'Estudiante'],
+                        [1, 'Roberto Torres Díaz', 'Roberto', 'Torres', 'Díaz', 'Masculino', 'TODR880725HDFRGN05', '2024005', 'roberto.torres@tecnm.mx', '5551234571', 'Estudiante'],
+                        [1, 'Laura Morales Silva', 'Laura', 'Morales', 'Silva', 'Femenino', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '5551234572', 'Estudiante'],
+                        [1, 'Fernando Jiménez Ruiz', 'Fernando', 'Jiménez', 'Ruiz', 'Masculino', 'JIRF870415HDFRGN07', '2024007', 'fernando.jimenez@tecnm.mx', '5551234573', 'Estudiante'],
+                        [1, 'Patricia Castro Moreno', 'Patricia', 'Castro', 'Moreno', 'Femenino', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '5551234574', 'Estudiante'],
+                        [1, 'Gabriel Mendoza Vega', 'Gabriel', 'Mendoza', 'Vega', 'Masculino', 'MEVG890825HDFRGN09', '2024009', 'gabriel.mendoza@tecnm.mx', '5551234575', 'Estudiante'],
+                        [1, 'Luis Hernández Campos', 'Luis', 'Hernández', 'Campos', 'Masculino', 'HECL900930HDFRGN10', '2024010', 'luis.hernandez@tecnm.mx', '5551234576', 'Estudiante']
+                    ]
+                ],
+                'Usuarios' => [
+                    'headers' => ['Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Correo', 'Contrasena', 'Rol', 'Estado', 'It_Centro_Id'],
+                    'datos' => [
+                        ['Juan', 'Pérez', 'García', 'admin@tecnm.mx', 'admin123', 'Admin', 'Activo', 1],
+                        ['María', 'González', 'López', 'maria.admin@tecnm.mx', 'admin123', 'SuperUsuario', 'Activo', 1],
+                        ['Carlos', 'Ramírez', 'Martínez', 'carlos.ramirez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
+                        ['Ana', 'Sánchez', 'Hernández', 'ana.sanchez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
+                        ['Roberto', 'Torres', 'Díaz', 'roberto.torres@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Laura', 'Morales', 'Silva', 'laura.morales@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Fernando', 'Jiménez', 'Ruiz', 'fernando.jimenez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Patricia', 'Castro', 'Moreno', 'patricia.castro@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Gabriel', 'Mendoza', 'Vega', 'gabriel.mendoza@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Luis', 'Hernández', 'Campos', 'luis.hernandez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1]
+                    ]
+                ],
+                'Insignias Maestras' => [
+                    'headers' => ['Tipo_Insignia', 'Propone_Insignia', 'Programa', 'Descripcion', 'Criterio', 'Fecha_Creacion', 'Fecha_Autorizacion', 'Nombre_gen_ins', 'Estatus', 'Archivo_Visual'],
+                    'datos' => [
+                        [1, 1, 'Ingeniería en Sistemas', 'Insignia por excelencia académica', 'Tener promedio mayor a 9.0 durante el semestre', '2024-01-15', '2024-01-20', 'Insignia de Excelencia Académica', 1, 'excelencia.jpg'],
+                        [2, 1, 'Ingeniería Industrial', 'Insignia por participación en actividades artísticas', 'Participar en al menos 3 eventos culturales', '2024-01-15', '2024-01-20', 'Insignia de Arte y Cultura', 1, 'arte.jpg'],
+                        [3, 1, 'Ingeniería Mecánica', 'Insignia por excelencia deportiva', 'Ganar competencia deportiva a nivel regional', '2024-01-15', '2024-01-20', 'Insignia Deportiva', 1, 'deporte.jpg'],
+                        [4, 1, 'Ingeniería en Sistemas', 'Insignia por proyecto científico', 'Desarrollar proyecto de investigación aprobado', '2024-01-15', '2024-01-20', 'Insignia Científica', 1, 'cientifico.jpg'],
+                        [5, 1, 'Ingeniería Industrial', 'Insignia por innovación tecnológica', 'Desarrollar solución tecnológica innovadora', '2024-01-15', '2024-01-20', 'Insignia de Innovación', 1, 'innovacion.jpg'],
+                        [6, 1, 'Ingeniería Mecánica', 'Insignia por responsabilidad social', 'Participar en 50 horas de servicio social', '2024-01-15', '2024-01-20', 'Insignia de Responsabilidad Social', 1, 'social.jpg'],
+                        [7, 1, 'Ingeniería en Sistemas', 'Insignia por formación continua', 'Completar 3 cursos de actualización', '2024-01-15', '2024-01-20', 'Insignia de Formación', 1, 'formacion.jpg'],
+                        [8, 1, 'Ingeniería Industrial', 'Insignia por movilidad estudiantil', 'Participar en programa de intercambio', '2024-01-15', '2024-01-20', 'Insignia de Movilidad', 1, 'movilidad.jpg'],
+                        [9, 1, 'Ingeniería Mecánica', 'Insignia por liderazgo estudiantil', 'Ser representante estudiantil activo', '2024-01-15', '2024-01-20', 'Insignia de Liderazgo', 1, 'liderazgo.jpg'],
+                        [10, 1, 'Ingeniería en Sistemas', 'Insignia por emprendimiento', 'Desarrollar proyecto emprendedor viable', '2024-01-15', '2024-01-20', 'Insignia de Emprendimiento', 1, 'emprendimiento.jpg']
+                    ]
+                ],
+                'Insignias Otorgadas' => [
+                    'headers' => ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'],
+                    'datos' => [
+                        [1, 1, '2024-02-15', 1, 1],
+                        [2, 2, '2024-02-16', 1, 1],
+                        [3, 3, '2024-02-17', 1, 1],
+                        [4, 4, '2024-02-18', 1, 1],
+                        [5, 5, '2024-02-19', 1, 1],
+                        [6, 6, '2024-02-20', 1, 1],
+                        [7, 7, '2024-02-21', 1, 1],
+                        [8, 8, '2024-02-22', 1, 1],
+                        [9, 9, '2024-02-23', 1, 1],
+                        [10, 10, '2024-02-24', 1, 1]
+                    ]
+                ]
+            ];
+            
+            // Crear una hoja por cada plantilla
+            foreach ($plantillas as $nombre_hoja => $datos_plantilla) {
+                $sheet = new \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet($spreadsheet, $nombre_hoja);
+                $spreadsheet->addSheet($sheet);
+                
+                // Escribir headers
+                $col = 'A';
+                foreach ($datos_plantilla['headers'] as $header) {
+                    $sheet->setCellValue($col . '1', $header);
+                    $sheet->getStyle($col . '1')->getFont()->setBold(true);
+                    $col++;
+                }
+                
+                // Escribir datos de ejemplo (10 registros)
+                $fila = 2;
+                foreach ($datos_plantilla['datos'] as $fila_datos) {
+                    $col = 'A';
+                    foreach ($fila_datos as $valor) {
+                        $sheet->setCellValue($col . $fila, $valor);
+                        $col++;
+                    }
+                    $fila++;
+                }
+                
+                // Ajustar ancho de columnas
+                foreach (range('A', $col) as $columna) {
+                    $sheet->getColumnDimension($columna)->setAutoSize(true);
+                }
+            }
+            
+            // Eliminar la primera hoja vacía si existe
+            if ($spreadsheet->getSheetCount() > 0) {
+                $sheetIndex = $spreadsheet->getIndex($spreadsheet->getSheetByName('Worksheet'));
+                if ($sheetIndex !== false) {
+                    $spreadsheet->removeSheetByIndex($sheetIndex);
+                }
+            }
+            
+            // Usar directorio temporal
+            $temp_dir = sys_get_temp_dir();
+            $filename = $temp_dir . DIRECTORY_SEPARATOR . "plantilla_todas_las_tablas_" . uniqid() . ".xlsx";
+            
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->save($filename);
+            
+            return $filename;
+        } catch (Exception $e) {
+            $this->errores[] = "Error al generar plantilla completa: " . $e->getMessage();
+            error_log("Error al generar plantilla completa Excel: " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    public function generarPlantilla($tipo) {
+        try {
+            // Si es todas las plantillas, usar función especial
+            if ($tipo === 'todas_las_plantillas') {
+                return $this->generarTodasLasPlantillas();
+            }
+            
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
+            
+            // Datos de ejemplo para 10 registros
+            $datos_ejemplo = [];
             
             switch ($tipo) {
                 case 'insignias_otorgadas':
                     $headers = ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'];
-                    $ejemplos = [1, 1, '2024-01-15', 1, 1];
+                    $datos_ejemplo = [
+                        [1, 1, '2024-02-15', 1, 1],
+                        [2, 2, '2024-02-16', 1, 1],
+                        [3, 3, '2024-02-17', 1, 1],
+                        [4, 4, '2024-02-18', 1, 1],
+                        [5, 5, '2024-02-19', 1, 1],
+                        [6, 6, '2024-02-20', 1, 1],
+                        [7, 7, '2024-02-21', 1, 1],
+                        [8, 8, '2024-02-22', 1, 1],
+                        [9, 9, '2024-02-23', 1, 1],
+                        [10, 10, '2024-02-24', 1, 1]
+                    ];
                     break;
                 case 'destinatarios':
                     $headers = ['Id_Centro', 'Nombre_Completo', 'Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Genero', 'Curp', 'Matricula', 'Correo', 'Telefono', 'Rol'];
-                    $ejemplos = [1, 'Juan Pérez Gómez', 'Juan', 'Pérez', 'Gómez', 'Masculino', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '5551234567', 'Estudiante'];
+                    $datos_ejemplo = [
+                        [1, 'Juan Pérez Gómez', 'Juan', 'Pérez', 'Gómez', 'Masculino', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '5551234567', 'Estudiante'],
+                        [1, 'María González López', 'María', 'González', 'López', 'Femenino', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '5551234568', 'Estudiante'],
+                        [1, 'Carlos Ramírez Martínez', 'Carlos', 'Ramírez', 'Martínez', 'Masculino', 'RAMC850320HDFRGN03', '2024003', 'carlos.ramirez@tecnm.mx', '5551234569', 'Estudiante'],
+                        [1, 'Ana Sánchez Hernández', 'Ana', 'Sánchez', 'Hernández', 'Femenino', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '5551234570', 'Estudiante'],
+                        [1, 'Roberto Torres Díaz', 'Roberto', 'Torres', 'Díaz', 'Masculino', 'TODR880725HDFRGN05', '2024005', 'roberto.torres@tecnm.mx', '5551234571', 'Estudiante'],
+                        [1, 'Laura Morales Silva', 'Laura', 'Morales', 'Silva', 'Femenino', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '5551234572', 'Estudiante'],
+                        [1, 'Fernando Jiménez Ruiz', 'Fernando', 'Jiménez', 'Ruiz', 'Masculino', 'JIRF870415HDFRGN07', '2024007', 'fernando.jimenez@tecnm.mx', '5551234573', 'Estudiante'],
+                        [1, 'Patricia Castro Moreno', 'Patricia', 'Castro', 'Moreno', 'Femenino', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '5551234574', 'Estudiante'],
+                        [1, 'Gabriel Mendoza Vega', 'Gabriel', 'Mendoza', 'Vega', 'Masculino', 'MEVG890825HDFRGN09', '2024009', 'gabriel.mendoza@tecnm.mx', '5551234575', 'Estudiante'],
+                        [1, 'Luis Hernández Campos', 'Luis', 'Hernández', 'Campos', 'Masculino', 'HECL900930HDFRGN10', '2024010', 'luis.hernandez@tecnm.mx', '5551234576', 'Estudiante']
+                    ];
                     break;
                 case 'centros_it':
                     $headers = ['Nombre_itc', 'Acron', 'Estado', 'Clave_ct', 'Tipo_itc'];
-                    $ejemplos = ['Instituto Tecnológico de Celaya', 'ITC', 'Guanajuato', '11DIT0001A', 'Federal'];
+                    $datos_ejemplo = [
+                        ['Instituto Tecnológico de San Marcos', 'ITSM', 'Coahuila', '05DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Celaya', 'ITC', 'Guanajuato', '11DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Morelia', 'ITM', 'Michoacán', '16DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Durango', 'ITD', 'Durango', '10DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Tijuana', 'ITT', 'Baja California', '02DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Chihuahua', 'ITCH', 'Chihuahua', '08DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Puebla', 'ITP', 'Puebla', '21DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Veracruz', 'ITV', 'Veracruz', '30DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Mérida', 'ITM', 'Yucatán', '31DIT0001A', 'Federal'],
+                        ['Instituto Tecnológico de Cancún', 'ITC', 'Quintana Roo', '23DIT0001A', 'Federal']
+                    ];
                     break;
                 case 'tipos_insignia':
                     $headers = ['Nombre_Insignia', 'Descripcion', 'Id_Categoria'];
-                    $ejemplos = ['Responsabilidad Social', 'Insignia por participación en actividades de responsabilidad social', 1];
+                    $datos_ejemplo = [
+                        ['Embajador del Arte', 'Reconocimiento por destacar en actividades artísticas y culturales', 1],
+                        ['Embajador del Deporte', 'Reconocimiento por excelencia en actividades deportivas', 3],
+                        ['Talento Científico', 'Reconocimiento por participación destacada en proyectos científicos', 2],
+                        ['Talento Innovador', 'Reconocimiento por innovación tecnológica', 2],
+                        ['Responsabilidad Social', 'Reconocimiento por participación en actividades de responsabilidad social', 1],
+                        ['Formación y Actualización', 'Reconocimiento por formación continua y actualización', 2],
+                        ['Movilidad e Intercambio', 'Reconocimiento por participación en programas de movilidad', 1],
+                        ['Liderazgo Estudiantil', 'Reconocimiento por liderazgo en actividades estudiantiles', 1],
+                        ['Emprendimiento', 'Reconocimiento por proyectos emprendedores', 1],
+                        ['Sustentabilidad', 'Reconocimiento por proyectos de sustentabilidad ambiental', 1]
+                    ];
                     break;
                 case 'categorias_insignia':
                     $headers = ['Nombre_Cat', 'Descripcion'];
-                    $ejemplos = ['Formación Integral', 'Categoría para insignias de formación integral', 'Categoría para insignias de formación integral'];
+                    $datos_ejemplo = [
+                        ['Formación Integral', 'Categoría para insignias de formación integral del estudiante'],
+                        ['Desarrollo Académico', 'Categoría para insignias de excelencia académica'],
+                        ['Desarrollo Personal', 'Categoría para insignias de desarrollo personal'],
+                        ['Responsabilidad Social', 'Categoría para insignias de responsabilidad social'],
+                        ['Liderazgo', 'Categoría para insignias de liderazgo estudiantil'],
+                        ['Emprendimiento', 'Categoría para insignias de emprendimiento'],
+                        ['Investigación', 'Categoría para insignias de investigación'],
+                        ['Innovación', 'Categoría para insignias de innovación tecnológica'],
+                        ['Sustentabilidad', 'Categoría para insignias de sustentabilidad'],
+                        ['Internacionalización', 'Categoría para insignias de movilidad internacional']
+                    ];
                     break;
                 case 'periodos_emision':
                     $headers = ['Periodo', 'Anio', 'Fecha_Inicio', 'Fecha_Fin'];
-                    $ejemplos = ['Enero-Junio 2024', 2024, '2024-01-01', '2024-06-30'];
+                    $datos_ejemplo = [
+                        ['Enero-Junio 2024', 2024, '2024-01-01', '2024-06-30'],
+                        ['Agosto-Diciembre 2024', 2024, '2024-08-01', '2024-12-31'],
+                        ['Enero-Junio 2025', 2025, '2025-01-01', '2025-06-30'],
+                        ['Agosto-Diciembre 2025', 2025, '2025-08-01', '2025-12-31'],
+                        ['Enero-Junio 2026', 2026, '2026-01-01', '2026-06-30'],
+                        ['Agosto-Diciembre 2026', 2026, '2026-08-01', '2026-12-31'],
+                        ['Enero-Junio 2027', 2027, '2027-01-01', '2027-06-30'],
+                        ['Agosto-Diciembre 2027', 2027, '2027-08-01', '2027-12-31'],
+                        ['Enero-Junio 2028', 2028, '2028-01-01', '2028-06-30'],
+                        ['Agosto-Diciembre 2028', 2028, '2028-08-01', '2028-12-31']
+                    ];
                     break;
                 case 'estatus':
                     $headers = ['Nombre_Estatus', 'Acron_Estatus'];
-                    $ejemplos = ['Activo', 'ACT'];
+                    $datos_ejemplo = [
+                        ['Activo', 'ACT'],
+                        ['Pendiente', 'PEND'],
+                        ['Autorizado', 'AUT'],
+                        ['Rechazado', 'REC'],
+                        ['Vencido', 'VEN'],
+                        ['En Revisión', 'REV'],
+                        ['Aprobado', 'APR'],
+                        ['Cancelado', 'CAN'],
+                        ['Suspendido', 'SUS'],
+                        ['Finalizado', 'FIN']
+                    ];
                     break;
                 case 'responsables_emision':
                     $headers = ['Nombre_Completo', 'Adscripcion', 'Cargo', 'Codigo_Identificacion', 'Correo', 'Telefono'];
-                    $ejemplos = ['Juan Pérez García', 1, 'Director', 'TECNM-DIR-001', 'juan.perez@tecnm.mx', '5551234567'];
+                    $datos_ejemplo = [
+                        ['Dr. Juan Pérez García', 1, 'Director', 'TECNM-DIR-001', 'juan.perez@tecnm.mx', '5551234567'],
+                        ['Mtra. María González López', 1, 'Subdirectora Académica', 'TECNM-SUB-001', 'maria.gonzalez@tecnm.mx', '5551234568'],
+                        ['Lic. Carlos Ramírez Martínez', 1, 'Coordinador de Vinculación', 'TECNM-COORD-001', 'carlos.ramirez@tecnm.mx', '5551234569'],
+                        ['Ing. Ana Sánchez Hernández', 1, 'Jefa de Departamento', 'TECNM-JEFE-001', 'ana.sanchez@tecnm.mx', '5551234570'],
+                        ['Mtra. Laura Torres Díaz', 1, 'Coordinadora de Extensión', 'TECNM-COORD-002', 'laura.torres@tecnm.mx', '5551234571'],
+                        ['Dr. Roberto Morales Silva', 1, 'Director de Investigación', 'TECNM-DIR-002', 'roberto.morales@tecnm.mx', '5551234572'],
+                        ['Mtra. Patricia Jiménez Ruiz', 1, 'Coordinadora de Servicios', 'TECNM-COORD-003', 'patricia.jimenez@tecnm.mx', '5551234573'],
+                        ['Ing. Fernando Castro Moreno', 1, 'Jefe de División', 'TECNM-JEFE-002', 'fernando.castro@tecnm.mx', '5551234574'],
+                        ['Mtra. Gabriela Mendoza Vega', 1, 'Coordinadora Académica', 'TECNM-COORD-004', 'gabriela.mendoza@tecnm.mx', '5551234575'],
+                        ['Dr. Luis Hernández Campos', 1, 'Director de Posgrado', 'TECNM-DIR-003', 'luis.hernandez@tecnm.mx', '5551234576']
+                    ];
                     break;
                 case 'insignias_maestras':
                     $headers = ['Tipo_Insignia', 'Propone_Insignia', 'Programa', 'Descripcion', 'Criterio', 'Fecha_Creacion', 'Fecha_Autorizacion', 'Nombre_gen_ins', 'Estatus', 'Archivo_Visual'];
-                    $ejemplos = [1, 1, 'Ingeniería en Sistemas', 'Insignia por excelencia académica', 'Tener promedio mayor a 9.0', '2024-01-15', '2024-01-20', 'Insignia de Excelencia Académica', 1, 'excelencia.jpg'];
+                    $datos_ejemplo = [
+                        [1, 1, 'Ingeniería en Sistemas', 'Insignia por excelencia académica', 'Tener promedio mayor a 9.0 durante el semestre', '2024-01-15', '2024-01-20', 'Insignia de Excelencia Académica', 1, 'excelencia.jpg'],
+                        [2, 1, 'Ingeniería Industrial', 'Insignia por participación en actividades artísticas', 'Participar en al menos 3 eventos culturales', '2024-01-15', '2024-01-20', 'Insignia de Arte y Cultura', 1, 'arte.jpg'],
+                        [3, 1, 'Ingeniería Mecánica', 'Insignia por excelencia deportiva', 'Ganar competencia deportiva a nivel regional', '2024-01-15', '2024-01-20', 'Insignia Deportiva', 1, 'deporte.jpg'],
+                        [4, 1, 'Ingeniería en Sistemas', 'Insignia por proyecto científico', 'Desarrollar proyecto de investigación aprobado', '2024-01-15', '2024-01-20', 'Insignia Científica', 1, 'cientifico.jpg'],
+                        [5, 1, 'Ingeniería Industrial', 'Insignia por innovación tecnológica', 'Desarrollar solución tecnológica innovadora', '2024-01-15', '2024-01-20', 'Insignia de Innovación', 1, 'innovacion.jpg'],
+                        [6, 1, 'Ingeniería Mecánica', 'Insignia por responsabilidad social', 'Participar en 50 horas de servicio social', '2024-01-15', '2024-01-20', 'Insignia de Responsabilidad Social', 1, 'social.jpg'],
+                        [7, 1, 'Ingeniería en Sistemas', 'Insignia por formación continua', 'Completar 3 cursos de actualización', '2024-01-15', '2024-01-20', 'Insignia de Formación', 1, 'formacion.jpg'],
+                        [8, 1, 'Ingeniería Industrial', 'Insignia por movilidad estudiantil', 'Participar en programa de intercambio', '2024-01-15', '2024-01-20', 'Insignia de Movilidad', 1, 'movilidad.jpg'],
+                        [9, 1, 'Ingeniería Mecánica', 'Insignia por liderazgo estudiantil', 'Ser representante estudiantil activo', '2024-01-15', '2024-01-20', 'Insignia de Liderazgo', 1, 'liderazgo.jpg'],
+                        [10, 1, 'Ingeniería en Sistemas', 'Insignia por emprendimiento', 'Desarrollar proyecto emprendedor viable', '2024-01-15', '2024-01-20', 'Insignia de Emprendimiento', 1, 'emprendimiento.jpg']
+                    ];
                     break;
                 case 'usuarios':
                     $headers = ['Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Correo', 'Contrasena', 'Rol', 'Estado', 'It_Centro_Id'];
-                    $ejemplos = ['María', 'González', 'López', 'maria.gonzalez@tecnm.mx', 'password123', 'Admin', 'Activo', 1];
+                    $datos_ejemplo = [
+                        ['Juan', 'Pérez', 'García', 'admin@tecnm.mx', 'admin123', 'Admin', 'Activo', 1],
+                        ['María', 'González', 'López', 'maria.admin@tecnm.mx', 'admin123', 'SuperUsuario', 'Activo', 1],
+                        ['Carlos', 'Ramírez', 'Martínez', 'carlos.ramirez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
+                        ['Ana', 'Sánchez', 'Hernández', 'ana.sanchez@tecnm.mx', 'password123', 'Admin', 'Activo', 1],
+                        ['Roberto', 'Torres', 'Díaz', 'roberto.torres@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Laura', 'Morales', 'Silva', 'laura.morales@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Fernando', 'Jiménez', 'Ruiz', 'fernando.jimenez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Patricia', 'Castro', 'Moreno', 'patricia.castro@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Gabriel', 'Mendoza', 'Vega', 'gabriel.mendoza@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1],
+                        ['Luis', 'Hernández', 'Campos', 'luis.hernandez@tecnm.mx', 'password123', 'Estudiante', 'Activo', 1]
+                    ];
                     break;
                 default:
                     $this->errores[] = "Tipo de plantilla no válido: $tipo";
                     return false;
             }
             
-            // Escribir headers
+            // Escribir headers con estilo en negrita
             $col = 'A';
             foreach ($headers as $header) {
                 $sheet->setCellValue($col . '1', $header);
+                $sheet->getStyle($col . '1')->getFont()->setBold(true);
                 $col++;
             }
             
-            // Escribir ejemplo
-            $col = 'A';
-            foreach ($ejemplos as $ejemplo) {
-                $sheet->setCellValue($col . '2', $ejemplo);
-                $col++;
+            // Escribir 10 registros de ejemplo
+            $fila = 2;
+            foreach ($datos_ejemplo as $fila_datos) {
+                $col = 'A';
+                foreach ($fila_datos as $valor) {
+                    $sheet->setCellValue($col . $fila, $valor);
+                    $col++;
+                }
+                $fila++;
+            }
+            
+            // Ajustar ancho de columnas automáticamente
+            foreach (range('A', $col) as $columna) {
+                $sheet->getColumnDimension($columna)->setAutoSize(true);
             }
             
             // Usar directorio temporal
@@ -1418,6 +1762,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Nombres amigables para el archivo
                 $nombres_amigables = [
+                    'todas_las_plantillas' => 'Plantilla_Completa_Todas_Las_Tablas',
                     'insignias_otorgadas' => 'Plantilla_Insignias_Otorgadas',
                     'destinatarios' => 'Plantilla_Destinatarios',
                     'centros_it' => 'Plantilla_Centros_IT',
@@ -2114,6 +2459,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="tipo_plantilla">Tipo de Plantilla:</label>
                         <select name="tipo_plantilla" id="tipo_plantilla" required>
                             <option value="">Seleccione una opción</option>
+                            <option value="todas_las_plantillas" style="background: #28a745; color: white; font-weight: bold;">🚀 TODAS LAS PLANTILLAS (Excel Completo con 10 ejemplos)</option>
                             <option value="insignias_otorgadas">Insignias Otorgadas</option>
                             <option value="destinatarios">Destinatarios</option>
                             <option value="centros_it">Centros IT</option>
