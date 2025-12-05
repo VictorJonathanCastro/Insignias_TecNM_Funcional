@@ -1308,7 +1308,6 @@ class CargaMasivaExcel {
     public function generarTodasLasPlantillas() {
         try {
             $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-            $spreadsheet->removeSheetByIndex(0); // Eliminar hoja por defecto
             
             // Definir todas las plantillas con datos de ejemplo
             // ORDEN IMPORTANTE: Debe coincidir con el orden recomendado de carga
@@ -1466,15 +1465,26 @@ class CargaMasivaExcel {
             ];
             
             // Crear una hoja por cada plantilla
+            $primera_vez = true;
             foreach ($plantillas as $nombre_hoja => $datos_plantilla) {
-                $sheet = new \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet($spreadsheet, $nombre_hoja);
-                $spreadsheet->addSheet($sheet);
+                if ($primera_vez) {
+                    // Reutilizar la hoja por defecto para la primera plantilla
+                    $sheet = $spreadsheet->getActiveSheet();
+                    $sheet->setTitle($nombre_hoja);
+                    $primera_vez = false;
+                } else {
+                    // Crear nuevas hojas para las demás
+                    $sheet = new \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet($spreadsheet, $nombre_hoja);
+                    $spreadsheet->addSheet($sheet);
+                }
                 
                 // Escribir headers
                 $col = 'A';
+                $ultima_col = 'A';
                 foreach ($datos_plantilla['headers'] as $header) {
                     $sheet->setCellValue($col . '1', $header);
                     $sheet->getStyle($col . '1')->getFont()->setBold(true);
+                    $ultima_col = $col;
                     $col++;
                 }
                 
@@ -1489,17 +1499,13 @@ class CargaMasivaExcel {
                     $fila++;
                 }
                 
-                // Ajustar ancho de columnas
-                foreach (range('A', $col) as $columna) {
-                    $sheet->getColumnDimension($columna)->setAutoSize(true);
-                }
-            }
-            
-            // Eliminar la primera hoja vacía si existe
-            if ($spreadsheet->getSheetCount() > 0) {
-                $sheetIndex = $spreadsheet->getIndex($spreadsheet->getSheetByName('Worksheet'));
-                if ($sheetIndex !== false) {
-                    $spreadsheet->removeSheetByIndex($sheetIndex);
+                // Ajustar ancho de columnas automáticamente
+                $col_letra = 'A';
+                $col_num = 0;
+                while ($col_num < count($datos_plantilla['headers'])) {
+                    $sheet->getColumnDimension($col_letra)->setAutoSize(true);
+                    $col_letra++;
+                    $col_num++;
                 }
             }
             
@@ -1698,10 +1704,10 @@ class CargaMasivaExcel {
             // Escribir 10 registros de ejemplo
             $fila = 2;
             foreach ($datos_ejemplo as $fila_datos) {
-                $col = 'A';
+            $col = 'A';
                 foreach ($fila_datos as $valor) {
                     $sheet->setCellValue($col . $fila, $valor);
-                    $col++;
+                $col++;
                 }
                 $fila++;
             }
@@ -1819,7 +1825,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($tipo_carga === 'todas_las_tablas') {
                     $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las Insignias Otorgadas (las demás tablas no se verán afectadas)'];
                 } else {
-                    $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las insignias'];
+                $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las insignias'];
                 }
                 $exitos = [];
             } else {
@@ -2703,7 +2709,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (tipoCarga === 'todas_las_tablas') {
                         alert('Para firmar las Insignias Otorgadas, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña. Las demás tablas no se verán afectadas.');
                     } else {
-                        alert('Para firmar las insignias, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña.');
+                    alert('Para firmar las insignias, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña.');
                     }
                     return;
                 }
