@@ -1615,11 +1615,12 @@ ob_clean();
       background:#1b396a; 
       color:white; 
       border:none; 
-      padding:12px 20px; 
+      padding:8px 16px; 
       border-radius:6px; 
       cursor:pointer;
-      font-size:16px;
-      width:100%;
+      font-size:14px;
+      width:auto;
+      display:inline-block;
       margin-top:10px;
     }
     button[type="submit"]:hover {
@@ -2553,8 +2554,8 @@ ob_clean();
           <form method="POST" class="form-group">
             <label class="form-label">Nombre de la categoría:</label>
             <input type="text" name="nombre" class="form-control" required placeholder="Ej: Formación Integral">
-            <button type="submit" name="guardar_categoria" class="btn" style="display: block; width: 100%; margin-bottom: 15px;">Guardar Categoría</button>
-            <a href="logout.php" class="logout-btn" style="background: #dc3545 !important; display: block; text-align: center; font-size: 16px; padding: 20px !important; text-decoration: none; color: white; border-radius: 12px; font-weight: bold; width: 100%; box-sizing: border-box;">
+            <button type="submit" name="guardar_categoria" class="btn" style="display: inline-block; padding: 8px 16px; font-size: 14px; margin-bottom: 10px; width: auto;">Guardar Categoría</button>
+            <a href="logout.php" class="logout-btn" style="background: #dc3545 !important; display: inline-block; text-align: center; font-size: 14px; padding: 8px 16px !important; text-decoration: none; color: white; border-radius: 6px; font-weight: bold; width: auto; box-sizing: border-box; margin-left: 10px;">
               Cerrar Sesión
             </a>
           </form>
@@ -2586,7 +2587,7 @@ ob_clean();
             <option value="">No hay categorías disponibles. Primero registra una categoría.</option>
           <?php endif; ?>
         </select>
-        <button type="submit" name="guardar_subcategoria">Guardar</button>
+        <button type="submit" name="guardar_subcategoria" style="background: #1b396a; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px; width: auto; display: inline-block;">Guardar</button>
       </form>
     </div>
 
@@ -2826,10 +2827,10 @@ ob_clean();
           <small style="color: #666; font-size: 12px;">Ruta al archivo de evidencia o número de folio de certificación</small>
         </div>
         
-        <button type="submit" name="guardar_insignia_otorgada" style="background: #28a745; font-size: 16px; padding: 15px; display: block; width: 100%; margin-bottom: 15px;">
+        <button type="submit" name="guardar_insignia_otorgada" style="background: #28a745; font-size: 14px; padding: 8px 16px; display: inline-block; width: auto; margin-bottom: 10px; border-radius: 6px; color: white; border: none; cursor: pointer;">
           🎖️ Registrar Reconocimiento
         </button>
-        <a href="logout.php" class="logout-btn" style="background: #dc3545 !important; display: block; text-align: center; font-size: 16px; padding: 15px;">
+        <a href="logout.php" class="logout-btn" style="background: #dc3545 !important; display: inline-block; text-align: center; font-size: 14px; padding: 8px 16px; text-decoration: none; color: white; border-radius: 6px; font-weight: bold; margin-left: 10px;">
           🚪 Cerrar Sesión
         </a>
       </form>
