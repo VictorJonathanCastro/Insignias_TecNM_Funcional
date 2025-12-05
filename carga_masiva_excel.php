@@ -2385,7 +2385,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label for="tipo_plantilla">Tipo de Plantilla:</label>
                         <select name="tipo_plantilla" id="tipo_plantilla" required>
                             <option value="">Seleccione una opción</option>
-                            <option value="todas_las_plantillas" style="background: #28a745; color: white; font-weight: bold;">🚀 TODAS LAS PLANTILLAS (Excel Completo con 10 ejemplos)</option>
+                            <option value="todas_las_plantillas" style="background: #28a745; color: white; font-weight: bold;">🚀 TODAS LAS PLANTILLAS</option>
                             <option value="insignias_otorgadas">Insignias Otorgadas</option>
                             <option value="destinatarios">Destinatarios</option>
                             <option value="centros_it">Centros IT</option>
