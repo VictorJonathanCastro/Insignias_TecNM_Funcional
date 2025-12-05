@@ -1728,116 +1728,131 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     if (isset($_POST['cargar_datos']) && isset($_FILES['archivo_excel'])) {
-        $cargaMasiva = new CargaMasivaExcel($conexion);
-        $tipo_carga = $_POST['tipo_carga'];
-        $nombre_archivo = $_FILES['archivo_excel']['name'];
-        $tamanio_archivo = $_FILES['archivo_excel']['size'];
-        
-        // Verificar si se desea firmar las insignias
-        $firmar_insignias = isset($_POST['firmar_insignias']) && $_POST['firmar_insignias'] === '1';
-        
-        // Si se desea firmar, procesar archivos de certificado
-        // Aplicar para "insignias_otorgadas" o "todas_las_tablas" 
-        // NOTA: Si es "todas_las_tablas", la firma solo se aplicará a las hojas de "Insignias Otorgadas"
-        if ($firmar_insignias && ($tipo_carga === 'insignias_otorgadas' || $tipo_carga === 'todas_las_tablas')) {
-            if (empty($_FILES['certificado']['tmp_name']) || empty($_FILES['clave_privada']['tmp_name'])) {
-                $mensaje = 'error';
-                if ($tipo_carga === 'todas_las_tablas') {
-                    $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las Insignias Otorgadas (las demás tablas no se verán afectadas)'];
-                } else {
-                $errores = ['Debes cargar el certificado .cer y la clave .key para firmar las insignias'];
-                }
-                $exitos = [];
+        try {
+            // Inicializar variables
+            $resultado = false;
+            $errores = [];
+            $exitos = [];
+            $estadisticas = [];
+            $mensaje = 'error';
+            
+            $cargaMasiva = new CargaMasivaExcel($conexion);
+            $tipo_carga = $_POST['tipo_carga'] ?? '';
+            $nombre_archivo = $_FILES['archivo_excel']['name'] ?? '';
+            $tamanio_archivo = $_FILES['archivo_excel']['size'] ?? 0;
+            
+            // Validar tipo de carga
+            if (empty($tipo_carga)) {
+                $errores[] = 'No se especificó el tipo de carga';
             } else {
-                $contrasena_firma = $_POST['contrasena_firma'] ?? '';
-                if (empty($contrasena_firma)) {
-                    $mensaje = 'error';
-                    $errores = ['Debes proporcionar la contraseña de la e.firma'];
-                    $exitos = [];
-                } else {
-                    // Crear archivos temporales para el certificado y la clave
-                    $tempDir = sys_get_temp_dir();
-                    $cerPath = tempnam($tempDir, 'cert_masivo_') . '.cer';
-                    $keyPath = tempnam($tempDir, 'key_masivo_') . '.key';
-                    
-                    // Copiar archivos subidos a ubicaciones temporales
-                    if (!copy($_FILES['certificado']['tmp_name'], $cerPath)) {
-                        $mensaje = 'error';
-                        $errores = ['No se pudo procesar el archivo .cer'];
-                        $exitos = [];
-                    } elseif (!copy($_FILES['clave_privada']['tmp_name'], $keyPath)) {
-                        @unlink($cerPath);
-                        $mensaje = 'error';
-                        $errores = ['No se pudo procesar el archivo .key'];
+                // Verificar si se desea firmar las insignias
+                $firmar_insignias = isset($_POST['firmar_insignias']) && $_POST['firmar_insignias'] === '1';
+                
+                // Si se desea firmar, procesar archivos de certificado
+                // Aplicar para "insignias_otorgadas" o "todas_las_tablas" 
+                // NOTA: Si es "todas_las_tablas", la firma solo se aplicará a las hojas de "Insignias Otorgadas"
+                if ($firmar_insignias && ($tipo_carga === 'insignias_otorgadas' || $tipo_carga === 'todas_las_tablas')) {
+                    if (empty($_FILES['certificado']['tmp_name']) || empty($_FILES['clave_privada']['tmp_name'])) {
+                        if ($tipo_carga === 'todas_las_tablas') {
+                            $errores[] = 'Debes cargar el certificado .cer y la clave .key para firmar las Insignias Otorgadas (las demás tablas no se verán afectadas)';
+                        } else {
+                            $errores[] = 'Debes cargar el certificado .cer y la clave .key para firmar las insignias';
+                        }
                         $exitos = [];
                     } else {
-                        // Configurar firma digital en la clase
-                        $cargaMasiva->configurarFirmaDigital($cerPath, $keyPath, $contrasena_firma);
-                        
-                        // Obtener información del usuario
-                        $usuario_id = $_SESSION['usuario_id'] ?? 0;
-                        $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
-                        
-                        // Procesar archivo (la firma se aplicará solo a insignias otorgadas si es todas_las_tablas)
-                        $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
-                        
-                        // Limpiar archivos temporales después de procesar
-                        @unlink($cerPath);
-                        @unlink($keyPath);
+                        $contrasena_firma = $_POST['contrasena_firma'] ?? '';
+                        if (empty($contrasena_firma)) {
+                            $errores[] = 'Debes proporcionar la contraseña de la e.firma';
+                            $exitos = [];
+                        } else {
+                            // Crear archivos temporales para el certificado y la clave
+                            $tempDir = sys_get_temp_dir();
+                            $cerPath = tempnam($tempDir, 'cert_masivo_') . '.cer';
+                            $keyPath = tempnam($tempDir, 'key_masivo_') . '.key';
+                            
+                            // Copiar archivos subidos a ubicaciones temporales
+                            if (!copy($_FILES['certificado']['tmp_name'], $cerPath)) {
+                                $errores[] = 'No se pudo procesar el archivo .cer';
+                                $exitos = [];
+                            } elseif (!copy($_FILES['clave_privada']['tmp_name'], $keyPath)) {
+                                @unlink($cerPath);
+                                $errores[] = 'No se pudo procesar el archivo .key';
+                                $exitos = [];
+                            } else {
+                                // Configurar firma digital en la clase
+                                $cargaMasiva->configurarFirmaDigital($cerPath, $keyPath, $contrasena_firma);
+                                
+                                // Obtener información del usuario
+                                $usuario_id = $_SESSION['usuario_id'] ?? 0;
+                                $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
+                                
+                                // Procesar archivo (la firma se aplicará solo a insignias otorgadas si es todas_las_tablas)
+                                $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
+                                
+                                // Limpiar archivos temporales después de procesar
+                                @unlink($cerPath);
+                                @unlink($keyPath);
+                            }
+                        }
                     }
+                } else {
+                    // Obtener información del usuario
+                    $usuario_id = $_SESSION['usuario_id'] ?? 0;
+                    $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
+                    
+                    $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
                 }
+                
+                // Obtener errores y éxitos
+                if (empty($errores)) {
+                    $errores = $cargaMasiva->getErrores();
+                }
+                if (empty($exitos)) {
+                    $exitos = $cargaMasiva->getExitos();
+                }
+                
+                // Obtener estadísticas
+                $estadisticas = $cargaMasiva->getEstadisticas();
+                
+                // Contar registros
+                $total_registros = count($errores) + count($exitos);
+                $registros_exitosos = $estadisticas['insertados'] ?? 0;
+                $registros_actualizados = $estadisticas['actualizados'] ?? 0;
+                $registros_con_error = count($errores) + ($estadisticas['errores'] ?? 0);
+                $registros_firmados = $estadisticas['firmadas'] ?? 0;
+                
+                // Determinar estado
+                $estado = 'completado';
+                if ($registros_con_error > 0 && $registros_exitosos == 0 && $registros_actualizados == 0) {
+                    $estado = 'fallido';
+                } elseif ($registros_con_error > 0) {
+                    $estado = 'con_errores';
+                }
+                
+                // Registrar en historial
+                if (isset($usuario_id) && isset($usuario_nombre)) {
+                    $cargaMasiva->registrarHistorial(
+                        $nombre_archivo,
+                        $tipo_carga,
+                        $usuario_id,
+                        $usuario_nombre,
+                        $tamanio_archivo,
+                        $total_registros,
+                        $registros_exitosos,
+                        $registros_actualizados,
+                        $registros_con_error,
+                        $estado
+                    );
+                }
+                
+                $mensaje = $resultado ? 'success' : 'error';
             }
-        } else {
-            // Obtener información del usuario
-            $usuario_id = $_SESSION['usuario_id'] ?? 0;
-            $usuario_nombre = $_SESSION['nombre'] ?? $_SESSION['usuario'] ?? 'Desconocido';
-            
-            $resultado = $cargaMasiva->procesarArchivo($_FILES['archivo_excel'], $tipo_carga);
+        } catch (Exception $e) {
+            error_log("Error en carga masiva: " . $e->getMessage() . " - " . $e->getTraceAsString());
+            $errores = ['Error al procesar la carga: ' . $e->getMessage()];
+            $exitos = [];
+            $mensaje = 'error';
         }
-        
-        if (!isset($errores)) {
-            $errores = $cargaMasiva->getErrores();
-            $exitos = $cargaMasiva->getExitos();
-        }
-        
-        $errores = $cargaMasiva->getErrores();
-        $exitos = $cargaMasiva->getExitos();
-        
-        // Obtener estadísticas
-        if (!isset($estadisticas)) {
-            $estadisticas = $cargaMasiva->getEstadisticas();
-        }
-        
-        // Contar registros
-        $total_registros = count($errores) + count($exitos);
-        $registros_exitosos = $estadisticas['insertados'];
-        $registros_actualizados = $estadisticas['actualizados'];
-        $registros_con_error = count($errores) + $estadisticas['errores'];
-        $registros_firmados = $estadisticas['firmadas'] ?? 0;
-        
-        // Determinar estado
-        $estado = 'completado';
-        if ($registros_con_error > 0 && $registros_exitosos == 0 && $registros_actualizados == 0) {
-            $estado = 'fallido';
-        } elseif ($registros_con_error > 0) {
-            $estado = 'con_errores';
-        }
-        
-        // Registrar en historial
-        $cargaMasiva->registrarHistorial(
-            $nombre_archivo,
-            $tipo_carga,
-            $usuario_id,
-            $usuario_nombre,
-            $tamanio_archivo,
-            $total_registros,
-            $registros_exitosos,
-            $registros_actualizados,
-            $registros_con_error,
-            $estado
-        );
-        
-        $mensaje = $resultado ? 'success' : 'error';
     }
 }
 ?>
