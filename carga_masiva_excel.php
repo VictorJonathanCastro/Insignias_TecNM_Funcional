@@ -256,7 +256,11 @@ class CargaMasivaExcel {
             'centros_it' => ['centros', 'it', 'centros it', 'institutos'],
             'tipos_insignia' => ['tipos', 'tipos insignia', 'tipos de insignia'],
             'categorias_insignia' => ['categorias', 'categorías', 'categorias insignia'],
-            'periodos_emision' => ['periodos', 'periodos emision', 'periodos de emision']
+            'periodos_emision' => ['periodos', 'periodos emision', 'periodos de emision'],
+            'estatus' => ['estatus', 'estados', 'status'],
+            'responsables_emision' => ['responsables', 'responsables emision', 'responsables de emision'],
+            'insignias_maestras' => ['insignias maestras', 't_insignias', 'insignias maestra'],
+            'usuarios' => ['usuarios', 'users', 'usuario']
         ];
         
         // Procesar cada hoja
@@ -305,6 +309,18 @@ class CargaMasivaExcel {
                     break;
                 case 'periodos_emision':
                     $resultado = $this->cargarPeriodosEmision($data_sin_headers, $headers_originales);
+                    break;
+                case 'estatus':
+                    $resultado = $this->cargarEstatus($data_sin_headers, $headers_originales);
+                    break;
+                case 'responsables_emision':
+                    $resultado = $this->cargarResponsablesEmision($data_sin_headers, $headers_originales);
+                    break;
+                case 'insignias_maestras':
+                    $resultado = $this->cargarInsigniasMaestras($data_sin_headers, $headers_originales);
+                    break;
+                case 'usuarios':
+                    $resultado = $this->cargarUsuarios($data_sin_headers, $headers_originales);
                     break;
             }
             
@@ -367,6 +383,29 @@ class CargaMasivaExcel {
         // Periodos
         if (in_array('periodo', $headers) || in_array('nombre_periodo', $headers)) {
             return 'periodos_emision';
+        }
+        
+        // Estatus
+        if (in_array('nombre_estatus', $headers) || in_array('estatus', $headers)) {
+            return 'estatus';
+        }
+        
+        // Responsables de Emisión
+        if (in_array('nombre_completo', $headers) && (in_array('adscripcion', $headers) || in_array('cargo', $headers))) {
+            // Verificar que no sea destinatario (destinatarios tienen matricula o curp)
+            if (!in_array('matricula', $headers) && !in_array('curp', $headers)) {
+                return 'responsables_emision';
+            }
+        }
+        
+        // Insignias Maestras (T_insignias)
+        if (in_array('tipo_insignia', $headers) && in_array('propone_insignia', $headers) && in_array('descripcion', $headers)) {
+            return 'insignias_maestras';
+        }
+        
+        // Usuarios
+        if (in_array('correo', $headers) && in_array('contrasena', $headers) && (in_array('rol', $headers) || in_array('nombre', $headers))) {
+            return 'usuarios';
         }
         
         return false;
@@ -786,6 +825,222 @@ class CargaMasivaExcel {
     }
     
     /**
+     * Cargar estatus desde Excel
+     */
+    private function cargarEstatus($data, $headers_provided = null) {
+        if ($headers_provided !== null) {
+            $headers = $headers_provided;
+        } else {
+            $headers = array_shift($data);
+        }
+        $procesados = 0;
+        
+        foreach ($data as $fila => $row) {
+            if (empty(array_filter($row))) continue;
+            
+            try {
+                $columnas = array_flip($headers);
+                $nombre_estatus = trim($row[$columnas['Nombre_Estatus']] ?? '');
+                $acron = trim($row[$columnas['Acron_Estatus']] ?? '');
+                
+                if (empty($nombre_estatus)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Nombre_Estatus es requerido";
+                    continue;
+                }
+                
+                $sql = "INSERT INTO estatus (Nombre_Estatus, Acron_Estatus) VALUES (?, ?)";
+                $stmt = $this->conexion->prepare($sql);
+                $stmt->bind_param("ss", $nombre_estatus, $acron);
+                
+                if ($stmt->execute()) {
+                    $procesados++;
+                    $this->exitos[] = "Fila " . ($fila + 2) . ": Estatus '$nombre_estatus' registrado correctamente";
+                } else {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar estatus - " . $stmt->error;
+                }
+            } catch (Exception $e) {
+                $this->errores[] = "Fila " . ($fila + 2) . ": " . $e->getMessage();
+            }
+        }
+        
+        return $procesados > 0;
+    }
+    
+    /**
+     * Cargar responsables de emisión desde Excel
+     */
+    private function cargarResponsablesEmision($data, $headers_provided = null) {
+        if ($headers_provided !== null) {
+            $headers = $headers_provided;
+        } else {
+            $headers = array_shift($data);
+        }
+        $procesados = 0;
+        
+        foreach ($data as $fila => $row) {
+            if (empty(array_filter($row))) continue;
+            
+            try {
+                $columnas = array_flip($headers);
+                $nombre_completo = trim($row[$columnas['Nombre_Completo']] ?? '');
+                $adscripcion = trim($row[$columnas['Adscripcion']] ?? '');
+                $cargo = trim($row[$columnas['Cargo']] ?? '');
+                $codigo = trim($row[$columnas['Codigo_Identificacion']] ?? '');
+                $correo = trim($row[$columnas['Correo']] ?? '');
+                $telefono = trim($row[$columnas['Telefono']] ?? '');
+                
+                if (empty($nombre_completo) || empty($adscripcion)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Nombre_Completo y Adscripcion son requeridos";
+                    continue;
+                }
+                
+                if (!is_numeric($adscripcion)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Adscripcion debe ser un ID numérico";
+                    continue;
+                }
+                
+                // Verificar si existe el campo Adscripcion en la tabla
+                $check_adscripcion = $this->conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'Adscripcion'");
+                $tiene_adscripcion = ($check_adscripcion && $check_adscripcion->num_rows > 0);
+                
+                if ($tiene_adscripcion) {
+                    $sql = "INSERT INTO responsable_emision (Nombre_Completo, Adscripcion, Cargo, Codigo_Identificacion, Correo, Telefono) VALUES (?, ?, ?, ?, ?, ?)";
+                    $stmt = $this->conexion->prepare($sql);
+                    $stmt->bind_param("sissss", $nombre_completo, $adscripcion, $cargo, $codigo, $correo, $telefono);
+                } else {
+                    $sql = "INSERT INTO responsable_emision (Nombre_Completo, Cargo, Codigo_Identificacion, Correo, Telefono) VALUES (?, ?, ?, ?, ?)";
+                    $stmt = $this->conexion->prepare($sql);
+                    $stmt->bind_param("sssss", $nombre_completo, $cargo, $codigo, $correo, $telefono);
+                }
+                
+                if ($stmt->execute()) {
+                    $procesados++;
+                    $this->exitos[] = "Fila " . ($fila + 2) . ": Responsable '$nombre_completo' registrado correctamente";
+                } else {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar responsable - " . $stmt->error;
+                }
+            } catch (Exception $e) {
+                $this->errores[] = "Fila " . ($fila + 2) . ": " . $e->getMessage();
+            }
+        }
+        
+        return $procesados > 0;
+    }
+    
+    /**
+     * Cargar insignias maestras (T_insignias) desde Excel
+     */
+    private function cargarInsigniasMaestras($data, $headers_provided = null) {
+        if ($headers_provided !== null) {
+            $headers = $headers_provided;
+        } else {
+            $headers = array_shift($data);
+        }
+        $procesados = 0;
+        
+        foreach ($data as $fila => $row) {
+            if (empty(array_filter($row))) continue;
+            
+            try {
+                $columnas = array_flip($headers);
+                $tipo_insignia = trim($row[$columnas['Tipo_Insignia']] ?? '');
+                $propone_insignia = trim($row[$columnas['Propone_Insignia']] ?? '');
+                $programa = trim($row[$columnas['Programa']] ?? '');
+                $descripcion = trim($row[$columnas['Descripcion']] ?? '');
+                $criterio = trim($row[$columnas['Criterio']] ?? '');
+                $fecha_creacion = trim($row[$columnas['Fecha_Creacion']] ?? date('Y-m-d'));
+                $fecha_autorizacion = trim($row[$columnas['Fecha_Autorizacion']] ?? date('Y-m-d'));
+                $nombre_gen_ins = trim($row[$columnas['Nombre_gen_ins']] ?? '');
+                $estatus = trim($row[$columnas['Estatus']] ?? '1');
+                $archivo_visual = trim($row[$columnas['Archivo_Visual']] ?? '');
+                
+                if (empty($tipo_insignia) || empty($propone_insignia) || empty($descripcion) || empty($criterio)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Tipo_Insignia, Propone_Insignia, Descripcion y Criterio son requeridos";
+                    continue;
+                }
+                
+                if (!is_numeric($tipo_insignia) || !is_numeric($propone_insignia) || !is_numeric($estatus)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Tipo_Insignia, Propone_Insignia y Estatus deben ser numéricos";
+                    continue;
+                }
+                
+                $sql = "INSERT INTO T_insignias (Tipo_Insignia, Propone_Insignia, Programa, Descripcion, Criterio, Fecha_Creacion, Fecha_Autorizacion, Nombre_gen_ins, Estatus, Archivo_Visual) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $this->conexion->prepare($sql);
+                $estatus_int = (int)$estatus;
+                $stmt->bind_param("iissssssis", $tipo_insignia, $propone_insignia, $programa, $descripcion, $criterio, $fecha_creacion, $fecha_autorizacion, $nombre_gen_ins, $estatus_int, $archivo_visual);
+                
+                if ($stmt->execute()) {
+                    $procesados++;
+                    $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia maestra registrada correctamente";
+                } else {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar insignia maestra - " . $stmt->error;
+                }
+            } catch (Exception $e) {
+                $this->errores[] = "Fila " . ($fila + 2) . ": " . $e->getMessage();
+            }
+        }
+        
+        return $procesados > 0;
+    }
+    
+    /**
+     * Cargar usuarios desde Excel
+     */
+    private function cargarUsuarios($data, $headers_provided = null) {
+        if ($headers_provided !== null) {
+            $headers = $headers_provided;
+        } else {
+            $headers = array_shift($data);
+        }
+        $procesados = 0;
+        
+        foreach ($data as $fila => $row) {
+            if (empty(array_filter($row))) continue;
+            
+            try {
+                $columnas = array_flip($headers);
+                $nombre = trim($row[$columnas['Nombre']] ?? '');
+                $apellido_paterno = trim($row[$columnas['Apellido_Paterno']] ?? '');
+                $apellido_materno = trim($row[$columnas['Apellido_Materno']] ?? '');
+                $correo = trim($row[$columnas['Correo']] ?? '');
+                $contrasena = trim($row[$columnas['Contrasena']] ?? '');
+                $rol = trim($row[$columnas['Rol']] ?? 'Estudiante');
+                $estado = trim($row[$columnas['Estado']] ?? 'Activo');
+                $it_centro_id = trim($row[$columnas['It_Centro_Id']] ?? '');
+                
+                if (empty($nombre) || empty($apellido_paterno) || empty($correo) || empty($contrasena)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Nombre, Apellido_Paterno, Correo y Contrasena son requeridos";
+                    continue;
+                }
+                
+                if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Correo inválido";
+                    continue;
+                }
+                
+                // Hash de contraseña
+                $contrasena_hash = password_hash($contrasena, PASSWORD_DEFAULT);
+                
+                $sql = "INSERT INTO Usuario (Nombre, Apellido_Paterno, Apellido_Materno, Correo, Contrasena, Rol, Estado, It_Centro_Id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                $stmt = $this->conexion->prepare($sql);
+                $it_centro_id_val = !empty($it_centro_id) && is_numeric($it_centro_id) ? $it_centro_id : null;
+                $stmt->bind_param("sssssssi", $nombre, $apellido_paterno, $apellido_materno, $correo, $contrasena_hash, $rol, $estado, $it_centro_id_val);
+                
+                if ($stmt->execute()) {
+                    $procesados++;
+                    $this->exitos[] = "Fila " . ($fila + 2) . ": Usuario '$correo' registrado correctamente";
+                } else {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar usuario - " . $stmt->error;
+                }
+            } catch (Exception $e) {
+                $this->errores[] = "Fila " . ($fila + 2) . ": " . $e->getMessage();
+            }
+        }
+        
+        return $procesados > 0;
+    }
+    
+    /**
      * Validar datos de insignia otorgada
      */
     private function validarDatosInsigniaOtorgada($row, $headers, $fila) {
@@ -1075,6 +1330,22 @@ class CargaMasivaExcel {
                     $headers = ['Periodo', 'Anio', 'Fecha_Inicio', 'Fecha_Fin'];
                     $ejemplos = ['Enero-Junio 2024', 2024, '2024-01-01', '2024-06-30'];
                     break;
+                case 'estatus':
+                    $headers = ['Nombre_Estatus', 'Acron_Estatus'];
+                    $ejemplos = ['Activo', 'ACT'];
+                    break;
+                case 'responsables_emision':
+                    $headers = ['Nombre_Completo', 'Adscripcion', 'Cargo', 'Codigo_Identificacion', 'Correo', 'Telefono'];
+                    $ejemplos = ['Juan Pérez García', 1, 'Director', 'TECNM-DIR-001', 'juan.perez@tecnm.mx', '5551234567'];
+                    break;
+                case 'insignias_maestras':
+                    $headers = ['Tipo_Insignia', 'Propone_Insignia', 'Programa', 'Descripcion', 'Criterio', 'Fecha_Creacion', 'Fecha_Autorizacion', 'Nombre_gen_ins', 'Estatus', 'Archivo_Visual'];
+                    $ejemplos = [1, 1, 'Ingeniería en Sistemas', 'Insignia por excelencia académica', 'Tener promedio mayor a 9.0', '2024-01-15', '2024-01-20', 'Insignia de Excelencia Académica', 1, 'excelencia.jpg'];
+                    break;
+                case 'usuarios':
+                    $headers = ['Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Correo', 'Contrasena', 'Rol', 'Estado', 'It_Centro_Id'];
+                    $ejemplos = ['María', 'González', 'López', 'maria.gonzalez@tecnm.mx', 'password123', 'Admin', 'Activo', 1];
+                    break;
                 default:
                     $this->errores[] = "Tipo de plantilla no válido: $tipo";
                     return false;
@@ -1150,7 +1421,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'centros_it' => 'Plantilla_Centros_IT',
                     'tipos_insignia' => 'Plantilla_Tipos_Insignia',
                     'categorias_insignia' => 'Plantilla_Categorias_Insignia',
-                    'periodos_emision' => 'Plantilla_Periodos_Emision'
+                    'periodos_emision' => 'Plantilla_Periodos_Emision',
+                    'estatus' => 'Plantilla_Estatus',
+                    'responsables_emision' => 'Plantilla_Responsables_Emision',
+                    'insignias_maestras' => 'Plantilla_Insignias_Maestras',
+                    'usuarios' => 'Plantilla_Usuarios'
                 ];
                 
                 $nombre_descarga = ($nombres_amigables[$tipo] ?? "plantilla_$tipo") . ".xlsx";
@@ -1837,6 +2112,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="tipos_insignia">Tipos de Insignia</option>
                             <option value="categorias_insignia">Categorías de Insignia</option>
                             <option value="periodos_emision">Periodos de Emisión</option>
+                            <option value="estatus">Estatus</option>
+                            <option value="responsables_emision">Responsables de Emisión</option>
+                            <option value="insignias_maestras">Insignias Maestras (T_insignias)</option>
+                            <option value="usuarios">Usuarios</option>
                         </select>
                     </div>
                     
@@ -1864,6 +2143,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <option value="tipos_insignia">Tipos de Insignia</option>
                             <option value="categorias_insignia">Categorías de Insignia</option>
                             <option value="periodos_emision">Periodos de Emisión</option>
+                            <option value="estatus">Estatus</option>
+                            <option value="responsables_emision">Responsables de Emisión</option>
+                            <option value="insignias_maestras">Insignias Maestras (T_insignias)</option>
+                            <option value="usuarios">Usuarios</option>
                         </select>
                     </div>
                     

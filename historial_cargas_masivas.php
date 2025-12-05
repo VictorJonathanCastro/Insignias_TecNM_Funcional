@@ -62,6 +62,10 @@ function getNombreTipoCarga($tipo) {
         'tipos_insignia' => 'Tipos de Insignia',
         'categorias_insignia' => 'Categorías de Insignia',
         'periodos_emision' => 'Periodos de Emisión',
+        'estatus' => 'Estatus',
+        'responsables_emision' => 'Responsables de Emisión',
+        'insignias_maestras' => 'Insignias Maestras',
+        'usuarios' => 'Usuarios',
         'todas_las_tablas' => 'Todas las Tablas'
     ];
     return $tipos[$tipo] ?? $tipo;
