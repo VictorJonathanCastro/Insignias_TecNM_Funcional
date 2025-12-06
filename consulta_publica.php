@@ -1,29 +1,29 @@
 <?php
 require_once 'conexion.php';
 
-// Verificar qué tabla existe - PRIORIDAD: usar insigniasotorgadas primero (donde se guardan las nuevas insignias)
+// Verificar qué tabla existe - PRIORIDAD: usar T_insignias_otorgadas primero (donde se guardan las nuevas insignias de carga masiva)
 $usar_tabla_t = false;
 $usar_tabla_i = false;
 
-// Primero verificar insigniasotorgadas (donde se guardan las nuevas insignias)
+// Primero verificar T_insignias_otorgadas (donde se guardan las nuevas insignias de carga masiva)
 try {
-    $tabla_existe_i = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
-    if ($tabla_existe_i && $tabla_existe_i->num_rows > 0) {
-        $usar_tabla_i = true;
+    $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+    if ($tabla_existe_t && $tabla_existe_t->num_rows > 0) {
+        $usar_tabla_t = true;
     }
 } catch (Exception $e) {
-    // Si hay error, no usar insigniasotorgadas
+    // Si hay error, no usar T_insignias_otorgadas
 }
 
-// Solo verificar T_insignias_otorgadas si insigniasotorgadas no existe
-if (!$usar_tabla_i) {
+// Solo verificar insigniasotorgadas si T_insignias_otorgadas no existe
+if (!$usar_tabla_t) {
     try {
-        $tabla_existe_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
-        if ($tabla_existe_t && $tabla_existe_t->num_rows > 0) {
-            $usar_tabla_t = true;
+        $tabla_existe_i = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        if ($tabla_existe_i && $tabla_existe_i->num_rows > 0) {
+            $usar_tabla_i = true;
         }
     } catch (Exception $e) {
-        // Si hay error, no usar T_insignias_otorgadas
+        // Si hay error, no usar insigniasotorgadas
     }
 }
 
