@@ -1200,7 +1200,17 @@ class CargaMasivaExcel {
             $stmt->execute();
             $result = $stmt->get_result();
             if ($result->num_rows == 0) {
-                $this->errores[] = "Fila $fila: Id_Insignia ({$datos['Id_Insignia']}) no existe en la tabla T_insignias";
+                // Obtener IDs disponibles
+                $sql_ids = "SELECT id FROM T_insignias ORDER BY id LIMIT 10";
+                $result_ids = $this->conexion->query($sql_ids);
+                $ids_disponibles = [];
+                if ($result_ids) {
+                    while ($row = $result_ids->fetch_assoc()) {
+                        $ids_disponibles[] = $row['id'];
+                    }
+                }
+                $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', $ids_disponibles) . (count($ids_disponibles) >= 10 ? '...' : '') . ")" : "";
+                $this->errores[] = "Fila $fila: Id_Insignia ({$datos['Id_Insignia']}) no existe en la tabla T_insignias$ids_texto";
                 $stmt->close();
                 return false;
             }
@@ -1215,7 +1225,17 @@ class CargaMasivaExcel {
             $stmt->execute();
             $result = $stmt->get_result();
             if ($result->num_rows == 0) {
-                $this->errores[] = "Fila $fila: Id_Destinatario ({$datos['Id_Destinatario']}) no existe en la tabla destinatario";
+                // Obtener IDs disponibles
+                $sql_ids = "SELECT ID_destinatario as id FROM destinatario ORDER BY ID_destinatario LIMIT 10";
+                $result_ids = $this->conexion->query($sql_ids);
+                $ids_disponibles = [];
+                if ($result_ids) {
+                    while ($row = $result_ids->fetch_assoc()) {
+                        $ids_disponibles[] = $row['id'];
+                    }
+                }
+                $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', $ids_disponibles) . (count($ids_disponibles) >= 10 ? '...' : '') . ")" : "";
+                $this->errores[] = "Fila $fila: Id_Destinatario ({$datos['Id_Destinatario']}) no existe en la tabla destinatario$ids_texto";
                 $stmt->close();
                 return false;
             }
@@ -1234,7 +1254,17 @@ class CargaMasivaExcel {
             $stmt->execute();
             $result = $stmt->get_result();
             if ($result->num_rows == 0) {
-                $this->errores[] = "Fila $fila: Id_Periodo_Emision ({$datos['Id_Periodo_Emision']}) no existe en la tabla periodo_emision";
+                // Obtener IDs disponibles
+                $sql_ids = "SELECT $campo_id_periodo as id FROM periodo_emision ORDER BY $campo_id_periodo LIMIT 10";
+                $result_ids = $this->conexion->query($sql_ids);
+                $ids_disponibles = [];
+                if ($result_ids) {
+                    while ($row = $result_ids->fetch_assoc()) {
+                        $ids_disponibles[] = $row['id'];
+                    }
+                }
+                $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', $ids_disponibles) . (count($ids_disponibles) >= 10 ? '...' : '') . ")" : "";
+                $this->errores[] = "Fila $fila: Id_Periodo_Emision ({$datos['Id_Periodo_Emision']}) no existe en la tabla periodo_emision$ids_texto";
                 $stmt->close();
                 return false;
             }
@@ -1253,7 +1283,19 @@ class CargaMasivaExcel {
             $stmt->execute();
             $result = $stmt->get_result();
             if ($result->num_rows == 0) {
-                $this->errores[] = "Fila $fila: Id_Estatus ({$datos['Id_Estatus']}) no existe en la tabla estatus";
+                // Obtener IDs disponibles con nombres
+                $check_nombre = $this->conexion->query("SHOW COLUMNS FROM estatus LIKE 'Nombre_Estatus'");
+                $campo_nombre = ($check_nombre && $check_nombre->num_rows > 0) ? 'Nombre_Estatus' : 'Estatus';
+                $sql_ids = "SELECT $campo_id_estatus as id, $campo_nombre as nombre FROM estatus ORDER BY $campo_id_estatus LIMIT 10";
+                $result_ids = $this->conexion->query($sql_ids);
+                $ids_disponibles = [];
+                if ($result_ids) {
+                    while ($row = $result_ids->fetch_assoc()) {
+                        $ids_disponibles[] = $row['id'] . " ({$row['nombre']})";
+                    }
+                }
+                $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', $ids_disponibles) . (count($ids_disponibles) >= 10 ? '...' : '') . ")" : "";
+                $this->errores[] = "Fila $fila: Id_Estatus ({$datos['Id_Estatus']}) no existe en la tabla estatus$ids_texto";
                 $stmt->close();
                 return false;
             }
