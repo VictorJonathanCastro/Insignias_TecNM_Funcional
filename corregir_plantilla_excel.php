@@ -254,29 +254,85 @@ try {
     // Guardar el archivo corregido
     $nombre_original = isset($_FILES['archivo_excel']) ? $_FILES['archivo_excel']['name'] : basename($archivo_excel);
     $nombre_sin_ext = pathinfo($nombre_original, PATHINFO_FILENAME);
-    $archivo_corregido = __DIR__ . '/temp/' . $nombre_sin_ext . '_CORREGIDA.xlsx';
+    $nombre_archivo_corregido = $nombre_sin_ext . '_CORREGIDA.xlsx';
+    
+    // Intentar guardar en directorio temp
+    $directorio_temp = __DIR__ . '/temp';
+    $archivo_corregido = $directorio_temp . '/' . $nombre_archivo_corregido;
+    $guardado_exitoso = false;
     
     // Crear directorio temp si no existe
-    if (!is_dir(__DIR__ . '/temp')) {
-        mkdir(__DIR__ . '/temp', 0777, true);
+    if (!is_dir($directorio_temp)) {
+        $permisos_creacion = @mkdir($directorio_temp, 0755, true);
+        if (!$permisos_creacion) {
+            echo "<p class='warning'>⚠️ No se pudo crear el directorio temp en: <code>" . htmlspecialchars($directorio_temp) . "</code></p>";
+            echo "<p>Verificando directorio temporal del sistema...</p>";
+        }
     }
     
-    $writer = new Xlsx($spreadsheet);
-    $writer->save($archivo_corregido);
+    // Verificar permisos de escritura
+    $puede_escribir = false;
+    if (is_dir($directorio_temp)) {
+        $puede_escribir = is_writable($directorio_temp);
+        if (!$puede_escribir) {
+            echo "<p class='warning'>⚠️ El directorio temp existe pero no tiene permisos de escritura.</p>";
+            echo "<p>Intenta ejecutar: <code>chmod 755 " . htmlspecialchars($directorio_temp) . "</code> o <code>chmod 777 " . htmlspecialchars($directorio_temp) . "</code></p>";
+        }
+    }
     
-    echo "<h3>✅ Archivo corregido guardado</h3>";
-    echo "<p><strong>Archivo: " . basename($archivo_corregido) . "</strong></p>";
-    echo "<p><a href='temp/" . basename($archivo_corregido) . "' download style='background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 10px;'>⬇️ Descargar Archivo Corregido</a></p>";
+    if ($puede_escribir) {
+        try {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($archivo_corregido);
+            $guardado_exitoso = true;
+            echo "<h3>✅ Archivo corregido guardado</h3>";
+            echo "<p><strong>Archivo: " . htmlspecialchars($nombre_archivo_corregido) . "</strong></p>";
+            echo "<p><a href='temp/" . urlencode($nombre_archivo_corregido) . "' download class='download-btn'>⬇️ Descargar Archivo Corregido</a></p>";
+        } catch (Exception $e) {
+            echo "<p class='warning'>⚠️ No se pudo guardar en el servidor: " . htmlspecialchars($e->getMessage()) . "</p>";
+            echo "<p>Ofreciendo descarga directa...</p>";
+        }
+    } else {
+        echo "<p class='warning'>⚠️ El directorio temp no tiene permisos de escritura. Ofreciendo descarga directa...</p>";
+    }
+    
+    // Si no se pudo guardar, guardar en memoria y ofrecer descarga mediante formulario
+    if (!$guardado_exitoso) {
+        // Intentar usar sys_get_temp_dir() que generalmente tiene permisos
+        $temp_sistema = sys_get_temp_dir();
+        $archivo_temp = $temp_sistema . '/' . uniqid('excel_') . '_' . $nombre_archivo_corregido;
+        
+        try {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($archivo_temp);
+            
+            echo "<h3>📥 Descarga del Archivo Corregido</h3>";
+            echo "<p>El archivo se guardó temporalmente. Haz clic en el botón para descargarlo:</p>";
+            echo "<form method='POST' action='descargar_excel_corregido.php'>";
+            echo "<input type='hidden' name='archivo' value='" . htmlspecialchars(base64_encode($archivo_temp)) . "'>";
+            echo "<input type='hidden' name='nombre' value='" . htmlspecialchars($nombre_archivo_corregido) . "'>";
+            echo "<button type='submit' class='download-btn'>⬇️ Descargar Archivo Corregido</button>";
+            echo "</form>";
+            echo "<p class='warning'>⚠️ Nota: Este archivo temporal se eliminará después de descargarlo.</p>";
+        } catch (Exception $e) {
+            echo "<p class='error'>❌ No se pudo guardar el archivo en ninguna ubicación.</p>";
+            echo "<p>Error: " . htmlspecialchars($e->getMessage()) . "</p>";
+            echo "<p><strong>Solución:</strong> Por favor, verifica los permisos del directorio temp o contacta al administrador del servidor.</p>";
+        }
+    }
+    
     echo "<p>📝 Puedes usar este archivo para la carga masiva.</p>";
     
-    // También intentar guardar en Downloads si es posible
-    $downloads_path = 'C:\Users\vc556\Downloads\\' . $nombre_sin_ext . '_CORREGIDA.xlsx';
-    if (is_writable('C:\Users\vc556\Downloads')) {
-        try {
-            copy($archivo_corregido, $downloads_path);
-            echo "<p>✅ También guardado en: <strong>$downloads_path</strong></p>";
-        } catch (Exception $e) {
-            // Ignorar si no se puede escribir en Downloads
+    // También intentar guardar en Downloads si es posible (solo en Windows)
+    if (PHP_OS_FAMILY === 'Windows') {
+        $downloads_path = 'C:\Users\vc556\Downloads\\' . $nombre_archivo_corregido;
+        if (is_writable('C:\Users\vc556\Downloads') && $guardado_exitoso) {
+            try {
+                copy($archivo_corregido, $downloads_path);
+                echo "<p>✅ También guardado en: <strong>" . htmlspecialchars($downloads_path) . "</strong></p>";
+            } catch (Exception $e) {
+                // Ignorar si no se puede escribir en Downloads
+            }
         }
     }
     
