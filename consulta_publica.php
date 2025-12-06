@@ -165,7 +165,7 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                 FROM insigniasotorgadas io
                 LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
                 LEFT JOIN it_centros itc ON d.ITCentro = itc.id
-                WHERE d.Nombre_Completo LIKE ? OR d.Curp LIKE ? OR d.Matricula LIKE ?
+                WHERE (d.Nombre_Completo LIKE ? OR COALESCE(d.Curp, '') LIKE ? OR COALESCE(d.Matricula, '') LIKE ?)
                 " . (!empty($codigo_filtro) ? "AND io.Codigo_Insignia LIKE '%$codigo_filtro%'" : "") . "
                 ORDER BY io.Fecha_Emision DESC
             ";
@@ -200,7 +200,7 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                 LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
                 LEFT JOIN estatus e ON tio.Id_Estatus = e.id
                 LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
-                WHERE d.Nombre_Completo LIKE ? OR d.Curp LIKE ? OR d.Matricula LIKE ?
+                WHERE (d.Nombre_Completo LIKE ? OR COALESCE(d.Curp, '') LIKE ? OR COALESCE(d.Matricula, '') LIKE ?)
                 " . (!empty($codigo_filtro) ? "AND tin.Nombre_Insignia LIKE '%$codigo_filtro%'" : "") . "
                 ORDER BY tio.Fecha_Emision DESC
             ";
