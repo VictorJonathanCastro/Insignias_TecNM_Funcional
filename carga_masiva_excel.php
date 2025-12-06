@@ -589,6 +589,15 @@ class CargaMasivaExcel {
         }
         $procesados = 0;
         
+        // Detectar qué columnas existen en la tabla destinatario
+        $columnas_disponibles = [];
+        $result = $this->conexion->query("SHOW COLUMNS FROM destinatario");
+        if ($result) {
+            while ($col = $result->fetch_assoc()) {
+                $columnas_disponibles[] = $col['Field'];
+            }
+        }
+        
         foreach ($data as $fila => $row) {
             if (empty(array_filter($row))) continue;
             
@@ -596,28 +605,73 @@ class CargaMasivaExcel {
                 $datos = $this->validarDatosDestinatario($row, $headers, $fila + 2);
                 if (!$datos) continue;
                 
-                $sql = "INSERT INTO destinatario 
-                        (Id_Centro, Nombre_Completo, Nombre, Apellido_Paterno, Apellido_Materno, 
-                         Genero, Curp, Matricula, Correo, Telefono, Rol) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                // Construir nombre completo si no viene directamente
+                if (empty($datos['Nombre_Completo']) && !empty($datos['Nombre'])) {
+                    $nombre_completo = trim($datos['Nombre'] . ' ' . 
+                                         ($datos['Apellido_Paterno'] ?? '') . ' ' . 
+                                         ($datos['Apellido_Materno'] ?? ''));
+                    $datos['Nombre_Completo'] = $nombre_completo;
+                }
+                
+                // Construir SQL adaptativo según columnas disponibles
+                $campos = [];
+                $valores = [];
+                $tipos = '';
+                $params = [];
+                
+                // Campos básicos que siempre deben existir
+                if (in_array('Nombre_Completo', $columnas_disponibles) && !empty($datos['Nombre_Completo'])) {
+                    $campos[] = 'Nombre_Completo';
+                    $valores[] = '?';
+                    $tipos .= 's';
+                    $params[] = $datos['Nombre_Completo'];
+                }
+                
+                // ITCentro (no Id_Centro)
+                if (in_array('ITCentro', $columnas_disponibles) && !empty($datos['ITCentro'])) {
+                    $campos[] = 'ITCentro';
+                    $valores[] = '?';
+                    $tipos .= 'i';
+                    $params[] = (int)$datos['ITCentro'];
+                }
+                
+                // Campos opcionales
+                if (in_array('Curp', $columnas_disponibles) && !empty($datos['Curp'])) {
+                    $campos[] = 'Curp';
+                    $valores[] = '?';
+                    $tipos .= 's';
+                    $params[] = $datos['Curp'];
+                }
+                
+                if (in_array('Matricula', $columnas_disponibles) && !empty($datos['Matricula'])) {
+                    $campos[] = 'Matricula';
+                    $valores[] = '?';
+                    $tipos .= 's';
+                    $params[] = $datos['Matricula'];
+                }
+                
+                if (in_array('Correo', $columnas_disponibles) && !empty($datos['Correo'])) {
+                    $campos[] = 'Correo';
+                    $valores[] = '?';
+                    $tipos .= 's';
+                    $params[] = $datos['Correo'];
+                }
+                
+                if (empty($campos)) {
+                    $this->errores[] = "Fila " . ($fila + 2) . ": No hay campos válidos para insertar";
+                    continue;
+                }
+                
+                $sql = "INSERT INTO destinatario (" . implode(', ', $campos) . ") VALUES (" . implode(', ', $valores) . ")";
                 
                 $stmt = $this->conexion->prepare($sql);
                 if (!$stmt) {
                     throw new Exception("Error al preparar consulta de destinatario: " . $this->conexion->error);
                 }
-                $stmt->bind_param("issssssssss", 
-                    $datos['Id_Centro'],
-                    $datos['Nombre_Completo'],
-                    $datos['Nombre'],
-                    $datos['Apellido_Paterno'],
-                    $datos['Apellido_Materno'],
-                    $datos['Genero'],
-                    $datos['Curp'],
-                    $datos['Matricula'],
-                    $datos['Correo'],
-                    $datos['Telefono'],
-                    $datos['Rol']
-                );
+                
+                if (!empty($params)) {
+                    $stmt->bind_param($tipos, ...$params);
+                }
                 
                 if ($stmt->execute()) {
                     $procesados++;
@@ -625,6 +679,8 @@ class CargaMasivaExcel {
                 } else {
                     $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar - " . $stmt->error;
                 }
+                
+                $stmt->close();
                 
             } catch (Exception $e) {
                 $this->errores[] = "Fila " . ($fila + 2) . ": " . $e->getMessage();
@@ -1214,30 +1270,75 @@ class CargaMasivaExcel {
         $datos = [];
         $columnas = array_flip($headers);
         
-        $campos_requeridos = ['Id_Centro', 'Nombre_Completo', 'Nombre', 'Apellido_Paterno', 'Apellido_Materno'];
+        // Validar que tenemos al menos Nombre_Completo o Nombre
+        $tiene_nombre_completo = isset($columnas['Nombre_Completo']) && !empty(trim($row[$columnas['Nombre_Completo']] ?? ''));
+        $tiene_nombre = isset($columnas['Nombre']) && !empty(trim($row[$columnas['Nombre']] ?? ''));
         
-        foreach ($campos_requeridos as $campo) {
-            if (!isset($columnas[$campo])) {
-                $this->errores[] = "Fila $fila: Columna '$campo' no encontrada";
+        if (!$tiene_nombre_completo && !$tiene_nombre) {
+            $this->errores[] = "Fila $fila: Se requiere 'Nombre_Completo' o 'Nombre'";
+            return false;
+        }
+        
+        // Nombre completo (puede venir directamente o construirse)
+        if ($tiene_nombre_completo) {
+            $datos['Nombre_Completo'] = trim($row[$columnas['Nombre_Completo']] ?? '');
+        } else {
+            $datos['Nombre'] = trim($row[$columnas['Nombre']] ?? '');
+            $datos['Apellido_Paterno'] = trim($row[$columnas['Apellido_Paterno']] ?? '');
+            $datos['Apellido_Materno'] = trim($row[$columnas['Apellido_Materno']] ?? '');
+        }
+        
+        // ITCentro (puede venir como Id_Centro o ITCentro)
+        if (isset($columnas['ITCentro']) && !empty(trim($row[$columnas['ITCentro']] ?? ''))) {
+            $datos['ITCentro'] = trim($row[$columnas['ITCentro']]);
+        } elseif (isset($columnas['Id_Centro']) && !empty(trim($row[$columnas['Id_Centro']] ?? ''))) {
+            $datos['ITCentro'] = trim($row[$columnas['Id_Centro']]);
+        } else {
+            $this->errores[] = "Fila $fila: Se requiere 'ITCentro' o 'Id_Centro'";
+            return false;
+        }
+        
+        // Validar que ITCentro es numérico
+        if (!is_numeric($datos['ITCentro'])) {
+            $this->errores[] = "Fila $fila: ITCentro debe ser numérico";
+            return false;
+        }
+        $datos['ITCentro'] = (int)$datos['ITCentro'];
+        
+        // Validar que ITCentro existe en it_centros
+        $sql = "SELECT id FROM it_centros WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("i", $datos['ITCentro']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows == 0) {
+                $this->errores[] = "Fila $fila: ITCentro ({$datos['ITCentro']}) no existe en la tabla it_centros";
+                $stmt->close();
                 return false;
             }
-            
-            $valor = trim($row[$columnas[$campo]] ?? '');
-            if (empty($valor)) {
-                $this->errores[] = "Fila $fila: Campo '$campo' es requerido";
-                return false;
-            }
-            
-            $datos[$campo] = $valor;
+            $stmt->close();
         }
         
         // Campos opcionales
-        $datos['Genero'] = trim($row[$columnas['Genero']] ?? '');
-        $datos['Curp'] = trim($row[$columnas['Curp']] ?? '');
-        $datos['Matricula'] = trim($row[$columnas['Matricula']] ?? '');
-        $datos['Correo'] = trim($row[$columnas['Correo']] ?? '');
-        $datos['Telefono'] = trim($row[$columnas['Telefono']] ?? '');
-        $datos['Rol'] = trim($row[$columnas['Rol']] ?? 'Estudiante');
+        if (isset($columnas['Curp'])) {
+            $datos['Curp'] = trim($row[$columnas['Curp']] ?? '');
+        }
+        if (isset($columnas['Matricula'])) {
+            $datos['Matricula'] = trim($row[$columnas['Matricula']] ?? '');
+        }
+        if (isset($columnas['Correo'])) {
+            $datos['Correo'] = trim($row[$columnas['Correo']] ?? '');
+        }
+        if (isset($columnas['Telefono'])) {
+            $datos['Telefono'] = trim($row[$columnas['Telefono']] ?? '');
+        }
+        if (isset($columnas['Genero'])) {
+            $datos['Genero'] = trim($row[$columnas['Genero']] ?? '');
+        }
+        if (isset($columnas['Rol'])) {
+            $datos['Rol'] = trim($row[$columnas['Rol']] ?? 'Estudiante');
+        }
         
         // Validar email si se proporciona
         if (!empty($datos['Correo']) && !filter_var($datos['Correo'], FILTER_VALIDATE_EMAIL)) {
