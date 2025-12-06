@@ -306,7 +306,10 @@ if (!empty($busqueda)) {
     $filtro_por_busqueda = false;
     $filtro_por_correo = false;
 } else {
-    // Filtrar por nombre del usuario
+    // Determinar si mostrar todas las insignias (Admin) o filtrar por usuario
+    $es_admin = ($rol_usuario === 'Admin' || $rol_usuario === 'Administrador' || $rol_usuario === 'SuperUsuario');
+    
+    // Filtrar por nombre del usuario (solo si no es admin)
     if ($usar_tabla_i) {
         // Usar insigniasotorgadas (donde se guardan las nuevas insignias)
         $sql = "
@@ -343,7 +346,7 @@ if (!empty($busqueda)) {
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
-            WHERE d.Nombre_Completo LIKE ?
+            " . ($es_admin ? "" : "WHERE d.Nombre_Completo LIKE ?") . "
             ORDER BY io.Fecha_Emision DESC
         ";
     } elseif ($usar_tabla_t) {
@@ -380,7 +383,7 @@ if (!empty($busqueda)) {
             LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id
             LEFT JOIN estatus e ON tio.Id_Estatus = e.id
             LEFT JOIN it_centros itc ON ti.Propone_Insignia = itc.id
-            WHERE d.Nombre_Completo LIKE ?
+            " . ($es_admin ? "" : "WHERE d.Nombre_Completo LIKE ?") . "
             ORDER BY tio.Fecha_Emision DESC
         ";
     } else {
@@ -419,7 +422,7 @@ if (!empty($busqueda)) {
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
-            WHERE d.Nombre_Completo LIKE ?
+            " . ($es_admin ? "" : "WHERE d.Nombre_Completo LIKE ?") . "
             ORDER BY io.Fecha_Emision DESC
         ";
     }
@@ -443,8 +446,9 @@ if ($filtro_por_busqueda) {
     $busqueda_param = "%$busqueda%";
     $stmt->bind_param("s", $busqueda_param);
 } elseif ($rol_usuario === 'Admin' || $rol_usuario === 'Administrador' || $rol_usuario === 'SuperUsuario') {
-    // Para administradores, no hay parámetros que bindear
+    // Para administradores sin búsqueda, no hay parámetros que bindear (muestran todas las insignias)
 } else {
+    // Para usuarios normales, filtrar por su nombre
     $nombre_completo = "%$nombre_usuario $apellido_usuario%";
     $stmt->bind_param("s", $nombre_completo);
 }
