@@ -1454,7 +1454,7 @@ function formatearFecha($fecha) {
                                     <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" target="_blank" onclick="event.stopPropagation();">
                                         🏆 Ver Certificado
                                     </a>
-                                    <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank" onclick="event.stopPropagation();">
+                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank" onclick="event.stopPropagation();">
                                         🔍 Ver Validación
                                     </a>
                                 <?php else: ?>
@@ -1462,7 +1462,7 @@ function formatearFecha($fecha) {
                                     <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" onclick="event.stopPropagation();">
                                         ⭐ Ver Reconocimiento
                                     </a>
-                                    <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" onclick="event.stopPropagation();">
+                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" onclick="event.stopPropagation();">
                                         ✓ Ver Validación
                                     </a>
                                 <?php endif; ?>
