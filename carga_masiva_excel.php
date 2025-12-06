@@ -1100,23 +1100,108 @@ class CargaMasivaExcel {
             $datos[$campo] = $valor;
         }
         
-        // Validar tipos de datos
+        // Validar tipos de datos y convertir a enteros
         if (!is_numeric($datos['Id_Insignia'])) {
             $this->errores[] = "Fila $fila: Id_Insignia debe ser numérico";
             return false;
         }
+        $datos['Id_Insignia'] = (int)$datos['Id_Insignia'];
         
         if (!is_numeric($datos['Id_Destinatario'])) {
             $this->errores[] = "Fila $fila: Id_Destinatario debe ser numérico";
             return false;
         }
+        $datos['Id_Destinatario'] = (int)$datos['Id_Destinatario'];
+        
+        if (!is_numeric($datos['Id_Periodo_Emision'])) {
+            $this->errores[] = "Fila $fila: Id_Periodo_Emision debe ser numérico";
+            return false;
+        }
+        $datos['Id_Periodo_Emision'] = (int)$datos['Id_Periodo_Emision'];
+        
+        if (!is_numeric($datos['Id_Estatus'])) {
+            $this->errores[] = "Fila $fila: Id_Estatus debe ser numérico";
+            return false;
+        }
+        $datos['Id_Estatus'] = (int)$datos['Id_Estatus'];
         
         // Validar fecha
         try {
             $datos['Fecha_Emision'] = date('Y-m-d', strtotime($datos['Fecha_Emision']));
+            if ($datos['Fecha_Emision'] === '1970-01-01' || $datos['Fecha_Emision'] === false) {
+                throw new Exception("Fecha inválida");
+            }
         } catch (Exception $e) {
             $this->errores[] = "Fila $fila: Fecha_Emision formato inválido";
             return false;
+        }
+        
+        // Validar que Id_Insignia existe en T_insignias
+        $sql = "SELECT id FROM T_insignias WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("i", $datos['Id_Insignia']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows == 0) {
+                $this->errores[] = "Fila $fila: Id_Insignia ({$datos['Id_Insignia']}) no existe en la tabla T_insignias";
+                $stmt->close();
+                return false;
+            }
+            $stmt->close();
+        }
+        
+        // Validar que Id_Destinatario existe en destinatario
+        $sql = "SELECT ID_destinatario FROM destinatario WHERE ID_destinatario = ?";
+        $stmt = $this->conexion->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("i", $datos['Id_Destinatario']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows == 0) {
+                $this->errores[] = "Fila $fila: Id_Destinatario ({$datos['Id_Destinatario']}) no existe en la tabla destinatario";
+                $stmt->close();
+                return false;
+            }
+            $stmt->close();
+        }
+        
+        // Validar que Id_Periodo_Emision existe en periodo_emision
+        // Verificar estructura de la tabla primero
+        $check_periodo = $this->conexion->query("SHOW COLUMNS FROM periodo_emision LIKE 'id'");
+        $campo_id_periodo = ($check_periodo && $check_periodo->num_rows > 0) ? 'id' : 'ID_periodo';
+        
+        $sql = "SELECT $campo_id_periodo as id FROM periodo_emision WHERE $campo_id_periodo = ?";
+        $stmt = $this->conexion->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("i", $datos['Id_Periodo_Emision']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows == 0) {
+                $this->errores[] = "Fila $fila: Id_Periodo_Emision ({$datos['Id_Periodo_Emision']}) no existe en la tabla periodo_emision";
+                $stmt->close();
+                return false;
+            }
+            $stmt->close();
+        }
+        
+        // Validar que Id_Estatus existe en estatus
+        // Verificar estructura de la tabla primero
+        $check_estatus = $this->conexion->query("SHOW COLUMNS FROM estatus LIKE 'id'");
+        $campo_id_estatus = ($check_estatus && $check_estatus->num_rows > 0) ? 'id' : 'ID_estatus';
+        
+        $sql = "SELECT $campo_id_estatus as id FROM estatus WHERE $campo_id_estatus = ?";
+        $stmt = $this->conexion->prepare($sql);
+        if ($stmt) {
+            $stmt->bind_param("i", $datos['Id_Estatus']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows == 0) {
+                $this->errores[] = "Fila $fila: Id_Estatus ({$datos['Id_Estatus']}) no existe en la tabla estatus";
+                $stmt->close();
+                return false;
+            }
+            $stmt->close();
         }
         
         return $datos;
