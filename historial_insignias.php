@@ -1079,12 +1079,14 @@ function formatearFecha($fecha) {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            cursor: pointer;
         }
 
         .insignia-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.12);
             border-color: rgba(30, 60, 114, 0.2);
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
         }
 
         .insignia-card::before {
@@ -1412,7 +1414,7 @@ function formatearFecha($fecha) {
             <?php else: ?>
                 <div class="insignias-grid">
                     <?php foreach ($insignias as $insignia): ?>
-                        <div class="insignia-card">
+                        <div class="insignia-card" onclick="window.location.href='ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>'" style="cursor: pointer;" title="Haz clic para ver la validación pública">
                             <div class="insignia-header">
                                 <div>
                                     <div class="insignia-title"><?php echo htmlspecialchars($insignia['nombre_insignia']); ?></div>
@@ -1447,21 +1449,21 @@ function formatearFecha($fecha) {
                                 </div>
                             </div>
 
-                            <div class="insignia-actions">
+                            <div class="insignia-actions" onclick="event.stopPropagation();">
                                 <?php if ($rol_usuario === 'Admin' || $rol_usuario === 'Administrador' || $rol_usuario === 'SuperUsuario'): ?>
                                     <!-- Enlaces para administradores -->
-                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" target="_blank">
+                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" target="_blank" onclick="event.stopPropagation();">
                                         🏆 Ver Certificado
                                     </a>
-                                    <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank">
+                                    <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank" onclick="event.stopPropagation();">
                                         🔍 Ver Validación
                                     </a>
                                 <?php else: ?>
                                     <!-- Enlaces para usuarios normales -->
-                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver">
+                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" onclick="event.stopPropagation();">
                                         ⭐ Ver Reconocimiento
                                     </a>
-                                    <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar">
+                                    <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" onclick="event.stopPropagation();">
                                         ✓ Ver Validación
                                     </a>
                                 <?php endif; ?>
