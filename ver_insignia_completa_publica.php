@@ -853,8 +853,8 @@ if (!empty($insignia_data['responsable_id'])) {
             <button onclick="window.print()" class="btn">
                 <i class="fas fa-print"></i> Imprimir
             </button>
-            <a href="validacion.php?insignia=<?php echo isset($codigo_insignia) ? urlencode($codigo_insignia) : ''; ?>" class="btn" style="text-decoration: none; display: inline-block;">
-                <i class="fas fa-share-alt"></i> Ver Validación
+            <a href="ver_insignia_publica.php?insignia=<?php echo isset($codigo_insignia) ? urlencode($codigo_insignia) : ''; ?>" class="btn" style="text-decoration: none; display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);" target="_blank">
+                <i class="fas fa-check-circle"></i> Ver Validación
             </a>
             <a href="javascript:history.back()" class="btn" style="text-decoration: none; display: inline-block;">
                 <i class="fas fa-arrow-left"></i> Volver

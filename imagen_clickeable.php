@@ -641,6 +641,16 @@ if (isset($_GET['codigo']) && !isset($_GET['stay']) && !$is_crawler) {
                     📋 Copiar Enlace
                 </a>
             </div>
+            
+            <!-- Botón Ver Validación -->
+            <div style="margin-top: 20px; text-align: center;">
+                <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($codigo_insignia); ?>" 
+                   class="share-btn" 
+                   style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);"
+                   target="_blank">
+                    <i class="fas fa-check-circle"></i> Ver Validación
+                </a>
+            </div>
         </div>
         
         <div class="url-section">
