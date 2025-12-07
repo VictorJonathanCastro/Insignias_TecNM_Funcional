@@ -1323,40 +1323,137 @@ class CargaMasivaExcel {
             $stmt->close();
         }
         
-        // Validar que Destinatario existe en destinatario
+        // Validar que Destinatario existe en destinatario o crearlo si es necesario
         // Verificar estructura de la tabla primero
         $check_destinatario = $this->conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
         $campo_id_destinatario = ($check_destinatario && $check_destinatario->num_rows > 0) ? 'id' : 'ID_destinatario';
         
-        if (!is_numeric($datos['Destinatario'])) {
-            $this->errores[] = "Fila $fila: Destinatario debe ser numérico (ID del destinatario)";
-            return false;
-        }
-        $datos['Destinatario'] = (int)$datos['Destinatario'];
+        $destinatario_id = null;
+        $valor_destinatario = trim($datos['Destinatario']);
         
-        $sql = "SELECT $campo_id_destinatario as id FROM destinatario WHERE $campo_id_destinatario = ?";
-        $stmt = $this->conexion->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("i", $datos['Destinatario']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($result->num_rows == 0) {
-                // Obtener IDs disponibles
-                $sql_ids = "SELECT $campo_id_destinatario as id FROM destinatario ORDER BY $campo_id_destinatario LIMIT 10";
-                $result_ids = $this->conexion->query($sql_ids);
-                $ids_disponibles = [];
-                if ($result_ids) {
-                    while ($row = $result_ids->fetch_assoc()) {
-                        $ids_disponibles[] = $row['id'];
+        // Si es numérico, buscar por ID
+        if (is_numeric($valor_destinatario)) {
+            $destinatario_id = (int)$valor_destinatario;
+            $sql = "SELECT $campo_id_destinatario as id FROM destinatario WHERE $campo_id_destinatario = ?";
+            $stmt = $this->conexion->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param("i", $destinatario_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($result->num_rows == 0) {
+                    $destinatario_id = null; // No existe, buscar por otros campos
+                }
+                $stmt->close();
+            }
+        }
+        
+        // Si no se encontró por ID o no es numérico, buscar por nombre completo, CURP o matrícula
+        if ($destinatario_id === null) {
+            // Buscar por nombre completo
+            $sql_buscar = "SELECT $campo_id_destinatario as id FROM destinatario WHERE Nombre_Completo = ? LIMIT 1";
+            $stmt_buscar = $this->conexion->prepare($sql_buscar);
+            if ($stmt_buscar) {
+                $stmt_buscar->bind_param("s", $valor_destinatario);
+                $stmt_buscar->execute();
+                $result_buscar = $stmt_buscar->get_result();
+                if ($result_buscar && $result_buscar->num_rows > 0) {
+                    $row_buscar = $result_buscar->fetch_assoc();
+                    $destinatario_id = $row_buscar['id'];
+                    $this->exitos[] = "Fila $fila: Destinatario encontrado por nombre completo: '{$valor_destinatario}' (ID: $destinatario_id)";
+                }
+                $stmt_buscar->close();
+            }
+            
+            // Si aún no se encontró, buscar por CURP
+            if ($destinatario_id === null) {
+                $sql_curp = "SELECT $campo_id_destinatario as id FROM destinatario WHERE Curp = ? LIMIT 1";
+                $stmt_curp = $this->conexion->prepare($sql_curp);
+                if ($stmt_curp) {
+                    $stmt_curp->bind_param("s", $valor_destinatario);
+                    $stmt_curp->execute();
+                    $result_curp = $stmt_curp->get_result();
+                    if ($result_curp && $result_curp->num_rows > 0) {
+                        $row_curp = $result_curp->fetch_assoc();
+                        $destinatario_id = $row_curp['id'];
+                        $this->exitos[] = "Fila $fila: Destinatario encontrado por CURP: '{$valor_destinatario}' (ID: $destinatario_id)";
+                    }
+                    $stmt_curp->close();
+                }
+            }
+            
+            // Si aún no se encontró, buscar por matrícula
+            if ($destinatario_id === null) {
+                $sql_mat = "SELECT $campo_id_destinatario as id FROM destinatario WHERE Matricula = ? LIMIT 1";
+                $stmt_mat = $this->conexion->prepare($sql_mat);
+                if ($stmt_mat) {
+                    $stmt_mat->bind_param("s", $valor_destinatario);
+                    $stmt_mat->execute();
+                    $result_mat = $stmt_mat->get_result();
+                    if ($result_mat && $result_mat->num_rows > 0) {
+                        $row_mat = $result_mat->fetch_assoc();
+                        $destinatario_id = $row_mat['id'];
+                        $this->exitos[] = "Fila $fila: Destinatario encontrado por matrícula: '{$valor_destinatario}' (ID: $destinatario_id)";
+                    }
+                    $stmt_mat->close();
+                }
+            }
+            
+            // Si aún no se encontró, crear nuevo destinatario
+            if ($destinatario_id === null) {
+                // Verificar si ITCentro existe en la tabla
+                $check_itcentro = $this->conexion->query("SHOW COLUMNS FROM destinatario LIKE 'ITCentro'");
+                $tiene_itcentro = ($check_itcentro && $check_itcentro->num_rows > 0);
+                
+                // Obtener un ITCentro por defecto (el primero disponible)
+                $itcentro_default = 1;
+                $sql_itc = "SELECT id FROM it_centros ORDER BY id LIMIT 1";
+                $result_itc = $this->conexion->query($sql_itc);
+                if ($result_itc && $result_itc->num_rows > 0) {
+                    $row_itc = $result_itc->fetch_assoc();
+                    $itcentro_default = $row_itc['id'];
+                }
+                
+                // Crear nuevo destinatario
+                if ($tiene_itcentro) {
+                    $sql_insert = "INSERT INTO destinatario (Nombre_Completo, ITCentro) VALUES (?, ?)";
+                    $stmt_insert = $this->conexion->prepare($sql_insert);
+                    if ($stmt_insert) {
+                        $stmt_insert->bind_param("si", $valor_destinatario, $itcentro_default);
+                        if ($stmt_insert->execute()) {
+                            $destinatario_id = $this->conexion->insert_id;
+                            $this->exitos[] = "Fila $fila: Destinatario creado automáticamente: '{$valor_destinatario}' (ID: $destinatario_id)";
+                        } else {
+                            $this->errores[] = "Fila $fila: Error al crear destinatario: " . $stmt_insert->error;
+                            $stmt_insert->close();
+                            return false;
+                        }
+                        $stmt_insert->close();
+                    }
+                } else {
+                    $sql_insert = "INSERT INTO destinatario (Nombre_Completo) VALUES (?)";
+                    $stmt_insert = $this->conexion->prepare($sql_insert);
+                    if ($stmt_insert) {
+                        $stmt_insert->bind_param("s", $valor_destinatario);
+                        if ($stmt_insert->execute()) {
+                            $destinatario_id = $this->conexion->insert_id;
+                            $this->exitos[] = "Fila $fila: Destinatario creado automáticamente: '{$valor_destinatario}' (ID: $destinatario_id)";
+                        } else {
+                            $this->errores[] = "Fila $fila: Error al crear destinatario: " . $stmt_insert->error;
+                            $stmt_insert->close();
+                            return false;
+                        }
+                        $stmt_insert->close();
                     }
                 }
-                $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', $ids_disponibles) . (count($ids_disponibles) >= 10 ? '...' : '') . ")" : "";
-                $this->errores[] = "Fila $fila: Destinatario ({$datos['Destinatario']}) no existe en la tabla destinatario$ids_texto";
-                $stmt->close();
-                return false;
             }
-            $stmt->close();
         }
+        
+        if ($destinatario_id === null) {
+            $this->errores[] = "Fila $fila: No se pudo encontrar o crear el destinatario: '{$valor_destinatario}'";
+            return false;
+        }
+        
+        $datos['Destinatario'] = $destinatario_id;
         
         // Campos opcionales
         $datos['Periodo_Emision'] = null;
@@ -1765,16 +1862,16 @@ class CargaMasivaExcel {
                 'insigniasotorgadas' => [
                     'headers' => ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'],
                     'datos' => [
-                        ['TECNM-OFCM-2025-ART-001', 1, 1, 1, 1, '2025-01-15'],
-                        ['TECNM-OFCM-2025-EMB-002', 2, 1, 1, 1, '2025-01-16'],
-                        ['TECNM-OFCM-2025-TAL-003', 3, 1, 1, 1, '2025-01-17'],
-                        ['TECNM-OFCM-2025-INN-004', 4, 1, 1, 1, '2025-01-18'],
-                        ['TECNM-OFCM-2025-SOC-005', 5, 1, 1, 1, '2025-01-19'],
-                        ['TECNM-OFCM-2025-FOR-006', 6, 1, 1, 1, '2025-01-20'],
-                        ['TECNM-OFCM-2025-MOV-007', 7, 1, 1, 1, '2025-01-21'],
-                        ['TECNM-OFCM-2025-ART-008', 8, 1, 1, 1, '2025-01-22'],
-                        ['TECNM-OFCM-2025-EMB-009', 9, 1, 1, 1, '2025-01-23'],
-                        ['TECNM-OFCM-2025-TAL-010', 10, 1, 1, 1, '2025-01-24']
+                        ['TECNM-OFCM-2025-ART-001', 'Juan Pérez Gómez', 1, 1, 1, '2025-01-15'],
+                        ['TECNM-OFCM-2025-EMB-002', 'María González López', 1, 1, 1, '2025-01-16'],
+                        ['TECNM-OFCM-2025-TAL-003', 'Carlos Ramírez Martínez', 1, 1, 1, '2025-01-17'],
+                        ['TECNM-OFCM-2025-INN-004', 'Ana Sánchez Hernández', 1, 1, 1, '2025-01-18'],
+                        ['TECNM-OFCM-2025-SOC-005', 'Roberto Torres Díaz', 1, 1, 1, '2025-01-19'],
+                        ['TECNM-OFCM-2025-FOR-006', 'Laura Morales Silva', 1, 1, 1, '2025-01-20'],
+                        ['TECNM-OFCM-2025-MOV-007', 'Fernando Jiménez Ruiz', 1, 1, 1, '2025-01-21'],
+                        ['TECNM-OFCM-2025-ART-008', 'Patricia Castro Moreno', 1, 1, 1, '2025-01-22'],
+                        ['TECNM-OFCM-2025-EMB-009', 'Gabriel Mendoza Vega', 1, 1, 1, '2025-01-23'],
+                        ['TECNM-OFCM-2025-TAL-010', 'Luis Hernández Campos', 1, 1, 1, '2025-01-24']
                     ]
                 ]
             ];
@@ -1856,16 +1953,16 @@ class CargaMasivaExcel {
                 case 'insignias_otorgadas':
                     $headers = ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'];
                     $datos_ejemplo = [
-                        ['TECNM-OFCM-2025-ART-001', 1, 1, 1, 1, '2025-01-15'],
-                        ['TECNM-OFCM-2025-EMB-002', 2, 1, 1, 1, '2025-01-16'],
-                        ['TECNM-OFCM-2025-TAL-003', 3, 1, 1, 1, '2025-01-17'],
-                        ['TECNM-OFCM-2025-INN-004', 4, 1, 1, 1, '2025-01-18'],
-                        ['TECNM-OFCM-2025-SOC-005', 5, 1, 1, 1, '2025-01-19'],
-                        ['TECNM-OFCM-2025-FOR-006', 6, 1, 1, 1, '2025-01-20'],
-                        ['TECNM-OFCM-2025-MOV-007', 7, 1, 1, 1, '2025-01-21'],
-                        ['TECNM-OFCM-2025-ART-008', 8, 1, 1, 1, '2025-01-22'],
-                        ['TECNM-OFCM-2025-EMB-009', 9, 1, 1, 1, '2025-01-23'],
-                        ['TECNM-OFCM-2025-TAL-010', 10, 1, 1, 1, '2025-01-24']
+                        ['TECNM-OFCM-2025-ART-001', 'Juan Pérez Gómez', 1, 1, 1, '2025-01-15'],
+                        ['TECNM-OFCM-2025-EMB-002', 'María González López', 1, 1, 1, '2025-01-16'],
+                        ['TECNM-OFCM-2025-TAL-003', 'Carlos Ramírez Martínez', 1, 1, 1, '2025-01-17'],
+                        ['TECNM-OFCM-2025-INN-004', 'Ana Sánchez Hernández', 1, 1, 1, '2025-01-18'],
+                        ['TECNM-OFCM-2025-SOC-005', 'Roberto Torres Díaz', 1, 1, 1, '2025-01-19'],
+                        ['TECNM-OFCM-2025-FOR-006', 'Laura Morales Silva', 1, 1, 1, '2025-01-20'],
+                        ['TECNM-OFCM-2025-MOV-007', 'Fernando Jiménez Ruiz', 1, 1, 1, '2025-01-21'],
+                        ['TECNM-OFCM-2025-ART-008', 'Patricia Castro Moreno', 1, 1, 1, '2025-01-22'],
+                        ['TECNM-OFCM-2025-EMB-009', 'Gabriel Mendoza Vega', 1, 1, 1, '2025-01-23'],
+                        ['TECNM-OFCM-2025-TAL-010', 'Luis Hernández Campos', 1, 1, 1, '2025-01-24']
                     ];
                     break;
                 case 'destinatarios':
