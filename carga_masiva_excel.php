@@ -1266,23 +1266,6 @@ class CargaMasivaExcel {
         if ($datos['Estatus'] === null) {
             $datos['Estatus'] = 1;
         }
-                
-                if ($id_por_defecto !== null) {
-                    // Usar automáticamente un ID válido
-                    $valor_anterior = $datos['Id_Estatus'];
-                    $datos['Id_Estatus'] = $id_por_defecto;
-                    $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', array_slice($ids_disponibles, 0, 10)) . (count($ids_disponibles) > 10 ? '...' : '') . ")" : "";
-                    $this->exitos[] = "Fila $fila: Id_Estatus corregido automáticamente de '$valor_anterior' a '$id_por_defecto'$ids_texto";
-                } else {
-                    // Si no hay IDs disponibles, mostrar error
-                    $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', array_slice($ids_disponibles, 0, 10)) . (count($ids_disponibles) > 10 ? '...' : '') . ")" : "";
-                    $this->errores[] = "Fila $fila: Id_Estatus ({$datos['Id_Estatus']}) no existe en la tabla estatus y no hay IDs disponibles$ids_texto";
-                    $stmt->close();
-                    return false;
-                }
-            }
-            $stmt->close();
-        }
         
         return $datos;
     }
