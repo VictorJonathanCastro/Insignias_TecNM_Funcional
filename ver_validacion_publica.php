@@ -201,22 +201,6 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
-        .header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-        }
-        
-        .logo-sep {
-            width: 200px;
-        }
-        
-        .logo-tecnm {
-            width: 250px;
-            text-align: right;
-        }
-        
         .title {
             text-align: center;
             font-size: 32px;
@@ -348,17 +332,6 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
 <body>
     <div class="container">
         <div class="document-container">
-            <!-- Header con logos -->
-            <div class="header-section">
-                <div class="logo-sep">
-                    <!-- Logo SEP - se puede agregar imagen si existe -->
-                    <div style="font-size: 14px; font-weight: bold; color: #1b396a;">SECRETARÍA DE EDUCACIÓN PÚBLICA</div>
-                </div>
-                <div class="logo-tecnm">
-                    <div style="font-size: 12px; font-weight: bold; color: #1b396a;">TECNOLÓGICO NACIONAL DE MÉXICO</div>
-                </div>
-            </div>
-            
             <!-- Título principal -->
             <div class="title">VALIDACIÓN DE INSIGNIA</div>
             
