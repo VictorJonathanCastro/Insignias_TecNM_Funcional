@@ -1100,7 +1100,7 @@ function determinarImagenInsignia($codigo_insignia, $nombre_insignia) {
                             🏆 Ver Certificado
                         </a>
                         <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank">
-                            🔍 Ver Validación
+                            📤 Compartir
                         </a>
                     </div>
                 </div>
