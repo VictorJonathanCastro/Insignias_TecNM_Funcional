@@ -230,11 +230,13 @@ class CargaMasivaExcel {
             // Procesar una sola hoja (comportamiento original)
             $worksheet = $spreadsheet->getActiveSheet();
             $data = $worksheet->toArray();
+            $active_sheet_index = $spreadsheet->getActiveSheetIndex();
             
             // Procesar según el tipo de carga
             switch ($tipo_carga) {
                 case 'insignias_otorgadas':
-                    return $this->cargarInsigniasOtorgadas($data);
+                    // Pasar spreadsheet y sheet_index para leer fechas correctamente
+                    return $this->cargarInsigniasOtorgadas($data, null, $spreadsheet, $active_sheet_index);
                 case 'destinatarios':
                     return $this->cargarDestinatarios($data);
                 case 'centros_it':
@@ -309,7 +311,8 @@ class CargaMasivaExcel {
             switch ($tipo_detectado) {
                 case 'insignias_otorgadas':
                     // Si hay firma digital configurada (viene de todas_las_tablas), se aplicará aquí
-                    $resultado = $this->cargarInsigniasOtorgadas($data_sin_headers, $headers_originales);
+                    // Pasar spreadsheet y sheet_index para leer fechas correctamente
+                    $resultado = $this->cargarInsigniasOtorgadas($data_sin_headers, $headers_originales, $spreadsheet, $i);
                     break;
                 case 'destinatarios':
                     $resultado = $this->cargarDestinatarios($data_sin_headers, $headers_originales);
@@ -441,7 +444,7 @@ class CargaMasivaExcel {
     /**
      * Cargar insignias otorgadas desde Excel
      */
-    private function cargarInsigniasOtorgadas($data, $headers_provided = null) {
+    private function cargarInsigniasOtorgadas($data, $headers_provided = null, $spreadsheet = null, $sheet_index = null) {
         // Si se proporcionan headers, usarlos; si no, tomar la primera fila
         if ($headers_provided !== null) {
             $headers = $headers_provided;
@@ -450,10 +453,46 @@ class CargaMasivaExcel {
         }
         $procesados = 0;
         
+        // Si tenemos acceso al spreadsheet, usarlo para leer fechas correctamente
+        $sheet = null;
+        if ($spreadsheet !== null && $sheet_index !== null) {
+            $sheet = $spreadsheet->getSheet($sheet_index);
+        }
+        
         foreach ($data as $fila => $row) {
             if (empty(array_filter($row))) continue; // Saltar filas vacías
             
             try {
+                // Si tenemos acceso a la hoja, convertir fechas de Excel correctamente
+                if ($sheet !== null) {
+                    $fila_excel = $fila + 2; // +2 porque fila 1 es headers y empezamos desde 0
+                    $col_fecha = null;
+                    foreach ($headers as $idx => $header) {
+                        if (strtolower(trim($header)) === 'fecha_emision') {
+                            $col_fecha = $idx;
+                            break;
+                        }
+                    }
+                    
+                    if ($col_fecha !== null) {
+                        $col_letter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col_fecha + 1);
+                        $cell = $sheet->getCell($col_letter . $fila_excel);
+                        
+                        // Si la celda contiene una fecha de Excel (número serial), convertirla
+                        if (\PhpOffice\PhpSpreadsheet\Shared\Date::isDateTime($cell)) {
+                            $excel_date = $cell->getValue();
+                            $php_date = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject($excel_date);
+                            $row[$col_fecha] = $php_date->format('Y-m-d');
+                        } else {
+                            // Intentar obtener el valor formateado
+                            $formatted = $cell->getFormattedValue();
+                            if (!empty($formatted)) {
+                                $row[$col_fecha] = $formatted;
+                            }
+                        }
+                    }
+                }
+                
                 // Validar datos requeridos
                 $datos = $this->validarDatosInsigniaOtorgada($row, $headers, $fila + 2);
                 if (!$datos) continue;
