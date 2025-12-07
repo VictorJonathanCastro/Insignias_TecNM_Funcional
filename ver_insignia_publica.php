@@ -237,9 +237,9 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
             background-repeat: no-repeat;
             background-position: center;
             margin: 0 auto;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
             transition: transform 0.3s;
             display: block;
         }
@@ -256,10 +256,11 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
         .qr-code img {
             width: 300px;
             height: 300px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            padding: 10px;
-            background: white;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            background: transparent;
+            display: block;
         }
 
         .action-buttons {
@@ -364,8 +365,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                     📱 Código QR de Validación
                 </div>
                 <div class="qr-code">
-                    <div style="position: relative; display: inline-block;">
-                        <img id="qr-img" src="<?php echo $qr_url; ?>" alt="Código QR" style="max-width: 300px; display: block;" onerror="this.style.border='5px solid red'; console.log('Error loading QR from: <?php echo addslashes($qr_url); ?>');">
+                    <div style="position: relative; display: inline-block; width: 300px; height: 300px;">
+                        <img id="qr-img" src="<?php echo $qr_url; ?>" alt="Código QR" style="width: 300px; height: 300px; display: block;" onerror="this.style.border='5px solid red'; console.log('Error loading QR from: <?php echo addslashes($qr_url); ?>');">
                         <img src="<?php echo $imagen_path; ?>" alt="Insignia" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: white; border-radius: 8px; padding: 5px; border: 2px solid #1b396a;">
                     </div>
                     <p style="margin-top: 15px; font-size: 14px; color: #6c757d;">
