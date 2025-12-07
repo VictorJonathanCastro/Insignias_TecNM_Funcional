@@ -268,7 +268,7 @@ class CargaMasivaExcel {
         
         // Mapeo de nombres de hojas a tipos de carga
         $mapeo_hojas = [
-            'insignias_otorgadas' => ['insignias', 'otorgadas', 'insignias otorgadas'],
+            'insignias_otorgadas' => ['insignias', 'otorgadas', 'insignias otorgadas', 'insigniasotorgadas'],
             'destinatarios' => ['destinatarios', 'estudiantes', 'personas'],
             'centros_it' => ['centros', 'it', 'centros it', 'institutos'],
             'tipos_insignia' => ['tipos', 'tipos insignia', 'tipos de insignia'],
@@ -365,7 +365,11 @@ class CargaMasivaExcel {
         // Si no se detecta por nombre, intentar por headers
         $headers_str = implode(' ', $headers);
         
-        // Insignias Otorgadas
+        // Insignias Otorgadas (insigniasotorgadas)
+        if (in_array('codigo_insignia', $headers) && in_array('destinatario', $headers)) {
+            return 'insignias_otorgadas';
+        }
+        // También reconocer estructura antigua por compatibilidad
         if (in_array('id_insignia', $headers) && in_array('id_destinatario', $headers)) {
             return 'insignias_otorgadas';
         }
@@ -454,21 +458,22 @@ class CargaMasivaExcel {
                 $datos = $this->validarDatosInsigniaOtorgada($row, $headers, $fila + 2);
                 if (!$datos) continue;
                 
-                // Insertar en base de datos
-                $sql = "INSERT INTO T_insignias_otorgadas 
-                        (Id_Insignia, Id_Destinatario, Fecha_Emision, Id_Periodo_Emision, Id_Estatus) 
-                        VALUES (?, ?, ?, ?, ?)";
+                // Insertar en base de datos (tabla insigniasotorgadas)
+                $sql = "INSERT INTO insigniasotorgadas 
+                        (Codigo_Insignia, Destinatario, Periodo_Emision, Responsable_Emision, Estatus, Fecha_Emision) 
+                        VALUES (?, ?, ?, ?, ?, ?)";
                 
                 $stmt = $this->conexion->prepare($sql);
                 if (!$stmt) {
                     throw new Exception("Error al preparar consulta de insignia otorgada: " . $this->conexion->error);
                 }
-                $stmt->bind_param("iisii", 
-                    $datos['Id_Insignia'],
-                    $datos['Id_Destinatario'],
-                    $datos['Fecha_Emision'],
-                    $datos['Id_Periodo_Emision'],
-                    $datos['Id_Estatus']
+                $stmt->bind_param("siiiss", 
+                    $datos['Codigo_Insignia'],
+                    $datos['Destinatario'],
+                    $datos['Periodo_Emision'],
+                    $datos['Responsable_Emision'],
+                    $datos['Estatus'],
+                    $datos['Fecha_Emision']
                 );
                 
                 if ($stmt->execute()) {
@@ -480,12 +485,12 @@ class CargaMasivaExcel {
                         $resultado_firma = $this->firmarInsignia($insignia_id, $datos);
                         if ($resultado_firma['success']) {
                             $this->estadisticas['firmadas']++;
-                            $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada y firmada correctamente";
+                            $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada y firmada correctamente (Código: {$datos['Codigo_Insignia']})";
                         } else {
-                            $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada correctamente (error al firmar: " . $resultado_firma['error'] . ")";
+                            $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada correctamente (Código: {$datos['Codigo_Insignia']}, error al firmar: " . $resultado_firma['error'] . ")";
                         }
                     } else {
-                        $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada correctamente";
+                        $this->exitos[] = "Fila " . ($fila + 2) . ": Insignia otorgada registrada correctamente (Código: {$datos['Codigo_Insignia']})";
                     }
                 } else {
                     $this->errores[] = "Fila " . ($fila + 2) . ": Error al insertar - " . $stmt->error;
@@ -504,19 +509,30 @@ class CargaMasivaExcel {
      */
     private function firmarInsignia($insignia_id, $datos_insignia) {
         try {
-            // Obtener datos completos de la insignia para la firma
+            // Obtener datos completos de la insignia para la firma (desde insigniasotorgadas)
+            // Verificar estructura de la tabla destinatario
+            $check_destinatario = $this->conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+            $campo_id_destinatario = ($check_destinatario && $check_destinatario->num_rows > 0) ? 'id' : 'ID_destinatario';
+            
             $sql = "SELECT 
-                        tio.Id_Insignia,
-                        tio.Id_Destinatario,
-                        tio.Fecha_Emision,
+                        io.Codigo_Insignia,
+                        io.Destinatario,
+                        io.Fecha_Emision,
                         d.Nombre_Completo as destinatario,
-                        COALESCE(tipo_ins.Nombre_Insignia, ti.Descripcion, 'Insignia') as nombre_insignia,
-                        tio.Id_Estatus
-                    FROM T_insignias_otorgadas tio
-                    LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario
-                    LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id
-                    LEFT JOIN tipo_insignia tipo_ins ON ti.Tipo_Insignia = tipo_ins.id
-                    WHERE tio.id = ?";
+                        CASE 
+                            WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
+                            WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
+                            WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
+                            WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
+                            WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
+                            WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
+                            WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+                            ELSE 'Insignia TecNM'
+                        END as nombre_insignia,
+                        io.Estatus
+                    FROM insigniasotorgadas io
+                    LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
+                    WHERE io.ID_otorgada = ?";
             
             $stmt = $this->conexion->prepare($sql);
             if (!$stmt) {
@@ -532,8 +548,8 @@ class CargaMasivaExcel {
             
             $insignia_data = $result->fetch_assoc();
             
-            // Generar código de insignia único si no existe
-            $codigo_insignia = 'TECNM-' . date('Y') . '-' . str_pad($insignia_id, 6, '0', STR_PAD_LEFT);
+            // Usar el código de insignia que ya existe
+            $codigo_insignia = $insignia_data['Codigo_Insignia'] ?? 'TECNM-' . date('Y') . '-' . str_pad($insignia_id, 6, '0', STR_PAD_LEFT);
             
             // Obtener responsable (usar el de sesión o uno por defecto)
             $responsable = $_SESSION['nombre'] ?? 'Responsable de Emisión';
@@ -543,7 +559,7 @@ class CargaMasivaExcel {
                 'destinatario' => $insignia_data['destinatario'] ?? 'N/A',
                 'nombre_insignia' => $insignia_data['nombre_insignia'] ?? 'Insignia',
                 'codigo_insignia' => $codigo_insignia,
-                'fecha_emision' => date('d/m/Y', strtotime($insignia_data['Fecha_Emision'])),
+                'fecha_emision' => date('d/m/Y', strtotime($insignia_data['Fecha_Emision'] ?? date('Y-m-d'))),
                 'responsable' => $responsable
             ];
             
@@ -1135,19 +1151,23 @@ class CargaMasivaExcel {
     private function validarDatosInsigniaOtorgada($row, $headers, $fila) {
         $datos = [];
         
-        // Mapear columnas por nombre
-        $columnas = array_flip($headers);
+        // Mapear columnas por nombre (case-insensitive)
+        $columnas = [];
+        foreach ($headers as $idx => $header) {
+            $columnas[strtolower(trim($header))] = $idx;
+        }
         
-        // Validar campos requeridos
-        $campos_requeridos = ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'];
+        // Validar campos requeridos para insigniasotorgadas
+        $campos_requeridos = ['Codigo_Insignia', 'Destinatario', 'Fecha_Emision'];
         
         foreach ($campos_requeridos as $campo) {
-            if (!isset($columnas[$campo])) {
+            $campo_lower = strtolower($campo);
+            if (!isset($columnas[$campo_lower])) {
                 $this->errores[] = "Fila $fila: Columna '$campo' no encontrada";
                 return false;
             }
             
-            $valor = trim($row[$columnas[$campo]] ?? '');
+            $valor = trim($row[$columnas[$campo_lower]] ?? '');
             if (empty($valor)) {
                 $this->errores[] = "Fila $fila: Campo '$campo' es requerido";
                 return false;
@@ -1155,31 +1175,6 @@ class CargaMasivaExcel {
             
             $datos[$campo] = $valor;
         }
-        
-        // Validar tipos de datos y convertir a enteros
-        if (!is_numeric($datos['Id_Insignia'])) {
-            $this->errores[] = "Fila $fila: Id_Insignia debe ser numérico";
-            return false;
-        }
-        $datos['Id_Insignia'] = (int)$datos['Id_Insignia'];
-        
-        if (!is_numeric($datos['Id_Destinatario'])) {
-            $this->errores[] = "Fila $fila: Id_Destinatario debe ser numérico";
-            return false;
-        }
-        $datos['Id_Destinatario'] = (int)$datos['Id_Destinatario'];
-        
-        if (!is_numeric($datos['Id_Periodo_Emision'])) {
-            $this->errores[] = "Fila $fila: Id_Periodo_Emision debe ser numérico";
-            return false;
-        }
-        $datos['Id_Periodo_Emision'] = (int)$datos['Id_Periodo_Emision'];
-        
-        if (!is_numeric($datos['Id_Estatus'])) {
-            $this->errores[] = "Fila $fila: Id_Estatus debe ser numérico";
-            return false;
-        }
-        $datos['Id_Estatus'] = (int)$datos['Id_Estatus'];
         
         // Validar fecha
         try {
@@ -1192,56 +1187,41 @@ class CargaMasivaExcel {
             return false;
         }
         
-        // Validar que Id_Insignia existe en T_insignias
-        $sql = "SELECT id FROM T_insignias WHERE id = ?";
+        // Validar que Codigo_Insignia no existe ya (debe ser único)
+        $sql = "SELECT Codigo_Insignia FROM insigniasotorgadas WHERE Codigo_Insignia = ?";
         $stmt = $this->conexion->prepare($sql);
         if ($stmt) {
-            $stmt->bind_param("i", $datos['Id_Insignia']);
+            $stmt->bind_param("s", $datos['Codigo_Insignia']);
             $stmt->execute();
             $result = $stmt->get_result();
-            if ($result->num_rows == 0) {
-                // Obtener IDs disponibles para usar uno válido
-                $sql_ids = "SELECT id FROM T_insignias ORDER BY id";
-                $result_ids = $this->conexion->query($sql_ids);
-                $ids_disponibles = [];
-                $id_por_defecto = null;
-                
-                if ($result_ids) {
-                    while ($row = $result_ids->fetch_assoc()) {
-                        $ids_disponibles[] = $row['id'];
-                        if ($id_por_defecto === null) {
-                            $id_por_defecto = $row['id'];
-                        }
-                    }
-                }
-                
-                if ($id_por_defecto !== null) {
-                    // Usar automáticamente el primer ID disponible
-                    $valor_anterior = $datos['Id_Insignia'];
-                    $datos['Id_Insignia'] = $id_por_defecto;
-                    $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', array_slice($ids_disponibles, 0, 10)) . (count($ids_disponibles) > 10 ? '...' : '') . ")" : "";
-                    $this->exitos[] = "Fila $fila: Id_Insignia corregido automáticamente de '$valor_anterior' a '$id_por_defecto'$ids_texto";
-                } else {
-                    // Si no hay IDs disponibles, mostrar error
-                    $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', array_slice($ids_disponibles, 0, 10)) . (count($ids_disponibles) > 10 ? '...' : '') . ")" : "";
-                    $this->errores[] = "Fila $fila: Id_Insignia ({$datos['Id_Insignia']}) no existe en la tabla T_insignias y no hay IDs disponibles$ids_texto";
-                    $stmt->close();
-                    return false;
-                }
+            if ($result->num_rows > 0) {
+                $this->errores[] = "Fila $fila: Codigo_Insignia '{$datos['Codigo_Insignia']}' ya existe en la tabla insigniasotorgadas";
+                $stmt->close();
+                return false;
             }
             $stmt->close();
         }
         
-        // Validar que Id_Destinatario existe en destinatario
-        $sql = "SELECT ID_destinatario FROM destinatario WHERE ID_destinatario = ?";
+        // Validar que Destinatario existe en destinatario
+        // Verificar estructura de la tabla primero
+        $check_destinatario = $this->conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+        $campo_id_destinatario = ($check_destinatario && $check_destinatario->num_rows > 0) ? 'id' : 'ID_destinatario';
+        
+        if (!is_numeric($datos['Destinatario'])) {
+            $this->errores[] = "Fila $fila: Destinatario debe ser numérico (ID del destinatario)";
+            return false;
+        }
+        $datos['Destinatario'] = (int)$datos['Destinatario'];
+        
+        $sql = "SELECT $campo_id_destinatario as id FROM destinatario WHERE $campo_id_destinatario = ?";
         $stmt = $this->conexion->prepare($sql);
         if ($stmt) {
-            $stmt->bind_param("i", $datos['Id_Destinatario']);
+            $stmt->bind_param("i", $datos['Destinatario']);
             $stmt->execute();
             $result = $stmt->get_result();
             if ($result->num_rows == 0) {
                 // Obtener IDs disponibles
-                $sql_ids = "SELECT ID_destinatario as id FROM destinatario ORDER BY ID_destinatario LIMIT 10";
+                $sql_ids = "SELECT $campo_id_destinatario as id FROM destinatario ORDER BY $campo_id_destinatario LIMIT 10";
                 $result_ids = $this->conexion->query($sql_ids);
                 $ids_disponibles = [];
                 if ($result_ids) {
@@ -1250,90 +1230,42 @@ class CargaMasivaExcel {
                     }
                 }
                 $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', $ids_disponibles) . (count($ids_disponibles) >= 10 ? '...' : '') . ")" : "";
-                $this->errores[] = "Fila $fila: Id_Destinatario ({$datos['Id_Destinatario']}) no existe en la tabla destinatario$ids_texto";
+                $this->errores[] = "Fila $fila: Destinatario ({$datos['Destinatario']}) no existe en la tabla destinatario$ids_texto";
                 $stmt->close();
                 return false;
             }
             $stmt->close();
         }
         
-        // Validar que Id_Periodo_Emision existe en periodo_emision
-        // Verificar estructura de la tabla primero
-        $check_periodo = $this->conexion->query("SHOW COLUMNS FROM periodo_emision LIKE 'id'");
-        $campo_id_periodo = ($check_periodo && $check_periodo->num_rows > 0) ? 'id' : 'ID_periodo';
-        
-        $sql = "SELECT $campo_id_periodo as id FROM periodo_emision WHERE $campo_id_periodo = ?";
-        $stmt = $this->conexion->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("i", $datos['Id_Periodo_Emision']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($result->num_rows == 0) {
-                // Obtener IDs disponibles para usar uno válido
-                $sql_ids = "SELECT $campo_id_periodo as id FROM periodo_emision ORDER BY $campo_id_periodo";
-                $result_ids = $this->conexion->query($sql_ids);
-                $ids_disponibles = [];
-                $id_por_defecto = null;
-                
-                if ($result_ids) {
-                    while ($row = $result_ids->fetch_assoc()) {
-                        $ids_disponibles[] = $row['id'];
-                        if ($id_por_defecto === null) {
-                            $id_por_defecto = $row['id'];
-                        }
-                    }
-                }
-                
-                if ($id_por_defecto !== null) {
-                    // Usar automáticamente el primer ID disponible
-                    $valor_anterior = $datos['Id_Periodo_Emision'];
-                    $datos['Id_Periodo_Emision'] = $id_por_defecto;
-                    $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', array_slice($ids_disponibles, 0, 10)) . (count($ids_disponibles) > 10 ? '...' : '') . ")" : "";
-                    $this->exitos[] = "Fila $fila: Id_Periodo_Emision corregido automáticamente de '$valor_anterior' a '$id_por_defecto'$ids_texto";
-                } else {
-                    // Si no hay IDs disponibles, mostrar error
-                    $ids_texto = !empty($ids_disponibles) ? " (IDs disponibles: " . implode(', ', array_slice($ids_disponibles, 0, 10)) . (count($ids_disponibles) > 10 ? '...' : '') . ")" : "";
-                    $this->errores[] = "Fila $fila: Id_Periodo_Emision ({$datos['Id_Periodo_Emision']}) no existe en la tabla periodo_emision y no hay IDs disponibles$ids_texto";
-                    $stmt->close();
-                    return false;
-                }
+        // Campos opcionales
+        $datos['Periodo_Emision'] = null;
+        if (isset($columnas['periodo_emision']) && !empty(trim($row[$columnas['periodo_emision']] ?? ''))) {
+            $valor = trim($row[$columnas['periodo_emision']]);
+            if (is_numeric($valor)) {
+                $datos['Periodo_Emision'] = (int)$valor;
             }
-            $stmt->close();
         }
         
-        // Validar que Id_Estatus existe en estatus
-        // Verificar estructura de la tabla primero
-        $check_estatus = $this->conexion->query("SHOW COLUMNS FROM estatus LIKE 'id'");
-        $campo_id_estatus = ($check_estatus && $check_estatus->num_rows > 0) ? 'id' : 'ID_estatus';
+        $datos['Responsable_Emision'] = null;
+        if (isset($columnas['responsable_emision']) && !empty(trim($row[$columnas['responsable_emision']] ?? ''))) {
+            $valor = trim($row[$columnas['responsable_emision']]);
+            if (is_numeric($valor)) {
+                $datos['Responsable_Emision'] = (int)$valor;
+            }
+        }
         
-        $sql = "SELECT $campo_id_estatus as id FROM estatus WHERE $campo_id_estatus = ?";
-        $stmt = $this->conexion->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("i", $datos['Id_Estatus']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($result->num_rows == 0) {
-                // Obtener IDs disponibles con nombres para usar uno válido
-                $check_nombre = $this->conexion->query("SHOW COLUMNS FROM estatus LIKE 'Nombre_Estatus'");
-                $campo_nombre = ($check_nombre && $check_nombre->num_rows > 0) ? 'Nombre_Estatus' : 'Estatus';
-                $sql_ids = "SELECT $campo_id_estatus as id, $campo_nombre as nombre FROM estatus ORDER BY $campo_id_estatus";
-                $result_ids = $this->conexion->query($sql_ids);
-                $ids_disponibles = [];
-                $id_por_defecto = null;
-                
-                if ($result_ids) {
-                    while ($row = $result_ids->fetch_assoc()) {
-                        $ids_disponibles[] = $row['id'] . " ({$row['nombre']})";
-                        // Preferir "Activo" como valor por defecto, o el primer ID disponible
-                        if ($id_por_defecto === null || stripos($row['nombre'], 'Activo') !== false) {
-                            $id_por_defecto = $row['id'];
-                            if (stripos($row['nombre'], 'Activo') !== false) {
-                                // Si encontramos "Activo", usarlo y no buscar más
-                                break;
-                            }
-                        }
-                    }
-                }
+        $datos['Estatus'] = null;
+        if (isset($columnas['estatus']) && !empty(trim($row[$columnas['estatus']] ?? ''))) {
+            $valor = trim($row[$columnas['estatus']]);
+            if (is_numeric($valor)) {
+                $datos['Estatus'] = (int)$valor;
+            }
+        }
+        
+        // Si no se proporcionó Estatus, usar 1 por defecto (Activo)
+        if ($datos['Estatus'] === null) {
+            $datos['Estatus'] = 1;
+        }
                 
                 if ($id_por_defecto !== null) {
                     // Usar automáticamente un ID válido
@@ -1726,19 +1658,19 @@ class CargaMasivaExcel {
                         [1, 'Luis Hernández Campos', 'Luis', 'Hernández', 'Campos', 'Masculino', 'HECL900930HDFRGN10', '2024010', 'luis.hernandez@tecnm.mx', '5551234576', 'Estudiante']
                     ]
                 ],
-                'Insignias Otorgadas' => [
-                    'headers' => ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'],
+                'insigniasotorgadas' => [
+                    'headers' => ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'],
                     'datos' => [
-                        [1, 1, '2024-02-15', 1, 1],
-                        [2, 2, '2024-02-16', 1, 1],
-                        [3, 3, '2024-02-17', 1, 1],
-                        [4, 4, '2024-02-18', 1, 1],
-                        [5, 5, '2024-02-19', 1, 1],
-                        [6, 6, '2024-02-20', 1, 1],
-                        [7, 7, '2024-02-21', 1, 1],
-                        [8, 8, '2024-02-22', 1, 1],
-                        [9, 9, '2024-02-23', 1, 1],
-                        [10, 10, '2024-02-24', 1, 1]
+                        ['TECNM-OFCM-2025-ART-001', 1, 1, 1, 1, '2025-01-15'],
+                        ['TECNM-OFCM-2025-EMB-002', 2, 1, 1, 1, '2025-01-16'],
+                        ['TECNM-OFCM-2025-TAL-003', 3, 1, 1, 1, '2025-01-17'],
+                        ['TECNM-OFCM-2025-INN-004', 4, 1, 1, 1, '2025-01-18'],
+                        ['TECNM-OFCM-2025-SOC-005', 5, 1, 1, 1, '2025-01-19'],
+                        ['TECNM-OFCM-2025-FOR-006', 6, 1, 1, 1, '2025-01-20'],
+                        ['TECNM-OFCM-2025-MOV-007', 7, 1, 1, 1, '2025-01-21'],
+                        ['TECNM-OFCM-2025-ART-008', 8, 1, 1, 1, '2025-01-22'],
+                        ['TECNM-OFCM-2025-EMB-009', 9, 1, 1, 1, '2025-01-23'],
+                        ['TECNM-OFCM-2025-TAL-010', 10, 1, 1, 1, '2025-01-24']
                     ]
                 ]
             ];
@@ -1818,18 +1750,18 @@ class CargaMasivaExcel {
             
             switch ($tipo) {
                 case 'insignias_otorgadas':
-                    $headers = ['Id_Insignia', 'Id_Destinatario', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus'];
+                    $headers = ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'];
                     $datos_ejemplo = [
-                        [1, 1, '2024-02-15', 1, 1],
-                        [2, 2, '2024-02-16', 1, 1],
-                        [3, 3, '2024-02-17', 1, 1],
-                        [4, 4, '2024-02-18', 1, 1],
-                        [5, 5, '2024-02-19', 1, 1],
-                        [6, 6, '2024-02-20', 1, 1],
-                        [7, 7, '2024-02-21', 1, 1],
-                        [8, 8, '2024-02-22', 1, 1],
-                        [9, 9, '2024-02-23', 1, 1],
-                        [10, 10, '2024-02-24', 1, 1]
+                        ['TECNM-OFCM-2025-ART-001', 1, 1, 1, 1, '2025-01-15'],
+                        ['TECNM-OFCM-2025-EMB-002', 2, 1, 1, 1, '2025-01-16'],
+                        ['TECNM-OFCM-2025-TAL-003', 3, 1, 1, 1, '2025-01-17'],
+                        ['TECNM-OFCM-2025-INN-004', 4, 1, 1, 1, '2025-01-18'],
+                        ['TECNM-OFCM-2025-SOC-005', 5, 1, 1, 1, '2025-01-19'],
+                        ['TECNM-OFCM-2025-FOR-006', 6, 1, 1, 1, '2025-01-20'],
+                        ['TECNM-OFCM-2025-MOV-007', 7, 1, 1, 1, '2025-01-21'],
+                        ['TECNM-OFCM-2025-ART-008', 8, 1, 1, 1, '2025-01-22'],
+                        ['TECNM-OFCM-2025-EMB-009', 9, 1, 1, 1, '2025-01-23'],
+                        ['TECNM-OFCM-2025-TAL-010', 10, 1, 1, 1, '2025-01-24']
                     ];
                     break;
                 case 'destinatarios':
