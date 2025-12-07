@@ -217,7 +217,7 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
             background: #f8f9fa;
             padding: 25px;
             border-radius: 12px;
-            border: 2px solid #e9ecef;
+            border: none;
         }
 
         .section-title {
@@ -349,8 +349,8 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                     🏆 Imagen de la Insignia
                 </div>
                 <div style="text-align: center; padding: 20px;">
-                    <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>&solo=1" style="text-decoration: none; cursor: pointer;">
-                        <div class="insignia-image" style="background-image: url('<?php echo $imagen_path; ?>');" title="Haz clic para ver el certificado completo"></div>
+                    <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>&solo=1" style="text-decoration: none; cursor: pointer; display: inline-block;">
+                        <div class="insignia-image" style="background-image: url('<?php echo $imagen_path; ?>'); width: 300px; height: 300px;" title="Haz clic para ver el certificado completo"></div>
                     </a>
                     <p style="margin-top: 15px; font-size: 14px; color: #6c757d;">
                         Insignia: <?php echo htmlspecialchars($insignia['nombre_insignia'] ?? 'Insignia de Reconocimiento'); ?><br>
