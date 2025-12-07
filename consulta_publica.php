@@ -132,13 +132,15 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
         // PRIORIDAD: usar insigniasotorgadas primero
         if ($usar_tabla_i) {
             // Usar insigniasotorgadas (donde se guardan las nuevas insignias)
+            // Búsqueda flexible: también buscar por código de insignia
+            $busqueda_like = '%' . $busqueda . '%';
             $sql = "
                 SELECT 
                     io.ID_otorgada as id,
                     io.Codigo_Insignia as clave_insignia,
                     io.Fecha_Emision as fecha_otorgamiento,
                     'Certificación oficial' as evidencia,
-                    d.Nombre_Completo as destinatario,
+                    COALESCE(d.Nombre_Completo, 'Destinatario no especificado') as destinatario,
                     COALESCE(d.Matricula, 'No especificada') as Matricula,
                     'Programa no especificado' as Programa,
                     COALESCE(d.Curp, '') as curp,
@@ -166,7 +168,12 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                 FROM insigniasotorgadas io
                 LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
                 LEFT JOIN it_centros itc ON d.ITCentro = itc.id
-                WHERE (d.Nombre_Completo LIKE ? OR COALESCE(d.Curp, '') LIKE ? OR COALESCE(d.Matricula, '') LIKE ?)
+                WHERE (
+                    UPPER(COALESCE(d.Nombre_Completo, '')) LIKE UPPER(?) 
+                    OR UPPER(COALESCE(d.Curp, '')) LIKE UPPER(?) 
+                    OR UPPER(COALESCE(d.Matricula, '')) LIKE UPPER(?)
+                    OR UPPER(io.Codigo_Insignia) LIKE UPPER(?)
+                )
                 " . (!empty($codigo_filtro) ? "AND io.Codigo_Insignia LIKE '%$codigo_filtro%'" : "") . "
                 ORDER BY io.Fecha_Emision DESC
             ";
@@ -216,8 +223,13 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
         }
         
         $busqueda_param = "%$busqueda%";
-        // Para ambas tablas, buscar en nombre, CURP y matrícula
-        $stmt->bind_param("sss", $busqueda_param, $busqueda_param, $busqueda_param);
+        // Para insigniasotorgadas: buscar en nombre, CURP, matrícula y código de insignia (4 parámetros)
+        // Para T_insignias_otorgadas: buscar en nombre, CURP y matrícula (3 parámetros)
+        if ($usar_tabla_i) {
+            $stmt->bind_param("ssss", $busqueda_param, $busqueda_param, $busqueda_param, $busqueda_param);
+        } else {
+            $stmt->bind_param("sss", $busqueda_param, $busqueda_param, $busqueda_param);
+        }
     
     if (!$stmt->execute()) {
         die('Error al ejecutar la consulta: ' . $stmt->error);
