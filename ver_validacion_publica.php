@@ -241,46 +241,14 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             width: 200px;
             height: 200px;
             margin: 0 auto 20px;
-            background: linear-gradient(135deg, #1b396a 0%, #002855 100%);
-            border: 4px solid #4a90e2;
-            border-radius: 15px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            padding: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-        
-        .insignia-logo {
-            width: 50px;
-            height: 50px;
-            margin-top: 10px;
-            margin-bottom: 15px;
-            background-image: url('imagen/logo.png');
+            background-image: url('<?php echo $imagen_path; ?>');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            filter: brightness(0) invert(1);
-        }
-        
-        .insignia-hexagon .insignia-name {
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            margin-bottom: 8px;
-            line-height: 1.2;
-        }
-        
-        .insignia-hexagon .insignia-category {
-            color: white;
-            font-size: 13px;
-            text-align: center;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            line-height: 1.2;
+            border: 3px solid #1b396a;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         
         .insignia-code {
@@ -400,11 +368,7 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             <div class="content-grid">
                 <!-- Insignia a la izquierda -->
                 <div class="insignia-display">
-                    <div class="insignia-hexagon">
-                        <div class="insignia-logo"></div>
-                        <div class="insignia-name"><?php echo htmlspecialchars($insignia['nombre_insignia']); ?></div>
-                        <div class="insignia-category"><?php echo htmlspecialchars($insignia['categoria']); ?></div>
-                    </div>
+                    <div class="insignia-hexagon"></div>
                     <div class="insignia-code">
                         Insignia<br>
                         <?php echo htmlspecialchars($insignia['codigo']); ?>
