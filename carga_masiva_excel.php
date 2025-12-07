@@ -1176,16 +1176,62 @@ class CargaMasivaExcel {
             $datos[$campo] = $valor;
         }
         
-        // Validar fecha
-        try {
-            $datos['Fecha_Emision'] = date('Y-m-d', strtotime($datos['Fecha_Emision']));
-            if ($datos['Fecha_Emision'] === '1970-01-01' || $datos['Fecha_Emision'] === false) {
-                throw new Exception("Fecha inválida");
+        // Validar fecha - aceptar múltiples formatos
+        $fecha_valida = false;
+        $fecha_formateada = null;
+        
+        // Si es un número (fecha serial de Excel), convertirla
+        if (is_numeric($datos['Fecha_Emision'])) {
+            // Excel usa fechas seriales desde 1900-01-01
+            // PHP usa timestamps desde 1970-01-01
+            // Necesitamos convertir: Excel serial = días desde 1900-01-01
+            $excel_serial = (float)$datos['Fecha_Emision'];
+            // Excel cuenta desde 1900-01-01, pero tiene un bug: cuenta 1900 como año bisiesto
+            // Entonces: timestamp = (serial - 25569) * 86400
+            $timestamp = ($excel_serial - 25569) * 86400;
+            $fecha_formateada = date('Y-m-d', $timestamp);
+            if ($fecha_formateada && $fecha_formateada !== '1970-01-01') {
+                $fecha_valida = true;
             }
-        } catch (Exception $e) {
-            $this->errores[] = "Fila $fila: Fecha_Emision formato inválido";
+        } else {
+            // Intentar diferentes formatos de fecha
+            $formatos_fecha = [
+                'Y-m-d',           // 2025-01-15
+                'd/m/Y',           // 15/01/2025
+                'd-m-Y',           // 15-01-2025
+                'Y/m/d',           // 2025/01/15
+                'm/d/Y',           // 01/15/2025
+                'd.m.Y',           // 15.01.2025
+                'Y.m.d',           // 2025.01.15
+            ];
+            
+            foreach ($formatos_fecha as $formato) {
+                $fecha_obj = \DateTime::createFromFormat($formato, trim($datos['Fecha_Emision']));
+                if ($fecha_obj !== false) {
+                    $fecha_formateada = $fecha_obj->format('Y-m-d');
+                    $fecha_valida = true;
+                    break;
+                }
+            }
+            
+            // Si no funcionó con formatos específicos, intentar strtotime
+            if (!$fecha_valida) {
+                $timestamp = strtotime(trim($datos['Fecha_Emision']));
+                if ($timestamp !== false && $timestamp > 0) {
+                    $fecha_formateada = date('Y-m-d', $timestamp);
+                    if ($fecha_formateada && $fecha_formateada !== '1970-01-01') {
+                        $fecha_valida = true;
+                    }
+                }
+            }
+        }
+        
+        if (!$fecha_valida || !$fecha_formateada) {
+            $this->errores[] = "Fila $fila: Fecha_Emision formato inválido. Valor recibido: '{$datos['Fecha_Emision']}'. Use formato YYYY-MM-DD, DD/MM/YYYY o DD-MM-YYYY";
             return false;
         }
+        
+        $datos['Fecha_Emision'] = $fecha_formateada;
         
         // Validar que Codigo_Insignia no existe ya (debe ser único)
         $sql = "SELECT Codigo_Insignia FROM insigniasotorgadas WHERE Codigo_Insignia = ?";
