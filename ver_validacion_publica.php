@@ -245,10 +245,8 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-            border: 3px solid #1b396a;
-            border-radius: 8px;
+            border: none;
             position: relative;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         
         .insignia-code {
