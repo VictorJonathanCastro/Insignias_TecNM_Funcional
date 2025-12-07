@@ -487,6 +487,21 @@ class CargaMasivaExcel {
                             // Intentar obtener el valor formateado
                             $formatted = $cell->getFormattedValue();
                             if (!empty($formatted)) {
+                                // Corregir formato erróneo común: YYYY-MM-YYYY (ej: 2025-08-2025)
+                                if (preg_match('/^(\d{4})-(\d{1,2})-(\d{4})$/', $formatted, $matches)) {
+                                    if ($matches[1] === $matches[3]) {
+                                        // Año duplicado, corregir a YYYY-MM-01
+                                        $anio = $matches[1];
+                                        $mes = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+                                        $formatted = "$anio-$mes-01";
+                                    }
+                                }
+                                // Detectar formato YYYY-MM (sin día) y agregar día 01
+                                elseif (preg_match('/^(\d{4})-(\d{1,2})$/', $formatted, $matches)) {
+                                    $anio = $matches[1];
+                                    $mes = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+                                    $formatted = "$anio-$mes-01";
+                                }
                                 $row[$col_fecha] = $formatted;
                             }
                         }
@@ -1215,16 +1230,37 @@ class CargaMasivaExcel {
             $datos[$campo] = $valor;
         }
         
-        // Validar fecha - aceptar múltiples formatos
+        // Validar fecha - aceptar múltiples formatos y corregir errores comunes
         $fecha_valida = false;
         $fecha_formateada = null;
+        $fecha_original = trim($datos['Fecha_Emision']);
+        
+        // Detectar y corregir formato erróneo común: YYYY-MM-YYYY (ej: 2025-08-2025)
+        if (preg_match('/^(\d{4})-(\d{1,2})-(\d{4})$/', $fecha_original, $matches)) {
+            // Si el tercer grupo es igual al primero (año duplicado), usar el mes como día
+            if ($matches[1] === $matches[3]) {
+                $anio = $matches[1];
+                $mes = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+                // Usar día 1 por defecto si solo hay año-mes
+                $fecha_original = "$anio-$mes-01";
+                $this->exitos[] = "Fila $fila: Fecha corregida automáticamente de '{$datos['Fecha_Emision']}' a '$fecha_original' (formato YYYY-MM-YYYY detectado, usando día 01)";
+            }
+        }
+        
+        // Detectar formato YYYY-MM (sin día) y agregar día 01
+        if (preg_match('/^(\d{4})-(\d{1,2})$/', $fecha_original, $matches)) {
+            $anio = $matches[1];
+            $mes = str_pad($matches[2], 2, '0', STR_PAD_LEFT);
+            $fecha_original = "$anio-$mes-01";
+            $this->exitos[] = "Fila $fila: Fecha corregida automáticamente de '{$datos['Fecha_Emision']}' a '$fecha_original' (formato YYYY-MM detectado, usando día 01)";
+        }
         
         // Si es un número (fecha serial de Excel), convertirla
-        if (is_numeric($datos['Fecha_Emision'])) {
+        if (is_numeric($fecha_original)) {
             // Excel usa fechas seriales desde 1900-01-01
             // PHP usa timestamps desde 1970-01-01
             // Necesitamos convertir: Excel serial = días desde 1900-01-01
-            $excel_serial = (float)$datos['Fecha_Emision'];
+            $excel_serial = (float)$fecha_original;
             // Excel cuenta desde 1900-01-01, pero tiene un bug: cuenta 1900 como año bisiesto
             // Entonces: timestamp = (serial - 25569) * 86400
             $timestamp = ($excel_serial - 25569) * 86400;
@@ -1245,7 +1281,7 @@ class CargaMasivaExcel {
             ];
             
             foreach ($formatos_fecha as $formato) {
-                $fecha_obj = \DateTime::createFromFormat($formato, trim($datos['Fecha_Emision']));
+                $fecha_obj = \DateTime::createFromFormat($formato, $fecha_original);
                 if ($fecha_obj !== false) {
                     $fecha_formateada = $fecha_obj->format('Y-m-d');
                     $fecha_valida = true;
@@ -1255,7 +1291,7 @@ class CargaMasivaExcel {
             
             // Si no funcionó con formatos específicos, intentar strtotime
             if (!$fecha_valida) {
-                $timestamp = strtotime(trim($datos['Fecha_Emision']));
+                $timestamp = strtotime($fecha_original);
                 if ($timestamp !== false && $timestamp > 0) {
                     $fecha_formateada = date('Y-m-d', $timestamp);
                     if ($fecha_formateada && $fecha_formateada !== '1970-01-01') {
