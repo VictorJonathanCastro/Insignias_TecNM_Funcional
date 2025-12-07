@@ -214,10 +214,11 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
         }
 
         .validation-section {
-            background: #f8f9fa;
+            background: transparent;
             padding: 25px;
-            border-radius: 12px;
+            border-radius: 0;
             border: none;
+            box-shadow: none;
         }
 
         .section-title {
@@ -348,9 +349,9 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                 <div class="section-title">
                     🏆 Imagen de la Insignia
                 </div>
-                <div style="text-align: center; padding: 20px;">
-                    <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>&solo=1" style="text-decoration: none; cursor: pointer; display: inline-block;">
-                        <div class="insignia-image" style="background-image: url('<?php echo $imagen_path; ?>'); width: 300px; height: 300px;" title="Haz clic para ver el certificado completo"></div>
+                <div style="text-align: center; padding: 0;">
+                    <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>&solo=1" style="text-decoration: none; cursor: pointer; display: inline-block; border: none; outline: none;">
+                        <div class="insignia-image" style="background-image: url('<?php echo $imagen_path; ?>'); width: 300px; height: 300px; border: none; outline: none;" title="Haz clic para ver el certificado completo"></div>
                     </a>
                     <p style="margin-top: 15px; font-size: 14px; color: #6c757d;">
                         Insignia: <?php echo htmlspecialchars($insignia['nombre_insignia'] ?? 'Insignia de Reconocimiento'); ?><br>
@@ -364,10 +365,10 @@ $qr_url = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" . url
                 <div class="section-title">
                     📱 Código QR de Validación
                 </div>
-                <div class="qr-code">
-                    <div style="position: relative; display: inline-block; width: 300px; height: 300px;">
-                        <img id="qr-img" src="<?php echo $qr_url; ?>" alt="Código QR" style="width: 300px; height: 300px; display: block;" onerror="this.style.border='5px solid red'; console.log('Error loading QR from: <?php echo addslashes($qr_url); ?>');">
-                        <img src="<?php echo $imagen_path; ?>" alt="Insignia" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: white; border-radius: 8px; padding: 5px; border: 2px solid #1b396a;">
+                <div class="qr-code" style="padding: 0;">
+                    <div style="position: relative; display: inline-block; width: 300px; height: 300px; border: none; outline: none;">
+                        <img id="qr-img" src="<?php echo $qr_url; ?>" alt="Código QR" style="width: 300px; height: 300px; display: block; border: none; outline: none;" onerror="this.style.border='5px solid red'; console.log('Error loading QR from: <?php echo addslashes($qr_url); ?>');">
+                        <img src="<?php echo $imagen_path; ?>" alt="Insignia" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; background: white; border-radius: 0; padding: 0; border: none; outline: none;">
                     </div>
                     <p style="margin-top: 15px; font-size: 14px; color: #6c757d;">
                         Escanea este código QR para verificar la autenticidad de la insignia
