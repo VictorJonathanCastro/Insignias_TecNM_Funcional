@@ -1076,18 +1076,33 @@ if (!empty($insignia_data['responsable_id'])) {
                 <span style="font-weight: bold; color: #1b396a; margin-bottom: 5px;">Compartir:</span>
                 <div class="share-buttons">
                     <?php
-                    // Construir URL para compartir
+                    // Construir URL para compartir (usar la URL completa de la página actual)
                     $url_compartir = $url_pagina_actual;
-                    $mensaje_whatsapp = 'He recibido una insignia de ' . $insignia_data['nombre'] . ' del TecNM. ' . htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante') . '. Ver mi insignia: ' . $url_compartir;
-                    $mensaje_twitter = 'He recibido una insignia de ' . $insignia_data['nombre'] . ' del TecNM!';
+                    
+                    // Limpiar y asegurar que la URL esté correctamente formateada
+                    $url_compartir = trim($url_compartir);
+                    
+                    // Para WhatsApp: poner la URL en una línea separada para que se detecte como enlace clickeable
+                    // Usar \n para salto de línea, luego se codificará correctamente
+                    $destinatario_nombre = htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante', ENT_QUOTES, 'UTF-8');
+                    $nombre_insignia = htmlspecialchars($insignia_data['nombre'] ?? 'Insignia TecNM', ENT_QUOTES, 'UTF-8');
+                    $mensaje_whatsapp = 'He recibido una insignia de ' . $nombre_insignia . ' del TecNM. ' . $destinatario_nombre . '. Ver mi insignia:' . "\n" . $url_compartir;
+                    
+                    // Para Twitter
+                    $mensaje_twitter = 'He recibido una insignia de ' . $nombre_insignia . ' del TecNM!';
+                    
+                    // Codificar URLs para compartir
+                    $url_whatsapp = 'https://wa.me/?text=' . rawurlencode($mensaje_whatsapp);
+                    $url_facebook = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($url_compartir);
+                    $url_twitter = 'https://twitter.com/intent/tweet?text=' . urlencode($mensaje_twitter) . '&url=' . urlencode($url_compartir);
                     ?>
-                    <a href="https://wa.me/?text=<?php echo urlencode($mensaje_whatsapp); ?>" class="share-btn whatsapp" target="_blank">
+                    <a href="<?php echo htmlspecialchars($url_whatsapp); ?>" class="share-btn whatsapp" target="_blank">
                         <i class="fab fa-whatsapp"></i> WhatsApp
                     </a>
-                    <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($url_compartir); ?>" class="share-btn facebook" target="_blank">
+                    <a href="<?php echo htmlspecialchars($url_facebook); ?>" class="share-btn facebook" target="_blank">
                         <i class="fab fa-facebook-f"></i> Facebook
                     </a>
-                    <a href="https://twitter.com/intent/tweet?text=<?php echo urlencode($mensaje_twitter); ?>&url=<?php echo urlencode($url_compartir); ?>" class="share-btn twitter" target="_blank">
+                    <a href="<?php echo htmlspecialchars($url_twitter); ?>" class="share-btn twitter" target="_blank">
                         <i class="fab fa-x-twitter"></i> Twitter
                     </a>
                 </div>
