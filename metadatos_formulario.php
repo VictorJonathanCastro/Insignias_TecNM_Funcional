@@ -599,20 +599,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $institucion_id = isset($_POST['institucion']) ? intval($_POST['institucion']) : 1;
             
             // Obtener nombre de la institución desde la base de datos
-            $nombre_institucion = 'TecNM';
-            if ($institucion_id > 0) {
-                $sql_institucion = "SELECT Nombre_itc FROM it_centros WHERE id = ? LIMIT 1";
-                $stmt_institucion = $conexion->prepare($sql_institucion);
-                if ($stmt_institucion) {
-                    $stmt_institucion->bind_param("i", $institucion_id);
-                    $stmt_institucion->execute();
-                    $result_institucion = $stmt_institucion->get_result();
-                    if ($result_institucion && $result_institucion->num_rows > 0) {
-                        $row_institucion = $result_institucion->fetch_assoc();
-                        $nombre_institucion = $row_institucion['Nombre_itc'] ?? 'TecNM';
+            // Determinar emisor según el responsable seleccionado
+            $emisor = 'Secretaria de Vinculacion y Extension (SVE)'; // Valor por defecto
+            
+            // Verificar si el responsable contiene palabras clave relacionadas con SVE
+            $responsable_lower = strtolower($responsable);
+            if (strpos($responsable_lower, 'secretaria') !== false || 
+                strpos($responsable_lower, 'vinculacion') !== false || 
+                strpos($responsable_lower, 'extension') !== false ||
+                strpos($responsable_lower, 'sve') !== false) {
+                $emisor = 'Secretaria de Vinculacion y Extension (SVE)';
+            } else {
+                // Si no es SVE, usar el nombre de la institución
+                $nombre_institucion = 'TecNM';
+                if ($institucion_id > 0) {
+                    $sql_institucion = "SELECT Nombre_itc FROM it_centros WHERE id = ? LIMIT 1";
+                    $stmt_institucion = $conexion->prepare($sql_institucion);
+                    if ($stmt_institucion) {
+                        $stmt_institucion->bind_param("i", $institucion_id);
+                        $stmt_institucion->execute();
+                        $result_institucion = $stmt_institucion->get_result();
+                        if ($result_institucion && $result_institucion->num_rows > 0) {
+                            $row_institucion = $result_institucion->fetch_assoc();
+                            $nombre_institucion = $row_institucion['Nombre_itc'] ?? 'TecNM';
+                        }
+                        $stmt_institucion->close();
                     }
-                    $stmt_institucion->close();
                 }
+                $emisor = 'TecNM / ' . $nombre_institucion;
             }
             
             // Si existe el destinatario, actualizar todos los datos
@@ -785,7 +799,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'descripcion' => $descripcion_real,
                     'criterios' => "Para obtener esta insignia de " . ($tipo_insignia_nombre ?: $insignia) . ", el estudiante debe haber demostrado competencias específicas.",
                     'fecha_emision' => $fecha_otorgamiento,
-                    'emisor' => $nombre_institucion,
+                    'emisor' => $emisor,
                     'evidencia' => $evidencia,
                     'archivo_visual' => "Insig_" . $clave . ".jpg",
                     'responsable' => $responsable,

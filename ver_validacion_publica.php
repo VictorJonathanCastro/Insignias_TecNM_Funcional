@@ -62,7 +62,13 @@ try {
                 COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
                 io.Responsable_Emision as responsable_id,
                 COALESCE(ti.Archivo_Visual, CONCAT('Insig_', io.Codigo_Insignia, '.jpg')) as archivo_visual,
-                'TecNM / Instituto Tecnológico de San Marcos' as emisor,
+                CASE 
+                    WHEN LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%secretaria%' 
+                         OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%vinculacion%' 
+                         OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%extension%'
+                         OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%sve%' THEN 'Secretaria de Vinculacion y Extension (SVE)'
+                    ELSE 'Secretaria de Vinculacion y Extension (SVE)'
+                END as emisor,
                 'Sin evidencia registrada' as evidencia,
                 'TecNM-ITSM-2025-Resp001' as codigo_responsable
             FROM insigniasotorgadas io
@@ -105,7 +111,7 @@ try {
                 'RESPONSABLE DE EMISIÓN' as cargo_responsable,
                 NULL as responsable_id,
                 CONCAT('Insig_', CONCAT(ti.id, '-', pe.Nombre_Periodo), '.jpg') as archivo_visual,
-                'TecNM / Instituto Tecnológico de San Marcos' as emisor,
+                'Secretaria de Vinculacion y Extension (SVE)' as emisor,
                 'Sin evidencia registrada' as evidencia,
                 'TecNM-ITSM-2025-Resp001' as codigo_responsable
             FROM T_insignias_otorgadas tio

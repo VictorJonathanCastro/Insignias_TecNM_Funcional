@@ -56,7 +56,13 @@ try {
         COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable,
         COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
         io.Fecha_Emision as fecha_emision,
-        'Tecnológico Nacional de México' as emisor,
+        CASE 
+            WHEN LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%secretaria%' 
+                 OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%vinculacion%' 
+                 OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%extension%'
+                 OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%sve%' THEN 'Secretaria de Vinculacion y Extension (SVE)'
+            ELSE 'Secretaria de Vinculacion y Extension (SVE)'
+        END as emisor,
             'Certificación oficial' as evidencia,
         COALESCE(ti.Archivo_Visual, 'insignia_default.png') as archivo_visual,
         COALESCE(re.Nombre_Completo, 'Administrador') as responsable_captura,
