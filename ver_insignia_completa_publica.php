@@ -1080,13 +1080,20 @@ if (!empty($insignia_data['responsable_id'])) {
                     $url_compartir = $url_pagina_actual;
                     
                     // Limpiar y asegurar que la URL esté correctamente formateada
+                    // Eliminar espacios, saltos de línea y caracteres especiales que puedan interferir
                     $url_compartir = trim($url_compartir);
+                    $url_compartir = preg_replace('/\s+/', '', $url_compartir); // Eliminar cualquier espacio
+                    // Asegurar que la URL comience con http:// o https://
+                    if (!preg_match('/^https?:\/\//', $url_compartir)) {
+                        $url_compartir = 'http://' . ltrim($url_compartir, '/');
+                    }
                     
-                    // Para WhatsApp: poner la URL en una línea separada para que se detecte como enlace clickeable
-                    // Usar \n para salto de línea, luego se codificará correctamente
+                    // Para WhatsApp: poner la URL en una línea completamente separada para que se detecte como enlace clickeable completo
+                    // La URL debe estar sola en su línea, sin espacios antes o después
                     $destinatario_nombre = htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante', ENT_QUOTES, 'UTF-8');
                     $nombre_insignia = htmlspecialchars($insignia_data['nombre'] ?? 'Insignia TecNM', ENT_QUOTES, 'UTF-8');
-                    $mensaje_whatsapp = 'He recibido una insignia de ' . $nombre_insignia . ' del TecNM. ' . $destinatario_nombre . '. Ver mi insignia:' . "\n" . $url_compartir;
+                    // Formato: texto + dos saltos de línea + URL sola (sin "Ver mi insignia:" antes)
+                    $mensaje_whatsapp = 'He recibido una insignia de ' . $nombre_insignia . ' del TecNM. ' . $destinatario_nombre . '.' . "\n\n" . $url_compartir;
                     
                     // Para Twitter
                     $mensaje_twitter = 'He recibido una insignia de ' . $nombre_insignia . ' del TecNM!';
