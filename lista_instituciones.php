@@ -9,6 +9,11 @@ $total = 0;
 try {
     $sql = "SELECT Nombre_itc, Acron, Estado, Clave_ct, Tipo_itc 
             FROM it_centros 
+            WHERE NOT (
+                (Nombre_itc LIKE '%San Marcos%' AND Estado = 'Coahuila' AND Clave_ct = '05DIT0001A')
+                OR (Nombre_itc LIKE '%San Marcos%' AND Estado = 'San Luis Potosi' AND Clave_ct = '24DIT0001A')
+                OR (Nombre_itc LIKE '%Director de San Marcos%' AND Estado = 'San Luis Potosi' AND Clave_ct = '24DIT0002C')
+            )
             ORDER BY Estado, Nombre_itc";
     $result = $conexion->query($sql);
     
