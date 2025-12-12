@@ -283,8 +283,87 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             font-weight: bold;
             color: #1b396a;
             margin-bottom: 40px;
-            margin-top: 40px;
+            margin-top: 80px;
             text-transform: uppercase;
+        }
+        
+        /* FOOTER PROFESIONAL AZUL */
+        footer {
+            background: #1e3c72;
+            color: white;
+            padding: 40px 0;
+            margin-top: 50px;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .footer-section {
+            margin-bottom: 25px;
+        }
+        
+        .footer-section h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        .footer-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        
+        .footer-links a {
+            color: #fff;
+            text-decoration: underline;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: #a0c4ff;
+        }
+        
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 18px;
+        }
+        
+        .social-icon {
+            width: 35px;
+            height: 35px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .copyright {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            color: #a0c4ff;
+            font-size: 14px;
         }
         
         
@@ -501,6 +580,62 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>" class="btn">← Volver</a>
         </div>
     </div>
+    
+    <!-- FOOTER PROFESIONAL -->
+    <footer>
+        <div class="footer-content">
+            <div class="copyright">
+                <p>Copyright 2025 - TecNM</p>
+                <p>Ultima actualización - Diciembre 2025</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Enlaces</h3>
+                <div class="footer-links">
+                    <a href="https://datos.gob.mx/" target="_blank">Datos</a>
+                    <a href="https://www.gob.mx/publicaciones" target="_blank">Publicaciones</a>
+                    <a href="https://consultapublicamx.plataformadetransparencia.org.mx/vut-web/faces/view/consultaPublica.xhtml?idEntidad=MzM=&idSujetoObligado=MTAwMDE=#inicio" target="_blank">Portal de Obligaciones de Transparencia</a>
+                    <a href="https://www.gob.mx/pnt" target="_blank">PNT</a>
+                    <a href="https://www.inai.org.mx/" target="_blank">INAI</a>
+                    <a href="https://www.gob.mx/alerta" target="_blank">Alerta</a>
+                    <a href="https://www.gob.mx/denuncia" target="_blank">Denuncia</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>¿Qué es gob.mx?</h3>
+                <p>Es el portal único de trámites, información y participación ciudadana.</p>
+                <a href="https://www.gob.mx/" target="_blank">Leer más</a>
+            </div>
+            
+            <div class="footer-section">
+                <div class="footer-links">
+                    <a href="https://www.gob.mx/administraciones-anteriores" target="_blank">Administraciones anteriores</a>
+                    <a href="https://www.gob.mx/accesibilidad" target="_blank">Declaración de Accesibilidad</a>
+                    <a href="https://www.gob.mx/privacidad" target="_blank">Aviso de privacidad</a>
+                    <a href="https://www.gob.mx/privacidad-simplificado" target="_blank">Aviso de privacidad simplificado</a>
+                    <a href="https://www.gob.mx/terminos" target="_blank">Términos y Condiciones</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <div class="footer-links">
+                    <a href="https://www.gob.mx/politica-seguridad" target="_blank">Política de seguridad</a>
+                    <a href="https://www.gob.mx/denuncia-servidores" target="_blank">Denuncia contra servidores públicos</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Síguenos en</h3>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/TecNacionalMexico" target="_blank" class="social-icon">f</a>
+                    <a href="https://twitter.com/TecNacionalMex" target="_blank" class="social-icon">X</a>
+                    <a href="https://www.youtube.com/user/TecNacionalMexico" target="_blank" class="social-icon">▶</a>
+                    <a href="https://www.instagram.com/tecnacionalmexico/" target="_blank" class="social-icon">📷</a>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
 
