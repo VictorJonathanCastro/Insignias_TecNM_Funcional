@@ -207,7 +207,11 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             font-weight: bold;
             color: #1b396a;
             margin-bottom: 40px;
-            margin-top: 20px;
+            margin-top: 60px;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            border-top: 2px solid #1b396a;
+            border-bottom: 2px solid #1b396a;
             text-transform: uppercase;
         }
         
