@@ -1079,7 +1079,6 @@ function formatearFecha($fecha) {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
-            cursor: pointer;
         }
 
         .insignia-card:hover {
@@ -1413,7 +1412,7 @@ function formatearFecha($fecha) {
             <?php else: ?>
                 <div class="insignias-grid">
                     <?php foreach ($insignias as $insignia): ?>
-                        <div class="insignia-card" onclick="window.location.href='ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>'" style="cursor: pointer;" title="Haz clic para ver la validación pública">
+                        <div class="insignia-card">
                             <div class="insignia-header">
                                 <div>
                                     <div class="insignia-title"><?php echo htmlspecialchars($insignia['nombre_insignia']); ?></div>
@@ -1448,21 +1447,21 @@ function formatearFecha($fecha) {
                                 </div>
                             </div>
 
-                            <div class="insignia-actions" onclick="event.stopPropagation();">
+                            <div class="insignia-actions">
                                 <?php if ($rol_usuario === 'Admin' || $rol_usuario === 'Administrador' || $rol_usuario === 'SuperUsuario'): ?>
                                     <!-- Enlaces para administradores -->
-                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" target="_blank" onclick="event.stopPropagation();">
+                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" target="_blank">
                                         🏆 Ver Certificado
                                     </a>
-                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank" onclick="event.stopPropagation();">
+                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank">
                                         🔍 Ver Validación
                                     </a>
                                 <?php else: ?>
                                     <!-- Enlaces para usuarios normales -->
-                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" onclick="event.stopPropagation();">
+                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver">
                                         ⭐ Ver Reconocimiento
                                     </a>
-                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" onclick="event.stopPropagation();">
+                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar">
                                         ✓ Ver Validación
                                     </a>
                                 <?php endif; ?>
@@ -1480,7 +1479,7 @@ function formatearFecha($fecha) {
       <div class="footer-content">
         <div class="copyright">
           <p>Copyright 2025 - TecNM</p>
-          <p>Ultima actualización - Octubre 2025</p>
+          <p>Ultima actualización - Diciembre 2025</p>
         </div>
         
         <div class="footer-section">

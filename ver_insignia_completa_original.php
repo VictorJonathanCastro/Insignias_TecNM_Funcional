@@ -367,7 +367,7 @@ try {
     
     <footer>
         <p>&copy; 2025 TecNM - Sistema de Insignias Digitales</p>
-        <p>Última actualización - Octubre 2025</p>
+        <p>Última actualización - Diciembre 2025</p>
     </footer>
 </body>
 </html>

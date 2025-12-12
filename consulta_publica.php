@@ -1130,7 +1130,7 @@ function determinarImagenInsignia($codigo_insignia, $nombre_insignia) {
         <div class="footer-content">
             <div class="copyright">
                 <p>Copyright 2025 - TecNM</p>
-                <p>Ultima actualización - Octubre 2025</p>
+                <p>Ultima actualización - Diciembre 2025</p>
             </div>
             
             <div class="footer-section">

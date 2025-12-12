@@ -175,7 +175,8 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
         body {
             font-family: Arial, sans-serif;
             background: #f5f5f5;
-            padding: 20px;
+            padding: 0;
+            margin: 0;
         }
         
         .container {
@@ -185,6 +186,7 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 0;
         }
         
         .document-container {
@@ -201,17 +203,87 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
+        .header {
+            background: 
+                linear-gradient(135deg, 
+                    rgba(30, 60, 114, 0.95) 0%, 
+                    rgba(42, 82, 152, 0.98) 30%,
+                    rgba(30, 60, 114, 0.95) 60%,
+                    rgba(26, 52, 100, 0.95) 100%);
+            backdrop-filter: blur(60px) saturate(200%);
+            -webkit-backdrop-filter: blur(60px) saturate(200%);
+            color: white;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 35px 0;
+            box-shadow: 
+                0 10px 50px rgba(0,0,0,0.4),
+                0 5px 25px rgba(0,0,0,0.2),
+                inset 0 2px 0 rgba(255,255,255,0.25),
+                inset 0 -1px 0 rgba(255,255,255,0.05);
+            border-bottom: 2px solid rgba(255,255,255,0.15);
+            border-top: 2px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 50% 0%, rgba(255,255,255,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+        }
+        
+        .header-logo {
+            position: absolute;
+            left: -260px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 60px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            transition: all 0.3s ease;
+        }
+        
+        .header-logo:hover {
+            transform: translateY(-50%) scale(1.1);
+            filter: brightness(0) invert(1) drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin: 0;
+            font-weight: 900;
+            text-shadow: 
+                0 6px 12px rgba(0,0,0,0.5),
+                0 0 30px rgba(59, 130, 246, 0.4),
+                0 0 60px rgba(59, 130, 246, 0.2);
+            letter-spacing: -0.5px;
+        }
+        
         .title {
             text-align: center;
             font-size: 32px;
             font-weight: bold;
             color: #1b396a;
             margin-bottom: 40px;
-            margin-top: 60px;
-            padding-top: 20px;
-            padding-bottom: 20px;
-            border-top: 2px solid #1b396a;
-            border-bottom: 2px solid #1b396a;
+            margin-top: 40px;
             text-transform: uppercase;
         }
         
@@ -336,6 +408,14 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
     </style>
 </head>
 <body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <img src="imagen/logo.png" alt="TecNM Logo" class="header-logo" onerror="this.style.display='none';">
+            <h1>Validación Pública</h1>
+        </div>
+    </header>
+    
     <div class="container">
         <div class="document-container">
             <!-- Título principal -->

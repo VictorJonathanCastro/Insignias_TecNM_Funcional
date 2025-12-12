@@ -330,7 +330,7 @@ function formatearFecha($fecha) {
         </div>
 
         <div class="footer">
-            <p>Copyright 2025 - TecNM | Última actualización - Octubre 2025</p>
+            <p>Copyright 2025 - TecNM | Última actualización - Diciembre 2025</p>
         </div>
     </div>
 </body>

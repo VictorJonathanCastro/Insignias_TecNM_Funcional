@@ -1,0 +1,10 @@
+[33m818c4d3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Restaurar enlace original de Ver Validación - Cambiar de ver_insignia_publica.php a validacion.php (compartir) como estaba originalmente
+[33m145e274[m Restaurar tarjeta clickeable manteniendo funcionalidad original de botones - La tarjeta redirige a validación pública, pero los botones funcionan independientemente con event.stopPropagation()
+[33m80f5b85[m Revertir cambios en botones de historial - Restaurar funcionalidad original de botones Ver Certificado y Ver Validación sin tarjeta clickeable
+[33md471fdf[m Corregir prioridad de tablas: usar T_insignias_otorgadas primero - Cambiar prioridad para que historial y consulta pública usen T_insignias_otorgadas (donde se insertan las insignias de carga masiva) antes que insigniasotorgadas
+[33mfc18457[m Hacer tarjetas de insignias clickeables - Al hacer clic en cualquier parte de la tarjeta, redirige a la validación pública (ver_insignia_publica.php)
+[33m1f7c90d[m Corregir historial_insignias: mostrar todas las insignias para administradores - Elimina filtro WHERE cuando Admin accede sin búsqueda para que vea todas las insignias otorgadas incluyendo las cargadas masivamente
+[33m939e529[m Fix: Corregir error de columnas faltantes en historial_insignias.php
+[33m94c2ac2[m Restaurar funcionalidad original de historial_insignias.php - Cambiar prioridad: usar insigniasotorgadas primero (donde se guardan las nuevas insignias) - Si no existe insigniasotorgadas, usar T_insignias_otorgadas - Mantener la misma lógica original, solo cambiar la prioridad de las tablas
+[33mcb6f3dd[m Corregir historial_insignias.php para consultar AMBAS tablas - Consulta T_insignias_otorgadas e insigniasotorgadas - Combina resultados de ambas tablas - Ordena por fecha de emisión (más recientes primero) - Esto permite mostrar las nuevas insignias guardadas en insigniasotorgadas
+[33m851bf1e[m Corregir historial_insignias.php para mostrar responsable real (Victor Jonathan Castro Secundino) desde responsable_emision en lugar de 'Sistema'

@@ -557,7 +557,7 @@ try {
     
     <footer>
         <p>Copyright 2025 - TecNM<br>
-        Última actualización - Octubre 2025</p>
+        Última actualización - Diciembre 2025</p>
     </footer>
 </body>
 </html>
