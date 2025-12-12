@@ -778,8 +778,8 @@ if (!empty($insignia_data['responsable_id'])) {
             .insignia-hexagon {
                 margin-right: 0;
                 margin-bottom: 20px;
-                width: 150px;
-                height: 150px;
+                width: 180px;
+                height: 180px;
             }
             
             .document-preview {
@@ -794,20 +794,29 @@ if (!empty($insignia_data['responsable_id'])) {
             }
             
             .metadata-item {
-                padding: 8px;
-                font-size: 14px;
+                padding: 10px;
+                font-size: 13px;
+                background: #f9f9f9;
+                border-radius: 5px;
+                margin-bottom: 10px;
             }
             
             .metadata-item strong {
-                font-size: 13px;
+                font-size: 12px;
                 display: block;
                 margin-bottom: 5px;
+                color: #1b396a;
+            }
+            
+            .metadata-item span {
+                font-size: 12px;
+                word-break: break-word;
             }
             
             .actions {
                 flex-direction: column;
                 gap: 10px;
-                padding: 15px;
+                padding: 15px 10px;
             }
             
             .btn {
@@ -820,11 +829,13 @@ if (!empty($insignia_data['responsable_id'])) {
             .share-buttons {
                 flex-direction: column;
                 width: 100%;
+                gap: 8px;
             }
             
             .share-btn {
                 width: 100%;
                 justify-content: center;
+                padding: 12px 20px;
             }
             
             footer {
@@ -864,8 +875,8 @@ if (!empty($insignia_data['responsable_id'])) {
             }
             
             .insignia-hexagon {
-                width: 120px;
-                height: 120px;
+                width: 150px;
+                height: 150px;
             }
             
             .document-preview {
@@ -875,12 +886,23 @@ if (!empty($insignia_data['responsable_id'])) {
             }
             
             .metadata-item {
-                padding: 6px;
-                font-size: 12px;
+                padding: 8px;
+                font-size: 11px;
+                background: #f9f9f9;
+                border-radius: 5px;
+                margin-bottom: 8px;
             }
             
             .metadata-item strong {
-                font-size: 12px;
+                font-size: 11px;
+                display: block;
+                margin-bottom: 4px;
+                color: #1b396a;
+            }
+            
+            .metadata-item span {
+                font-size: 11px;
+                word-break: break-word;
             }
             
             .btn {
@@ -889,7 +911,7 @@ if (!empty($insignia_data['responsable_id'])) {
             }
             
             .share-btn {
-                padding: 8px 14px;
+                padding: 10px 16px;
                 font-size: 12px;
             }
             

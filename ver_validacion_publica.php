@@ -469,6 +469,227 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             background: #0f2a4a;
         }
         
+        /* RESPONSIVE - Tablets */
+        @media (max-width: 1024px) {
+            .header {
+                padding: 25px 0;
+            }
+            
+            .header-logo {
+                height: 50px;
+                left: -180px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .document-container {
+                padding: 40px 50px;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .title {
+                font-size: 28px;
+                margin-top: 50px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles y tablets pequeñas */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+            
+            .header {
+                padding: 15px 0;
+            }
+            
+            .header-content {
+                padding: 0 10px;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .header-logo {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                height: 40px;
+                width: auto;
+                display: block;
+                margin: 0;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+                margin: 0;
+                text-shadow: none;
+            }
+            
+            .container {
+                padding: 10px;
+                margin: 0;
+            }
+            
+            .document-container {
+                padding: 20px 15px;
+                min-height: auto;
+            }
+            
+            .title {
+                font-size: 20px;
+                margin-top: 30px;
+                margin-bottom: 25px;
+                padding: 0 10px;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .insignia-display {
+                text-align: center;
+            }
+            
+            .insignia-hexagon {
+                width: 150px;
+                height: 150px;
+                margin: 0 auto 15px;
+            }
+            
+            .insignia-code {
+                font-size: 11px;
+            }
+            
+            .detail-label {
+                min-width: auto;
+                display: block;
+                margin-bottom: 5px;
+                font-size: 12px;
+            }
+            
+            .detail-row {
+                margin-bottom: 15px;
+                padding: 10px;
+                background: #f9f9f9;
+                border-radius: 5px;
+            }
+            
+            .detail-value {
+                font-size: 12px;
+                word-break: break-word;
+            }
+            
+            .section-title {
+                font-size: 14px;
+                margin-top: 20px;
+            }
+            
+            .section-content {
+                font-size: 12px;
+                line-height: 1.6;
+            }
+            
+            .actions {
+                padding: 15px 10px;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+                margin: 5px 0;
+                width: 100%;
+                text-align: center;
+            }
+            
+            footer {
+                padding: 30px 15px;
+            }
+            
+            .footer-content {
+                padding: 0 10px;
+            }
+            
+            .footer-section {
+                margin-bottom: 20px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles pequeños (iPhone SE, etc.) */
+        @media (max-width: 480px) {
+            .header {
+                padding: 12px 0;
+            }
+            
+            .header h1 {
+                font-size: 16px;
+            }
+            
+            .header-logo {
+                height: 35px;
+            }
+            
+            .title {
+                font-size: 18px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .document-container {
+                padding: 15px 10px;
+            }
+            
+            .insignia-hexagon {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .detail-label {
+                font-size: 11px;
+            }
+            
+            .detail-value {
+                font-size: 11px;
+            }
+            
+            .section-title {
+                font-size: 13px;
+            }
+            
+            .section-content {
+                font-size: 11px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            footer {
+                padding: 20px 10px;
+            }
+        }
+        
         @media print {
             body {
                 background: white;
@@ -481,6 +702,14 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             }
             
             .actions {
+                display: none;
+            }
+            
+            .header {
+                display: none;
+            }
+            
+            footer {
                 display: none;
             }
         }
