@@ -422,12 +422,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!isset($mensaje_error_modal)) {
             // Generar clave única si no se proporcionó
             if (empty($clave)) {
-                // Crear clave más específica: TECNM-OFCM-[PERIODO]-[TIPO]-[NUMERO]
+                // Crear clave más específica: TECNM-SEV-[PERIODO]-[TIPO]-[NUMERO]
                 $tipo_codigo = strtoupper(substr($tipo_insignia_nombre, 0, 3)); // Primeras 3 letras del tipo
                 $tipo_codigo = preg_replace('/[^A-Z]/', '', $tipo_codigo); // Solo letras
                 if (strlen($tipo_codigo) < 3) $tipo_codigo = 'INS'; // Fallback
                 
-                $clave = "TECNM-OFCM-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
+                $clave = "TECNM-SEV-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
                 
                 // Verificar que la clave no exista (usar Codigo_Insignia, no clave_insignia)
                 // Primero verificar si la tabla existe
@@ -451,7 +451,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Si la clave existe, generar una nueva
                 $intentos = 0;
                 while ($clave_existe && $intentos < 10) {
-                    $clave = "TECNM-OFCM-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
+                    $clave = "TECNM-SEV-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
                     if ($tabla_io_existe) {
                         $stmt_verificar_clave = $conexion->prepare("SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?");
                         if ($stmt_verificar_clave) {
@@ -600,15 +600,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             // Obtener nombre de la institución desde la base de datos
             // Determinar emisor según el responsable seleccionado
-            $emisor = 'Secretaria de Vinculacion y Extension (SVE)'; // Valor por defecto
+            $emisor = 'Secretaria de Extension y Vinculacion (SEV)'; // Valor por defecto
             
-            // Verificar si el responsable contiene palabras clave relacionadas con SVE
+            // Verificar si el responsable contiene palabras clave relacionadas con SEV
             $responsable_lower = strtolower($responsable);
             if (strpos($responsable_lower, 'secretaria') !== false || 
                 strpos($responsable_lower, 'vinculacion') !== false || 
                 strpos($responsable_lower, 'extension') !== false ||
-                strpos($responsable_lower, 'sve') !== false) {
-                $emisor = 'Secretaria de Vinculacion y Extension (SVE)';
+                strpos($responsable_lower, 'sev') !== false) {
+                $emisor = 'Secretaria de Extension y Vinculacion (SEV)';
             } else {
                 // Si no es SVE, usar el nombre de la institución
                 $nombre_institucion = 'TecNM';
@@ -803,7 +803,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'evidencia' => $evidencia,
                     'archivo_visual' => "Insig_" . $clave . ".jpg",
                     'responsable' => $responsable,
-                    'codigo_responsable' => 'TecNM-OFCM-2025-Resp001',
+                    'codigo_responsable' => 'TecNM-SEV-2025-Resp001',
                     'estatus' => $estatus,
                     'periodo' => $periodo
                 ];
@@ -1831,8 +1831,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Generar número aleatorio de 3 dígitos
                 const numero = Math.floor(Math.random() * 900) + 100; // 100-999
                 
-                // Crear clave única: TECNM-OFCM-[PERIODO]-[TIPO]-[NUMERO]
-                const claveUnica = `TECNM-OFCM-${periodo}-${tipoCodigo}-${numero}`;
+                // Crear clave única: TECNM-SEV-[PERIODO]-[TIPO]-[NUMERO]
+                const claveUnica = `TECNM-SEV-${periodo}-${tipoCodigo}-${numero}`;
                 
                 // Asignar al campo
                 claveInput.value = claveUnica;
@@ -2115,7 +2115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-group">
                 <label>Clave Única de Insignia:</label>
-                <input type="text" name="clave" placeholder="Ej: TECNM-OFCM-2025-001" value="<?php echo isset($_SESSION['formulario_datos']['clave']) ? htmlspecialchars($_SESSION['formulario_datos']['clave']) : ''; ?>">
+                <input type="text" name="clave" placeholder="Ej: TECNM-SEV-2025-001" value="<?php echo isset($_SESSION['formulario_datos']['clave']) ? htmlspecialchars($_SESSION['formulario_datos']['clave']) : ''; ?>">
             </div>
 
             <div class="form-group">

@@ -66,8 +66,8 @@ try {
                     WHEN LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%secretaria%' 
                          OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%vinculacion%' 
                          OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%extension%'
-                         OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%sve%' THEN 'Secretaria de Vinculacion y Extension (SVE)'
-                    ELSE 'Secretaria de Vinculacion y Extension (SVE)'
+                         OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%sev%' THEN 'Secretaria de Extension y Vinculacion (SEV)'
+                    ELSE 'Secretaria de Extension y Vinculacion (SEV)'
                 END as emisor,
                 'Sin evidencia registrada' as evidencia,
                 'TecNM-ITSM-2025-Resp001' as codigo_responsable
@@ -111,7 +111,7 @@ try {
                 'RESPONSABLE DE EMISIÓN' as cargo_responsable,
                 NULL as responsable_id,
                 CONCAT('Insig_', CONCAT(ti.id, '-', pe.Nombre_Periodo), '.jpg') as archivo_visual,
-                'Secretaria de Vinculacion y Extension (SVE)' as emisor,
+                'Secretaria de Extension y Vinculacion (SEV)' as emisor,
                 'Sin evidencia registrada' as evidencia,
                 'TecNM-ITSM-2025-Resp001' as codigo_responsable
             FROM T_insignias_otorgadas tio

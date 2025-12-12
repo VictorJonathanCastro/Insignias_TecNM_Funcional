@@ -60,8 +60,8 @@ try {
             WHEN LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%secretaria%' 
                  OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%vinculacion%' 
                  OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%extension%'
-                 OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%sve%' THEN 'Secretaria de Vinculacion y Extension (SVE)'
-            ELSE 'Secretaria de Vinculacion y Extension (SVE)'
+                 OR LOWER(COALESCE(re.Nombre_Completo, '')) LIKE '%sev%' THEN 'Secretaria de Extension y Vinculacion (SEV)'
+            ELSE 'Secretaria de Extension y Vinculacion (SEV)'
         END as emisor,
             'Certificación oficial' as evidencia,
         COALESCE(ti.Archivo_Visual, 'insignia_default.png') as archivo_visual,
