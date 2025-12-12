@@ -1718,7 +1718,7 @@ if ($conexion && !$conexion->connect_errno) {
                 <i class="fas fa-quote-left"></i>
               </div>
               <p class="testimonial-text">
-                "El Sistema de Insignias Digitales ha transformado la forma en que reconocemos el esfuerzo y dedicación de nuestros estudiantes. Es una herramienta innovadora que motiva a los alumnos a alcanzar nuevas metas y competencias."
+                "El Sistema de Insignias Digitales transformará la forma en que reconoceremos el esfuerzo y dedicación de nuestros estudiantes. Será una herramienta innovadora que motivará a los alumnos a alcanzar nuevas metas y competencias."
               </p>
               <div class="testimonial-author">
                 <div class="testimonial-avatar">
@@ -1753,43 +1753,23 @@ if ($conexion && !$conexion->connect_errno) {
             </div>
           </div>
           
-          <!-- Testimonio 3 - Estudiante -->
+          <!-- Testimonio 3 - Director General -->
           <div class="testimonial-item">
             <div class="testimonial-card">
               <div class="testimonial-icon">
                 <i class="fas fa-quote-left"></i>
               </div>
               <p class="testimonial-text">
-                "Recibir mi insignia digital fue un momento muy especial. Es increíble poder mostrar mis logros de forma oficial y compartirlos fácilmente. Esta plataforma me ayuda a construir mi perfil profesional desde la universidad."
+                "El Sistema de Insignias Digitales representa un avance significativo en el reconocimiento del talento y esfuerzo de nuestra comunidad estudiantil. Esta plataforma fortalecerá la identidad institucional y promoverá la excelencia académica en todos nuestros campus."
               </p>
               <div class="testimonial-author">
                 <div class="testimonial-avatar">
-                  <span>JCGT</span>
+                  <span>RJL</span>
                 </div>
                 <div class="testimonial-info">
-                  <h4>Juan Carlos Gómez Torres</h4>
-                  <p>Estudiante de Ingeniería en Sistemas</p>
+                  <h4>Ramón Jiménez López</h4>
+                  <p>Director General del TecNM</p>
                 </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Testimonio 4 - Estudiante -->
-          <div class="testimonial-item">
-            <div class="testimonial-card">
-              <div class="testimonial-icon">
-                <i class="fas fa-quote-left"></i>
-              </div>
-              <p class="testimonial-text">
-                "El sistema de insignias me ha motivado mucho a participar en más actividades extracurriculares. Saber que cada esfuerzo será reconocido oficialmente me da ese impulso extra para buscar la excelencia académica."
-              </p>
-              <div class="testimonial-author">
-                <div class="testimonial-avatar">
-                  <span>MFSP</span>
-                </div>
-                <div class="testimonial-info">
-                  <h4>María Fernanda Sánchez Pérez</h4>
-                  <p>Estudiante de Administración</p>
               </div>
             </div>
           </div>
@@ -1802,7 +1782,6 @@ if ($conexion && !$conexion->connect_errno) {
         <div class="carousel-dots">
           <span class="dot active" onclick="goToTestimonial(0)"></span>
           <span class="dot" onclick="goToTestimonial(1)"></span>
-          <span class="dot" onclick="goToTestimonial(2)"></span>
         </div>
       </div>
     </div>

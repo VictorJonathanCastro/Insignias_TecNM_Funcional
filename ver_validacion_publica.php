@@ -201,32 +201,6 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         
-        .header-logos {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #1b396a;
-        }
-        
-        .logo-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .logo-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .logo-img {
-            height: 60px;
-            width: auto;
-        }
-        
         .title {
             text-align: center;
             font-size: 32px;
@@ -360,24 +334,6 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
 <body>
     <div class="container">
         <div class="document-container">
-            <!-- Header con logos -->
-            <div class="header-logos">
-                <div class="logo-left">
-                    <img src="imagen/logo_sep.png" alt="Secretaría de Educación Pública" class="logo-img" onerror="this.style.display='none';">
-                    <div>
-                        <div style="font-weight: bold; font-size: 12px; color: #1b396a;">Educación</div>
-                        <div style="font-size: 10px; color: #666;">Secretaría de Educación Pública</div>
-                    </div>
-                </div>
-                <div class="logo-right">
-                    <img src="imagen/logo.png" alt="TecNM" class="logo-img" onerror="this.style.display='none';">
-                    <div>
-                        <div style="font-weight: bold; font-size: 12px; color: #1b396a;">TECNOLÓGICO</div>
-                        <div style="font-size: 10px; color: #666;">NACIONAL DE MÉXICO</div>
-                    </div>
-                </div>
-            </div>
-            
             <!-- Título principal -->
             <div class="title">VALIDACIÓN DE INSIGNIA</div>
             
