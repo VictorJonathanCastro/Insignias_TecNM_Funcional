@@ -467,8 +467,46 @@ if (!empty($insignia_data['responsable_id'])) {
             background-repeat: no-repeat;
             background-position: center;
             margin: 0 auto 30px;
-            border: 2px solid #1b396a;
-            border-radius: 8px;
+            border: none;
+        }
+        
+        .share-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .share-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .share-btn.facebook {
+            background: #1877f2;
+        }
+        
+        .share-btn.whatsapp {
+            background: #25d366;
+        }
+        
+        .share-btn.twitter {
+            background: #1da1f2;
+        }
+        
+        .share-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            opacity: 0.9;
         }
         
         .document-preview {
@@ -656,9 +694,80 @@ if (!empty($insignia_data['responsable_id'])) {
             margin: 5px 0;
         }
         
+        /* RESPONSIVE - Tablets */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 25px 0;
+            }
+            
+            .header-logo {
+                height: 50px;
+                left: -180px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .insignia-section {
+                gap: 15px;
+            }
+            
+            .document-preview {
+                padding: 30px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles y tablets pequeñas */
         @media (max-width: 768px) {
+            .header {
+                padding: 20px 0;
+            }
+            
+            .header-content {
+                padding: 0 15px;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .header-logo {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                height: 45px;
+                width: auto;
+                display: block;
+                margin: 0;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+                margin: 0;
+            }
+            
+            .header p {
+                font-size: 12px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 15px;
+            }
+            
             .insignia-section {
                 grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 15px;
             }
             
             .insignia-preview {
@@ -669,10 +778,123 @@ if (!empty($insignia_data['responsable_id'])) {
             .insignia-hexagon {
                 margin-right: 0;
                 margin-bottom: 20px;
+                width: 150px;
+                height: 150px;
             }
             
             .document-preview {
-                height: 300px;
+                height: auto;
+                min-height: 500px;
+                padding: 20px;
+                font-size: 12px;
+            }
+            
+            .metadata-section {
+                margin-top: 20px;
+            }
+            
+            .metadata-item {
+                padding: 8px;
+                font-size: 14px;
+            }
+            
+            .metadata-item strong {
+                font-size: 13px;
+                display: block;
+                margin-bottom: 5px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 10px;
+                padding: 15px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 14px;
+                margin: 5px 0;
+            }
+            
+            .share-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .share-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            footer {
+                padding: 30px 15px;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles pequeños (iPhone SE, etc.) */
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 0;
+            }
+            
+            .header h1 {
+                font-size: 16px;
+            }
+            
+            .header-logo {
+                height: 35px;
+            }
+            
+            .container {
+                padding: 5px;
+            }
+            
+            .content {
+                padding: 10px;
+            }
+            
+            .insignia-section {
+                padding: 10px;
+            }
+            
+            .insignia-hexagon {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .document-preview {
+                padding: 15px;
+                font-size: 11px;
+                min-height: 400px;
+            }
+            
+            .metadata-item {
+                padding: 6px;
+                font-size: 12px;
+            }
+            
+            .metadata-item strong {
+                font-size: 12px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .share-btn {
+                padding: 8px 14px;
+                font-size: 12px;
+            }
+            
+            footer {
+                padding: 20px 10px;
             }
         }
     </style>
@@ -850,9 +1072,26 @@ if (!empty($insignia_data['responsable_id'])) {
             <button onclick="descargarCertificado('pdf')" class="btn" id="btn-descargar-pdf" style="background-color: #dc3545;">
                 <i class="fas fa-file-pdf"></i> Descargar como PDF
             </button>
-            <button onclick="window.print()" class="btn">
-                <i class="fas fa-print"></i> Imprimir
-            </button>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                <span style="font-weight: bold; color: #1b396a; margin-bottom: 5px;">Compartir:</span>
+                <div class="share-buttons">
+                    <?php
+                    // Construir URL para compartir
+                    $url_compartir = $url_pagina_actual;
+                    $mensaje_whatsapp = 'He recibido una insignia de ' . $insignia_data['nombre'] . ' del TecNM. ' . htmlspecialchars($insignia_data['destinatario'] ?? 'estudiante') . '. Ver mi insignia: ' . $url_compartir;
+                    $mensaje_twitter = 'He recibido una insignia de ' . $insignia_data['nombre'] . ' del TecNM!';
+                    ?>
+                    <a href="https://wa.me/?text=<?php echo urlencode($mensaje_whatsapp); ?>" class="share-btn whatsapp" target="_blank">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($url_compartir); ?>" class="share-btn facebook" target="_blank">
+                        <i class="fab fa-facebook-f"></i> Facebook
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?text=<?php echo urlencode($mensaje_twitter); ?>&url=<?php echo urlencode($url_compartir); ?>" class="share-btn twitter" target="_blank">
+                        <i class="fab fa-x-twitter"></i> Twitter
+                    </a>
+                </div>
+            </div>
             <a href="ver_validacion_publica.php?insignia=<?php echo isset($codigo_insignia) ? urlencode($codigo_insignia) : ''; ?>" class="btn" style="text-decoration: none; display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);" target="_blank">
                 <i class="fas fa-check-circle"></i> Ver Validación
             </a>

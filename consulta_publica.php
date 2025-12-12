@@ -939,7 +939,65 @@ function determinarImagenInsignia($codigo_insignia, $nombre_insignia) {
             font-size: 14px;
         }
         
+        /* RESPONSIVE - Tablets */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 25px 0;
+            }
+            
+            .header-logo {
+                height: 50px;
+                left: -180px;
+            }
+            
+            .insignias-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles y tablets pequeñas */
         @media (max-width: 768px) {
+            .header {
+                padding: 20px 0;
+            }
+            
+            .header-content {
+                padding: 0 15px;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .header-logo {
+                position: relative;
+                left: auto;
+                top: auto;
+                transform: none;
+                height: 45px;
+                width: auto;
+                display: block;
+                margin: 0;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+                margin: 0;
+            }
+            
+            .header p {
+                font-size: 12px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
             .footer-links {
                 flex-direction: column;
                 align-items: center;
@@ -963,6 +1021,40 @@ function determinarImagenInsignia($codigo_insignia, $nombre_insignia) {
             .insignia-actions {
                 flex-direction: column;
                 gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles pequeños (iPhone SE, etc.) */
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 0;
+            }
+            
+            .header h1 {
+                font-size: 16px;
+            }
+            
+            .header-logo {
+                height: 35px;
+            }
+            
+            .container {
+                padding: 5px;
+            }
+            
+            .insignias-grid {
+                gap: 15px;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
             }
         }
     </style>

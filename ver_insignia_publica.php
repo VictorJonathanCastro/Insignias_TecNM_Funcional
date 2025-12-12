@@ -312,6 +312,129 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
             background: #0f2a4a;
         }
         
+        /* RESPONSIVE - Tablets */
+        @media (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .document-container {
+                padding: 40px 50px;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+            
+            .title {
+                font-size: 28px;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles y tablets pequeñas */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+            
+            .container {
+                padding: 10px;
+                margin: 0;
+            }
+            
+            .document-container {
+                padding: 30px 20px;
+                min-height: auto;
+            }
+            
+            .title {
+                font-size: 24px;
+                margin-top: 30px;
+                margin-bottom: 30px;
+            }
+            
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            
+            .insignia-hexagon {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .detail-label {
+                min-width: auto;
+                display: block;
+                margin-bottom: 5px;
+            }
+            
+            .detail-row {
+                margin-bottom: 15px;
+            }
+            
+            .section-title {
+                font-size: 14px;
+            }
+            
+            .section-content {
+                font-size: 12px;
+            }
+            
+            .actions {
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+                margin: 5px;
+                display: block;
+                width: 100%;
+                text-align: center;
+            }
+        }
+        
+        /* RESPONSIVE - Móviles pequeños (iPhone SE, etc.) */
+        @media (max-width: 480px) {
+            .title {
+                font-size: 20px;
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .document-container {
+                padding: 20px 15px;
+            }
+            
+            .insignia-hexagon {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .detail-label {
+                font-size: 11px;
+            }
+            
+            .detail-value {
+                font-size: 11px;
+            }
+            
+            .section-title {
+                font-size: 13px;
+            }
+            
+            .section-content {
+                font-size: 11px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+        }
+        
         @media print {
             body {
                 background: white;
