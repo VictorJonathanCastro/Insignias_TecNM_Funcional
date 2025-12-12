@@ -332,9 +332,6 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
 <body>
     <div class="container">
         <div class="document-container">
-            <!-- Título principal -->
-            <div class="title">VALIDACIÓN DE INSIGNIA</div>
-            
             <!-- Contenido principal: Insignia y Detalles -->
             <div class="content-grid">
                 <!-- Insignia a la izquierda -->
@@ -412,7 +409,7 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
         
         <div class="actions">
             <button onclick="window.print()" class="btn">🖨️ Imprimir</button>
-            <a href="ver_insignia_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>" class="btn">← Volver</a>
+            <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['codigo']); ?>" class="btn">← Volver</a>
         </div>
     </div>
 </body>

@@ -801,16 +801,6 @@ if (!empty($insignia_data['responsable_id'])) {
                 </div>
                 
                 <div class="metadata-item">
-                    <strong>Descripción:</strong>
-                    <span><?php echo nl2br(htmlspecialchars($insignia_data['descripcion'])); ?></span>
-                </div>
-                
-                <div class="metadata-item">
-                    <strong>Criterios para su emisión:</strong>
-                    <span><?php echo nl2br(htmlspecialchars($insignia_data['criterios'])); ?></span>
-                </div>
-                
-                <div class="metadata-item">
                     <strong>Fecha de emisión:</strong>
                     <span><?php echo date('d-m-Y', strtotime($insignia_data['fecha_emision'])); ?></span>
                 </div>
@@ -818,6 +808,16 @@ if (!empty($insignia_data['responsable_id'])) {
                 <div class="metadata-item">
                     <strong>Emisor (TecNM o Instituto/Centro):</strong>
                     <span><?php echo htmlspecialchars($insignia_data['emisor']); ?></span>
+                </div>
+                
+                <div class="metadata-item">
+                    <strong>Descripción:</strong>
+                    <span><?php echo nl2br(htmlspecialchars($insignia_data['descripcion'])); ?></span>
+                </div>
+                
+                <div class="metadata-item">
+                    <strong>Criterios para su emisión:</strong>
+                    <span><?php echo nl2br(htmlspecialchars($insignia_data['criterios'])); ?></span>
                 </div>
                 
                 <div class="metadata-item">
