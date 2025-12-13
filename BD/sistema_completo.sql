@@ -1,11 +1,5 @@
 -- ========================================
 -- SISTEMA COMPLETO DE INSIGNIAS TECNM - SCRIPT SQL CONSOLIDADO
--- ========================================
--- Este archivo contiene todos los scripts SQL necesarios para el sistema
--- Fecha de consolidación: 2025
--- ========================================
-
--- ========================================
 -- SECCIÓN 1: CREACIÓN DE BASE DE DATOS Y ESTRUCTURA PRINCIPAL
 -- ========================================
 
