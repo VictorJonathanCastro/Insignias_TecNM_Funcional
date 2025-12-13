@@ -2930,7 +2930,6 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
     </header>
     
     <a href="modulo_de_administracion.php" class="back-btn">← Volver al Panel</a>
-    <a href="historial_cargas_masivas.php" class="back-btn" style="left: 200px;">📋 Ver Historial</a>
     
     <div class="container">
         <div class="header">
