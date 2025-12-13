@@ -1200,6 +1200,66 @@ class CargaMasivaExcel {
     }
     
     /**
+     * Generar código de insignia único automáticamente
+     */
+    private function generarCodigoInsigniaUnico($fecha_emision, $codigo_original = null) {
+        // Extraer año de la fecha
+        $anio = date('Y', strtotime($fecha_emision));
+        
+        // Intentar extraer el tipo y siglas del código original si existe
+        $tipo_codigo = 'INS'; // Por defecto
+        $siglas_centro = 'SEV'; // Por defecto
+        $prefijo = 'TECNM'; // Por defecto
+        
+        if (!empty($codigo_original)) {
+            // Intentar extraer del formato: TECNM-OFCM-2025-ART-008 o TECNIM-OFCM-2025-EMB-009
+            if (preg_match('/^(TECNM|TECNIM)-([A-Z]+)-(\d{4})-([A-Z]+)-(\d+)$/i', $codigo_original, $matches)) {
+                $prefijo = strtoupper($matches[1]);
+                $siglas_centro = strtoupper($matches[2]);
+                $tipo_codigo = strtoupper($matches[4]);
+            } elseif (preg_match('/-([A-Z]{3,4})-\d{4}-([A-Z]{3})-\d+/i', $codigo_original, $matches)) {
+                // Buscar patrón: -SIGLAS-AÑO-TIPO-NUM
+                $siglas_centro = strtoupper($matches[1]);
+                $tipo_codigo = strtoupper($matches[2]);
+            } elseif (preg_match('/(ART|EMB|TAL|INN|SOC|FOR|MOV)/i', $codigo_original, $matches)) {
+                // Buscar códigos conocidos de tipo
+                $tipo_codigo = strtoupper($matches[1]);
+            }
+        }
+        
+        // Generar código único
+        $intentos = 0;
+        $max_intentos = 50;
+        
+        while ($intentos < $max_intentos) {
+            $numero = str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
+            $codigo = "$prefijo-$siglas_centro-$anio-$tipo_codigo-$numero";
+            
+            // Verificar que no exista
+            $sql = "SELECT COUNT(*) as total FROM insigniasotorgadas WHERE Codigo_Insignia = ?";
+            $stmt = $this->conexion->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param("s", $codigo);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $existe = $result->fetch_assoc()['total'] > 0;
+                $stmt->close();
+                
+                if (!$existe) {
+                    return $codigo;
+                }
+            }
+            
+            $intentos++;
+        }
+        
+        // Si después de muchos intentos no se encontró uno único, usar timestamp
+        $timestamp = time();
+        $numero_final = substr($timestamp, -6);
+        return "$prefijo-$siglas_centro-$anio-$tipo_codigo-$numero_final";
+    }
+    
+    /**
      * Validar datos de insignia otorgada
      */
     private function validarDatosInsigniaOtorgada($row, $headers, $fila) {
@@ -1212,7 +1272,7 @@ class CargaMasivaExcel {
         }
         
         // Validar campos requeridos para insigniasotorgadas
-        $campos_requeridos = ['Codigo_Insignia', 'Destinatario', 'Fecha_Emision'];
+        $campos_requeridos = ['Destinatario', 'Fecha_Emision'];
         
         foreach ($campos_requeridos as $campo) {
             $campo_lower = strtolower($campo);
@@ -1229,6 +1289,13 @@ class CargaMasivaExcel {
             
             $datos[$campo] = $valor;
         }
+        
+        // Obtener Codigo_Insignia (puede estar vacío, se generará automáticamente)
+        $codigo_insignia = '';
+        if (isset($columnas['codigo_insignia'])) {
+            $codigo_insignia = trim($row[$columnas['codigo_insignia']] ?? '');
+        }
+        $datos['Codigo_Insignia'] = $codigo_insignia;
         
         // Validar fecha - aceptar múltiples formatos y corregir errores comunes
         $fecha_valida = false;
@@ -1308,20 +1375,35 @@ class CargaMasivaExcel {
         
         $datos['Fecha_Emision'] = $fecha_formateada;
         
-        // Validar que Codigo_Insignia no existe ya (debe ser único)
-        $sql = "SELECT Codigo_Insignia FROM insigniasotorgadas WHERE Codigo_Insignia = ?";
-        $stmt = $this->conexion->prepare($sql);
-        if ($stmt) {
-            $stmt->bind_param("s", $datos['Codigo_Insignia']);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            if ($result->num_rows > 0) {
-                $this->errores[] = "Fila $fila: Codigo_Insignia '{$datos['Codigo_Insignia']}' ya existe en la tabla insigniasotorgadas";
+        // Generar o validar Codigo_Insignia
+        $codigo_insignia = $datos['Codigo_Insignia'];
+        $codigo_generado = false;
+        
+        // Si está vacío o ya existe, generar uno nuevo
+        if (empty($codigo_insignia)) {
+            $codigo_insignia = $this->generarCodigoInsigniaUnico($fecha_formateada);
+            $codigo_generado = true;
+            $this->exitos[] = "Fila $fila: Codigo_Insignia generado automáticamente: '$codigo_insignia'";
+        } else {
+            // Verificar si ya existe
+            $sql = "SELECT Codigo_Insignia FROM insigniasotorgadas WHERE Codigo_Insignia = ?";
+            $stmt = $this->conexion->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param("s", $codigo_insignia);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    // Si existe, generar uno nuevo
+                    $codigo_original = $codigo_insignia;
+                    $codigo_insignia = $this->generarCodigoInsigniaUnico($fecha_formateada, $codigo_original);
+                    $codigo_generado = true;
+                    $this->exitos[] = "Fila $fila: Codigo_Insignia '$codigo_original' ya existía, se generó uno nuevo: '$codigo_insignia'";
+                }
                 $stmt->close();
-                return false;
             }
-            $stmt->close();
         }
+        
+        $datos['Codigo_Insignia'] = $codigo_insignia;
         
         // Validar que Destinatario existe en destinatario o crearlo si es necesario
         // Verificar estructura de la tabla primero
