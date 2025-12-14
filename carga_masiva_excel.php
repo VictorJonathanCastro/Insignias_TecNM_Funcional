@@ -368,18 +368,24 @@ class CargaMasivaExcel {
         // Si no se detecta por nombre, intentar por headers
         $headers_str = implode(' ', $headers);
         
-        // Insignias Otorgadas (insigniasotorgadas)
-        if (in_array('codigo_insignia', $headers) && in_array('destinatario', $headers)) {
-            return 'insignias_otorgadas';
+        // PRIORIDAD: Insignias Otorgadas (insigniasotorgadas) - verificar PRIMERO
+        // Si tiene Codigo_Insignia, es definitivamente insigniasotorgadas (aunque tenga otras columnas)
+        if (in_array('codigo_insignia', $headers)) {
+            // Verificar que también tenga Destinatario para confirmar
+            if (in_array('destinatario', $headers)) {
+                return 'insignias_otorgadas';
+            }
         }
         // También reconocer estructura antigua por compatibilidad
         if (in_array('id_insignia', $headers) && in_array('id_destinatario', $headers)) {
             return 'insignias_otorgadas';
         }
         
-        // Destinatarios
-        if (in_array('nombre_completo', $headers) && (in_array('matricula', $headers) || in_array('correo', $headers))) {
-            return 'destinatarios';
+        // Destinatarios - solo si NO tiene Codigo_Insignia (para evitar confusión)
+        if (!in_array('codigo_insignia', $headers) && !in_array('id_insignia', $headers)) {
+            if (in_array('nombre_completo', $headers) && (in_array('matricula', $headers) || in_array('correo', $headers))) {
+                return 'destinatarios';
+            }
         }
         
         // Centros IT
