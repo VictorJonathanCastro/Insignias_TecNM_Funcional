@@ -4,6 +4,11 @@
 // Proyecto Insignias TecNM
 // ========================================
 
+// Iniciar output buffering para evitar problemas con headers
+if (!ob_get_level()) {
+    ob_start();
+}
+
 // Habilitar reporte de errores para depuración
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -17,11 +22,76 @@ if (session_status() === PHP_SESSION_NONE) {
 // Solo ejecutar el código principal si el archivo se accede directamente
 // (no cuando se incluye desde otro archivo)
 if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
-    require_once 'conexion.php';
-    
-    // Verificar sesión de administrador
-    if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'Admin') {
-        header('Location: login.php');
+    try {
+        require_once 'conexion.php';
+        
+        // Verificar que la conexión se haya establecido
+        if (!isset($conexion) || !$conexion) {
+            throw new Exception("No se pudo establecer la conexión a la base de datos");
+        }
+        
+        // Verificar sesión de administrador
+        if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'Admin') {
+            header('Location: login.php');
+            exit();
+        }
+    } catch (Exception $e) {
+        // Limpiar cualquier salida previa
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        error_log("Error en carga_masiva_excel.php (inicio): " . $e->getMessage());
+        http_response_code(500);
+        header('Content-Type: text/html; charset=UTF-8');
+        echo '<!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Error - Carga Masiva</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+                h1 { color: #dc3545; }
+                .error-details { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="error-box">
+                <h1>Error al cargar el sistema</h1>
+                <p>' . htmlspecialchars($e->getMessage()) . '</p>
+                <p><a href="modulo_de_administracion.php">← Volver al Panel</a></p>
+            </div>
+        </body>
+        </html>';
+        exit();
+    } catch (Error $e) {
+        // Limpiar cualquier salida previa
+        if (ob_get_level()) {
+            ob_clean();
+        }
+        error_log("Error fatal en carga_masiva_excel.php (inicio): " . $e->getMessage());
+        http_response_code(500);
+        header('Content-Type: text/html; charset=UTF-8');
+        echo '<!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Error - Carga Masiva</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+                h1 { color: #dc3545; }
+                .error-details { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            </style>
+        </head>
+        <body>
+            <div class="error-box">
+                <h1>Error fatal al cargar el sistema</h1>
+                <p>' . htmlspecialchars($e->getMessage()) . '</p>
+                <p><a href="modulo_de_administracion.php">← Volver al Panel</a></p>
+            </div>
+        </body>
+        </html>';
         exit();
     }
 } else {
@@ -125,7 +195,8 @@ try {
     if (ob_get_level()) {
         ob_clean();
     }
-    http_response_code(500);
+    // Usar 200 en lugar de 500 para mostrar el mensaje de error correctamente
+    http_response_code(200);
     header('Content-Type: text/html; charset=UTF-8');
     echo '<!DOCTYPE html>
     <html lang="es">
