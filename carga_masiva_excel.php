@@ -1412,6 +1412,8 @@ class CargaMasivaExcel {
         $datos['Codigo_Insignia'] = $codigo_insignia;
         
         // Validar que Destinatario existe en destinatario o crearlo si es necesario
+        // PRIORIDAD: Buscar por nombre completo primero (recomendado para Excel)
+        // Si es un número, buscar por ID; si es texto, buscar por nombre completo
         // Verificar estructura de la tabla primero
         $check_destinatario = $this->conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
         $campo_id_destinatario = ($check_destinatario && $check_destinatario->num_rows > 0) ? 'id' : 'ID_destinatario';
@@ -1419,26 +1421,10 @@ class CargaMasivaExcel {
         $destinatario_id = null;
         $valor_destinatario = trim($datos['Destinatario']);
         
-        // Si es numérico, buscar por ID
-        if (is_numeric($valor_destinatario)) {
-            $destinatario_id = (int)$valor_destinatario;
-            $sql = "SELECT $campo_id_destinatario as id FROM destinatario WHERE $campo_id_destinatario = ?";
-            $stmt = $this->conexion->prepare($sql);
-            if ($stmt) {
-                $stmt->bind_param("i", $destinatario_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                if ($result->num_rows == 0) {
-                    $destinatario_id = null; // No existe, buscar por otros campos
-                }
-                $stmt->close();
-            }
-        }
-        
-        // Si no se encontró por ID o no es numérico, buscar por nombre completo, CURP o matrícula
-        if ($destinatario_id === null) {
-            // Buscar por nombre completo
-            $sql_buscar = "SELECT $campo_id_destinatario as id FROM destinatario WHERE Nombre_Completo = ? LIMIT 1";
+        // PRIORIDAD 1: Si NO es numérico (es texto/nombre), buscar por nombre completo primero
+        if (!is_numeric($valor_destinatario)) {
+            // Buscar por nombre completo (case-insensitive, con trim)
+            $sql_buscar = "SELECT $campo_id_destinatario as id FROM destinatario WHERE TRIM(Nombre_Completo) = ? LIMIT 1";
             $stmt_buscar = $this->conexion->prepare($sql_buscar);
             if ($stmt_buscar) {
                 $stmt_buscar->bind_param("s", $valor_destinatario);
@@ -1447,31 +1433,51 @@ class CargaMasivaExcel {
                 if ($result_buscar && $result_buscar->num_rows > 0) {
                     $row_buscar = $result_buscar->fetch_assoc();
                     $destinatario_id = $row_buscar['id'];
-                    $this->exitos[] = "Fila $fila: Destinatario encontrado por nombre completo: '{$valor_destinatario}' (ID: $destinatario_id)";
+                    $this->exitos[] = "Fila $fila: ✅ Destinatario encontrado por nombre: '{$valor_destinatario}' (ID: $destinatario_id)";
                 }
                 $stmt_buscar->close();
             }
-            
-            // Si aún no se encontró, buscar por CURP
-            if ($destinatario_id === null) {
-                $sql_curp = "SELECT $campo_id_destinatario as id FROM destinatario WHERE Curp = ? LIMIT 1";
-                $stmt_curp = $this->conexion->prepare($sql_curp);
-                if ($stmt_curp) {
-                    $stmt_curp->bind_param("s", $valor_destinatario);
-                    $stmt_curp->execute();
-                    $result_curp = $stmt_curp->get_result();
-                    if ($result_curp && $result_curp->num_rows > 0) {
-                        $row_curp = $result_curp->fetch_assoc();
-                        $destinatario_id = $row_curp['id'];
-                        $this->exitos[] = "Fila $fila: Destinatario encontrado por CURP: '{$valor_destinatario}' (ID: $destinatario_id)";
-                    }
-                    $stmt_curp->close();
+        }
+        
+        // PRIORIDAD 2: Si es numérico, buscar por ID
+        if ($destinatario_id === null && is_numeric($valor_destinatario)) {
+            $destinatario_id = (int)$valor_destinatario;
+            $sql = "SELECT $campo_id_destinatario as id FROM destinatario WHERE $campo_id_destinatario = ?";
+            $stmt = $this->conexion->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param("i", $destinatario_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    $this->exitos[] = "Fila $fila: ✅ Destinatario encontrado por ID: $destinatario_id";
+                } else {
+                    $destinatario_id = null; // No existe, buscar por otros campos
+                    $this->errores[] = "Fila $fila: ⚠️ ID de destinatario $destinatario_id no existe. Buscando por otros campos...";
                 }
+                $stmt->close();
+            }
+        }
+        
+        // PRIORIDAD 3: Si aún no se encontró, buscar por CURP o matrícula (solo si no es numérico)
+        if ($destinatario_id === null && !is_numeric($valor_destinatario)) {
+            // Buscar por CURP
+            $sql_curp = "SELECT $campo_id_destinatario as id FROM destinatario WHERE TRIM(Curp) = ? LIMIT 1";
+            $stmt_curp = $this->conexion->prepare($sql_curp);
+            if ($stmt_curp) {
+                $stmt_curp->bind_param("s", $valor_destinatario);
+                $stmt_curp->execute();
+                $result_curp = $stmt_curp->get_result();
+                if ($result_curp && $result_curp->num_rows > 0) {
+                    $row_curp = $result_curp->fetch_assoc();
+                    $destinatario_id = $row_curp['id'];
+                    $this->exitos[] = "Fila $fila: ✅ Destinatario encontrado por CURP: '{$valor_destinatario}' (ID: $destinatario_id)";
+                }
+                $stmt_curp->close();
             }
             
             // Si aún no se encontró, buscar por matrícula
             if ($destinatario_id === null) {
-                $sql_mat = "SELECT $campo_id_destinatario as id FROM destinatario WHERE Matricula = ? LIMIT 1";
+                $sql_mat = "SELECT $campo_id_destinatario as id FROM destinatario WHERE TRIM(Matricula) = ? LIMIT 1";
                 $stmt_mat = $this->conexion->prepare($sql_mat);
                 if ($stmt_mat) {
                     $stmt_mat->bind_param("s", $valor_destinatario);
@@ -1480,60 +1486,69 @@ class CargaMasivaExcel {
                     if ($result_mat && $result_mat->num_rows > 0) {
                         $row_mat = $result_mat->fetch_assoc();
                         $destinatario_id = $row_mat['id'];
-                        $this->exitos[] = "Fila $fila: Destinatario encontrado por matrícula: '{$valor_destinatario}' (ID: $destinatario_id)";
+                        $this->exitos[] = "Fila $fila: ✅ Destinatario encontrado por matrícula: '{$valor_destinatario}' (ID: $destinatario_id)";
                     }
                     $stmt_mat->close();
                 }
             }
+        }
+        
+        // PRIORIDAD 4: Si aún no se encontró, crear nuevo destinatario automáticamente
+        // (Solo si es texto/nombre, no si es un ID numérico que no existe)
+        if ($destinatario_id === null) {
+            // Si es un ID numérico que no existe, no crear automáticamente (mostrar error)
+            if (is_numeric($valor_destinatario)) {
+                $this->errores[] = "Fila $fila: ❌ ID de destinatario '$valor_destinatario' no existe en la base de datos. Usa el nombre completo del destinatario en lugar del ID.";
+                return false;
+            }
             
-            // Si aún no se encontró, crear nuevo destinatario
-            if ($destinatario_id === null) {
-                // Verificar si ITCentro existe en la tabla
-                $check_itcentro = $this->conexion->query("SHOW COLUMNS FROM destinatario LIKE 'ITCentro'");
-                $tiene_itcentro = ($check_itcentro && $check_itcentro->num_rows > 0);
-                
-                // Obtener un ITCentro por defecto (el primero disponible)
-                $itcentro_default = 1;
-                $sql_itc = "SELECT id FROM it_centros ORDER BY id LIMIT 1";
-                $result_itc = $this->conexion->query($sql_itc);
-                if ($result_itc && $result_itc->num_rows > 0) {
-                    $row_itc = $result_itc->fetch_assoc();
-                    $itcentro_default = $row_itc['id'];
+            // Si es texto/nombre, crear nuevo destinatario automáticamente
+            // Verificar si ITCentro existe en la tabla
+            $check_itcentro = $this->conexion->query("SHOW COLUMNS FROM destinatario LIKE 'ITCentro'");
+            $tiene_itcentro = ($check_itcentro && $check_itcentro->num_rows > 0);
+            
+            // Obtener un ITCentro por defecto (el primero disponible)
+            $itcentro_default = 1;
+            $sql_itc = "SELECT id FROM it_centros ORDER BY id LIMIT 1";
+            $result_itc = $this->conexion->query($sql_itc);
+            if ($result_itc && $result_itc->num_rows > 0) {
+                $row_itc = $result_itc->fetch_assoc();
+                $itcentro_default = $row_itc['id'];
+            }
+            
+            // Crear nuevo destinatario
+            if ($tiene_itcentro) {
+                $sql_insert = "INSERT INTO destinatario (Nombre_Completo, ITCentro) VALUES (?, ?)";
+                $stmt_insert = $this->conexion->prepare($sql_insert);
+                if ($stmt_insert) {
+                    $stmt_insert->bind_param("si", $valor_destinatario, $itcentro_default);
+                    if ($stmt_insert->execute()) {
+                        $destinatario_id = $this->conexion->insert_id;
+                        $this->exitos[] = "Fila $fila: ✅ Destinatario creado automáticamente: '{$valor_destinatario}' (ID: $destinatario_id)";
+                    } else {
+                        $this->errores[] = "Fila $fila: ❌ Error al crear destinatario: " . $stmt_insert->error;
+                        $stmt_insert->close();
+                        return false;
+                    }
+                    $stmt_insert->close();
                 }
-                
-                // Crear nuevo destinatario
-                if ($tiene_itcentro) {
-                    $sql_insert = "INSERT INTO destinatario (Nombre_Completo, ITCentro) VALUES (?, ?)";
-                    $stmt_insert = $this->conexion->prepare($sql_insert);
-                    if ($stmt_insert) {
-                        $stmt_insert->bind_param("si", $valor_destinatario, $itcentro_default);
-                        if ($stmt_insert->execute()) {
-                            $destinatario_id = $this->conexion->insert_id;
-                            $this->exitos[] = "Fila $fila: Destinatario creado automáticamente: '{$valor_destinatario}' (ID: $destinatario_id)";
-                        } else {
-                            $this->errores[] = "Fila $fila: Error al crear destinatario: " . $stmt_insert->error;
-                            $stmt_insert->close();
-                            return false;
-                        }
+            } else {
+                $sql_insert = "INSERT INTO destinatario (Nombre_Completo) VALUES (?)";
+                $stmt_insert = $this->conexion->prepare($sql_insert);
+                if ($stmt_insert) {
+                    $stmt_insert->bind_param("s", $valor_destinatario);
+                    if ($stmt_insert->execute()) {
+                        $destinatario_id = $this->conexion->insert_id;
+                        $this->exitos[] = "Fila $fila: ✅ Destinatario creado automáticamente: '{$valor_destinatario}' (ID: $destinatario_id)";
+                    } else {
+                        $this->errores[] = "Fila $fila: ❌ Error al crear destinatario: " . $stmt_insert->error;
                         $stmt_insert->close();
+                        return false;
                     }
-                } else {
-                    $sql_insert = "INSERT INTO destinatario (Nombre_Completo) VALUES (?)";
-                    $stmt_insert = $this->conexion->prepare($sql_insert);
-                    if ($stmt_insert) {
-                        $stmt_insert->bind_param("s", $valor_destinatario);
-                        if ($stmt_insert->execute()) {
-                            $destinatario_id = $this->conexion->insert_id;
-                            $this->exitos[] = "Fila $fila: Destinatario creado automáticamente: '{$valor_destinatario}' (ID: $destinatario_id)";
-                        } else {
-                            $this->errores[] = "Fila $fila: Error al crear destinatario: " . $stmt_insert->error;
-                            $stmt_insert->close();
-                            return false;
-                        }
-                        $stmt_insert->close();
-                    }
+                    $stmt_insert->close();
                 }
             }
+        }
         }
         
         if ($destinatario_id === null) {
@@ -1949,17 +1964,24 @@ class CargaMasivaExcel {
                 ],
                 'insigniasotorgadas' => [
                     'headers' => ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'],
+                    // IMPORTANTE: 
+                    // - Destinatario: Usa NOMBRE COMPLETO (texto), NO ID numérico. El sistema buscará o creará automáticamente.
+                    // - Codigo_Insignia: Puede estar vacío, se generará automáticamente. Si proporcionas uno, debe ser único.
+                    // - Periodo_Emision, Responsable_Emision: Pueden estar vacíos. Si usas un ID, debe existir en la BD.
+                    // - Estatus: Puede estar vacío, se usará 1 (Activo) por defecto. Si usas un ID, debe existir.
+                    // - Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15) - REQUERIDO
+                    // NOTA: Los valores de ejemplo usan campos opcionales vacíos. Puedes dejarlos vacíos o llenarlos con IDs válidos.
                     'datos' => [
-                        ['TECNM-OFCM-2025-ART-001', 'Juan Pérez Gómez', 1, 1, 1, '2025-01-15'],
-                        ['TECNM-OFCM-2025-EMB-002', 'María González López', 1, 1, 1, '2025-01-16'],
-                        ['TECNM-OFCM-2025-TAL-003', 'Carlos Ramírez Martínez', 1, 1, 1, '2025-01-17'],
-                        ['TECNM-OFCM-2025-INN-004', 'Ana Sánchez Hernández', 1, 1, 1, '2025-01-18'],
-                        ['TECNM-OFCM-2025-SOC-005', 'Roberto Torres Díaz', 1, 1, 1, '2025-01-19'],
-                        ['TECNM-OFCM-2025-FOR-006', 'Laura Morales Silva', 1, 1, 1, '2025-01-20'],
-                        ['TECNM-OFCM-2025-MOV-007', 'Fernando Jiménez Ruiz', 1, 1, 1, '2025-01-21'],
-                        ['TECNM-OFCM-2025-ART-008', 'Patricia Castro Moreno', 1, 1, 1, '2025-01-22'],
-                        ['TECNM-OFCM-2025-EMB-009', 'Gabriel Mendoza Vega', 1, 1, 1, '2025-01-23'],
-                        ['TECNM-OFCM-2025-TAL-010', 'Luis Hernández Campos', 1, 1, 1, '2025-01-24']
+                        ['TECNM-2025-ART-001', 'Juan Pérez Gómez', '', '', '1', '2025-01-15'],
+                        ['TECNM-2025-EMB-002', 'María González López', '', '', '1', '2025-01-16'],
+                        ['TECNM-2025-TAL-003', 'Carlos Ramírez Martínez', '', '', '1', '2025-01-17'],
+                        ['TECNM-2025-INN-004', 'Ana Sánchez Hernández', '', '', '1', '2025-01-18'],
+                        ['TECNM-2025-SOC-005', 'Roberto Torres Díaz', '', '', '1', '2025-01-19'],
+                        ['TECNM-2025-FOR-006', 'Laura Morales Silva', '', '', '1', '2025-01-20'],
+                        ['TECNM-2025-MOV-007', 'Fernando Jiménez Ruiz', '', '', '1', '2025-01-21'],
+                        ['TECNM-2025-ART-008', 'Patricia Castro Moreno', '', '', '1', '2025-01-22'],
+                        ['TECNM-2025-EMB-009', 'Gabriel Mendoza Vega', '', '', '1', '2025-01-23'],
+                        ['TECNM-2025-TAL-010', 'Luis Hernández Campos', '', '', '1', '2025-01-24']
                     ]
                 ]
             ];
@@ -1978,25 +2000,63 @@ class CargaMasivaExcel {
                     $spreadsheet->addSheet($sheet);
                 }
                 
-                // Escribir headers
+                // Escribir headers con estilo profesional
                 $col = 'A';
                 $ultima_col = 'A';
                 foreach ($datos_plantilla['headers'] as $header) {
                     $sheet->setCellValue($col . '1', $header);
-                    $sheet->getStyle($col . '1')->getFont()->setBold(true);
+                    // Estilo para headers: fondo azul, texto blanco, negrita
+                    $sheet->getStyle($col . '1')->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'color' => ['rgb' => 'FFFFFF'],
+                            'size' => 11
+                        ],
+                        'fill' => [
+                            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => '1e3c72']
+                        ],
+                        'alignment' => [
+                            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                            'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                                'color' => ['rgb' => 'CCCCCC']
+                            ]
+                        ]
+                    ]);
                     $ultima_col = $col;
                     $col++;
                 }
+                $sheet->getRowDimension(1)->setRowHeight(25);
                 
                 // Escribir datos de ejemplo (10 registros)
                 $fila = 2;
                 foreach ($datos_plantilla['datos'] as $fila_datos) {
                     $col = 'A';
                     foreach ($fila_datos as $valor) {
-                        $sheet->setCellValue($col . $fila, $valor);
+                        // Si el valor está vacío, dejar la celda vacía (no escribir nada)
+                        if ($valor !== '' && $valor !== null) {
+                            $sheet->setCellValue($col . $fila, $valor);
+                        }
                         $col++;
                     }
                     $fila++;
+                }
+                
+                // Aplicar bordes a todas las celdas con datos
+                $ultima_fila = $fila - 1;
+                if ($ultima_fila >= 2) {
+                    $sheet->getStyle('A1:' . $ultima_col . $ultima_fila)->applyFromArray([
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                                'color' => ['rgb' => 'CCCCCC']
+                            ]
+                        ]
+                    ]);
                 }
                 
                 // Ajustar ancho de columnas automáticamente
@@ -2006,6 +2066,39 @@ class CargaMasivaExcel {
                     $sheet->getColumnDimension($col_letra)->setAutoSize(true);
                     $col_letra++;
                     $col_num++;
+                }
+                
+                // Agregar nota importante para insigniasotorgadas
+                if ($nombre_hoja === 'insigniasotorgadas') {
+                    $nota_fila = $ultima_fila + 2;
+                    $sheet->setCellValue('A' . $nota_fila, '📌 NOTAS IMPORTANTES:');
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'))->setSize(12);
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    
+                    $nota_fila++;
+                    $sheet->setCellValue('A' . $nota_fila, '• Destinatario: Usa el NOMBRE COMPLETO del estudiante (ej: "Juan Pérez Gómez"). NO uses IDs numéricos.');
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                    
+                    $nota_fila++;
+                    $sheet->setCellValue('A' . $nota_fila, '• Codigo_Insignia: Puede estar vacío (se generará automáticamente) o usar un código único. Si ya existe, se generará uno nuevo.');
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                    
+                    $nota_fila++;
+                    $sheet->setCellValue('A' . $nota_fila, '• Periodo_Emision, Responsable_Emision: Pueden estar vacíos (se usarán NULL). Si llenas con un ID, debe existir en la base de datos.');
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                    
+                    $nota_fila++;
+                    $sheet->setCellValue('A' . $nota_fila, '• Estatus: Puede estar vacío (se usará 1 "Activo" por defecto) o usar un ID válido que exista en la tabla estatus.');
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                    
+                    $nota_fila++;
+                    $sheet->setCellValue('A' . $nota_fila, '• Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15)');
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
                 }
             }
             
@@ -2040,17 +2133,24 @@ class CargaMasivaExcel {
             switch ($tipo) {
                 case 'insignias_otorgadas':
                     $headers = ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'];
+                    // IMPORTANTE: 
+                    // - Destinatario: Usa NOMBRE COMPLETO (texto), NO ID numérico. El sistema buscará o creará automáticamente.
+                    // - Codigo_Insignia: Puede estar vacío, se generará automáticamente. Si proporcionas uno, debe ser único.
+                    // - Periodo_Emision, Responsable_Emision: Pueden estar vacíos. Si usas un ID, debe existir en la BD.
+                    // - Estatus: Puede estar vacío, se usará 1 (Activo) por defecto. Si usas un ID, debe existir.
+                    // - Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15) - REQUERIDO
+                    // NOTA: Los valores de ejemplo usan campos opcionales vacíos. Puedes dejarlos vacíos o llenarlos con IDs válidos.
                     $datos_ejemplo = [
-                        ['TECNM-OFCM-2025-ART-001', 'Juan Pérez Gómez', 1, 1, 1, '2025-01-15'],
-                        ['TECNM-OFCM-2025-EMB-002', 'María González López', 1, 1, 1, '2025-01-16'],
-                        ['TECNM-OFCM-2025-TAL-003', 'Carlos Ramírez Martínez', 1, 1, 1, '2025-01-17'],
-                        ['TECNM-OFCM-2025-INN-004', 'Ana Sánchez Hernández', 1, 1, 1, '2025-01-18'],
-                        ['TECNM-OFCM-2025-SOC-005', 'Roberto Torres Díaz', 1, 1, 1, '2025-01-19'],
-                        ['TECNM-OFCM-2025-FOR-006', 'Laura Morales Silva', 1, 1, 1, '2025-01-20'],
-                        ['TECNM-OFCM-2025-MOV-007', 'Fernando Jiménez Ruiz', 1, 1, 1, '2025-01-21'],
-                        ['TECNM-OFCM-2025-ART-008', 'Patricia Castro Moreno', 1, 1, 1, '2025-01-22'],
-                        ['TECNM-OFCM-2025-EMB-009', 'Gabriel Mendoza Vega', 1, 1, 1, '2025-01-23'],
-                        ['TECNM-OFCM-2025-TAL-010', 'Luis Hernández Campos', 1, 1, 1, '2025-01-24']
+                        ['TECNM-2025-ART-001', 'Juan Pérez Gómez', '', '', '1', '2025-01-15'],
+                        ['TECNM-2025-EMB-002', 'María González López', '', '', '1', '2025-01-16'],
+                        ['TECNM-2025-TAL-003', 'Carlos Ramírez Martínez', '', '', '1', '2025-01-17'],
+                        ['TECNM-2025-INN-004', 'Ana Sánchez Hernández', '', '', '1', '2025-01-18'],
+                        ['TECNM-2025-SOC-005', 'Roberto Torres Díaz', '', '', '1', '2025-01-19'],
+                        ['TECNM-2025-FOR-006', 'Laura Morales Silva', '', '', '1', '2025-01-20'],
+                        ['TECNM-2025-MOV-007', 'Fernando Jiménez Ruiz', '', '', '1', '2025-01-21'],
+                        ['TECNM-2025-ART-008', 'Patricia Castro Moreno', '', '', '1', '2025-01-22'],
+                        ['TECNM-2025-EMB-009', 'Gabriel Mendoza Vega', '', '', '1', '2025-01-23'],
+                        ['TECNM-2025-TAL-010', 'Luis Hernández Campos', '', '', '1', '2025-01-24']
                     ];
                     break;
                 case 'destinatarios':
@@ -2163,28 +2263,101 @@ class CargaMasivaExcel {
                     return false;
             }
             
-            // Escribir headers con estilo en negrita
+            // Escribir headers con estilo profesional
             $col = 'A';
+            $ultima_col = 'A';
             foreach ($headers as $header) {
                 $sheet->setCellValue($col . '1', $header);
-                $sheet->getStyle($col . '1')->getFont()->setBold(true);
+                // Estilo para headers: fondo azul, texto blanco, negrita
+                $sheet->getStyle($col . '1')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'color' => ['rgb' => 'FFFFFF'],
+                        'size' => 11
+                    ],
+                    'fill' => [
+                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => '1e3c72']
+                    ],
+                    'alignment' => [
+                        'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                        'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                            'color' => ['rgb' => 'CCCCCC']
+                        ]
+                    ]
+                ]);
+                $ultima_col = $col;
                 $col++;
             }
+            $sheet->getRowDimension(1)->setRowHeight(25);
             
             // Escribir 10 registros de ejemplo
             $fila = 2;
             foreach ($datos_ejemplo as $fila_datos) {
-            $col = 'A';
+                $col = 'A';
                 foreach ($fila_datos as $valor) {
-                    $sheet->setCellValue($col . $fila, $valor);
-                $col++;
+                    // Si el valor está vacío, dejar la celda vacía (no escribir nada)
+                    if ($valor !== '' && $valor !== null) {
+                        $sheet->setCellValue($col . $fila, $valor);
+                    }
+                    $col++;
                 }
                 $fila++;
             }
             
+            // Aplicar bordes a todas las celdas con datos
+            $ultima_fila = $fila - 1;
+            if ($ultima_fila >= 2) {
+                $sheet->getStyle('A1:' . $ultima_col . $ultima_fila)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                            'color' => ['rgb' => 'CCCCCC']
+                        ]
+                    ]
+                ]);
+            }
+            
             // Ajustar ancho de columnas automáticamente
-            foreach (range('A', $col) as $columna) {
+            foreach (range('A', $ultima_col) as $columna) {
                 $sheet->getColumnDimension($columna)->setAutoSize(true);
+            }
+            
+            // Agregar nota importante para insignias_otorgadas
+            if ($tipo === 'insignias_otorgadas') {
+                $nota_fila = $ultima_fila + 2;
+                $sheet->setCellValue('A' . $nota_fila, '📌 NOTAS IMPORTANTES:');
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'))->setSize(12);
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                
+                $nota_fila++;
+                $sheet->setCellValue('A' . $nota_fila, '• Destinatario: Usa el NOMBRE COMPLETO del estudiante (ej: "Juan Pérez Gómez"). NO uses IDs numéricos.');
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                
+                $nota_fila++;
+                $sheet->setCellValue('A' . $nota_fila, '• Codigo_Insignia: Puede estar vacío (se generará automáticamente) o usar un código único. Si ya existe, se generará uno nuevo.');
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                
+                $nota_fila++;
+                $sheet->setCellValue('A' . $nota_fila, '• Periodo_Emision, Responsable_Emision: Pueden estar vacíos (se usarán NULL). Si llenas con un ID, debe existir en la base de datos.');
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                
+                $nota_fila++;
+                $sheet->setCellValue('A' . $nota_fila, '• Estatus: Puede estar vacío (se usará 1 "Activo" por defecto) o usar un ID válido que exista en la tabla estatus.');
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                
+                $nota_fila++;
+                $sheet->setCellValue('A' . $nota_fila, '• Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15)');
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
             }
             
             // Usar directorio temporal
