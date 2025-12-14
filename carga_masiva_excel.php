@@ -1684,7 +1684,6 @@ class CargaMasivaExcel {
                 }
             }
         }
-        }
         
         if ($destinatario_id === null) {
             $this->errores[] = "Fila $fila: No se pudo encontrar o crear el destinatario: '{$valor_destinatario}'";
