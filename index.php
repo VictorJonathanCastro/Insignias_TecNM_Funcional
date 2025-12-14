@@ -20,18 +20,18 @@ require_once 'conexion.php';
 // Contar insignias otorgadas dinámicamente
 $total_insignias_otorgadas = 0;
 if ($conexion && !$conexion->connect_errno) {
-    // Intentar primero con T_insignias_otorgadas (tabla principal)
-    $resultado = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+    // Intentar primero con insigniasotorgadas (donde se guardan las nuevas insignias de carga masiva)
+    $resultado = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
     if ($resultado && $resultado->num_rows > 0) {
-        $consulta = $conexion->query("SELECT COUNT(*) as total FROM T_insignias_otorgadas");
+        $consulta = $conexion->query("SELECT COUNT(*) as total FROM insigniasotorgadas");
         if ($consulta && $fila = $consulta->fetch_assoc()) {
             $total_insignias_otorgadas = $fila['total'];
         }
     } else {
-        // Si no existe, intentar con insigniasotorgadas
-        $resultado = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        // Si no existe, intentar con T_insignias_otorgadas
+        $resultado = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
         if ($resultado && $resultado->num_rows > 0) {
-            $consulta = $conexion->query("SELECT COUNT(*) as total FROM insigniasotorgadas");
+            $consulta = $conexion->query("SELECT COUNT(*) as total FROM T_insignias_otorgadas");
             if ($consulta && $fila = $consulta->fetch_assoc()) {
                 $total_insignias_otorgadas = $fila['total'];
             }
