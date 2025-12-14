@@ -4,6 +4,11 @@
 // Proyecto Insignias TecNM
 // ========================================
 
+// Habilitar reporte de errores para depuración
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 // Iniciar sesión solo si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -27,9 +32,15 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
 }
 
 // Incluir librería para leer Excel
-if (!file_exists('vendor/autoload.php')) {
-    die('
-    <!DOCTYPE html>
+$vendor_path = __DIR__ . '/vendor/autoload.php';
+if (!file_exists($vendor_path)) {
+    // Limpiar cualquier salida previa
+    if (ob_get_level()) {
+        ob_clean();
+    }
+    http_response_code(200); // Cambiar a 200 para mostrar el mensaje de error correctamente
+    header('Content-Type: text/html; charset=UTF-8');
+    echo '<!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
@@ -103,11 +114,42 @@ if (!file_exists('vendor/autoload.php')) {
             <a href="modulo_de_administracion.php" class="btn">← Volver al Panel</a>
         </div>
     </body>
-    </html>
-    ');
+    </html>';
+    exit();
 }
 
-require_once 'vendor/autoload.php';
+try {
+    require_once $vendor_path;
+} catch (Throwable $e) {
+    // Limpiar cualquier salida previa
+    if (ob_get_level()) {
+        ob_clean();
+    }
+    http_response_code(500);
+    header('Content-Type: text/html; charset=UTF-8');
+    echo '<!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Error - Carga Masiva</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+            .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+            h1 { color: #dc3545; }
+            .error-details { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; font-family: monospace; white-space: pre-wrap; }
+        </style>
+    </head>
+    <body>
+        <div class="error-box">
+            <h1>Error al cargar dependencias</h1>
+            <p>No se pudo cargar la librería de Excel. Error:</p>
+            <div class="error-details">' . htmlspecialchars($e->getMessage()) . '</div>
+            <p><a href="modulo_de_administracion.php">← Volver al Panel</a></p>
+        </div>
+    </body>
+    </html>';
+    exit();
+}
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
@@ -2071,32 +2113,36 @@ class CargaMasivaExcel {
                 // Agregar nota importante para insigniasotorgadas
                 if ($nombre_hoja === 'insigniasotorgadas') {
                     $nota_fila = $ultima_fila + 2;
-                    $sheet->setCellValue('A' . $nota_fila, '📌 NOTAS IMPORTANTES:');
-                    $sheet->getStyle('A' . $nota_fila)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'))->setSize(12);
+                    $sheet->setCellValue('A' . $nota_fila, 'NOTAS IMPORTANTES:');
+                    $nota_style = $sheet->getStyle('A' . $nota_fila);
+                    $nota_font = $nota_style->getFont();
+                    $nota_font->setBold(true);
+                    $nota_font->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'));
+                    $nota_font->setSize(12);
                     $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                     
                     $nota_fila++;
-                    $sheet->setCellValue('A' . $nota_fila, '• Destinatario: Usa el NOMBRE COMPLETO del estudiante (ej: "Juan Pérez Gómez"). NO uses IDs numéricos.');
-                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
-                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
-                    
-                    $nota_fila++;
-                    $sheet->setCellValue('A' . $nota_fila, '• Codigo_Insignia: Puede estar vacío (se generará automáticamente) o usar un código único. Si ya existe, se generará uno nuevo.');
-                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
-                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
-                    
-                    $nota_fila++;
-                    $sheet->setCellValue('A' . $nota_fila, '• Periodo_Emision, Responsable_Emision: Pueden estar vacíos (se usarán NULL). Si llenas con un ID, debe existir en la base de datos.');
+                    $sheet->setCellValue('A' . $nota_fila, '- Destinatario: Usa el NOMBRE COMPLETO del estudiante (ej: "Juan Perez Gomez"). NO uses IDs numericos.');
                     $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                     $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
                     
                     $nota_fila++;
-                    $sheet->setCellValue('A' . $nota_fila, '• Estatus: Puede estar vacío (se usará 1 "Activo" por defecto) o usar un ID válido que exista en la tabla estatus.');
+                    $sheet->setCellValue('A' . $nota_fila, '- Codigo_Insignia: Puede estar vacio (se generara automaticamente) o usar un codigo unico. Si ya existe, se generara uno nuevo.');
                     $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                     $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
                     
                     $nota_fila++;
-                    $sheet->setCellValue('A' . $nota_fila, '• Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15)');
+                    $sheet->setCellValue('A' . $nota_fila, '- Periodo_Emision, Responsable_Emision: Pueden estar vacios (se usaran NULL). Si llenas con un ID, debe existir en la base de datos.');
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                    
+                    $nota_fila++;
+                    $sheet->setCellValue('A' . $nota_fila, '- Estatus: Puede estar vacio (se usara 1 "Activo" por defecto) o usar un ID valido que exista en la tabla estatus.');
+                    $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                    $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                    
+                    $nota_fila++;
+                    $sheet->setCellValue('A' . $nota_fila, '- Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15)');
                     $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                     $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
                 }
@@ -2323,39 +2369,46 @@ class CargaMasivaExcel {
             }
             
             // Ajustar ancho de columnas automáticamente
-            foreach (range('A', $ultima_col) as $columna) {
-                $sheet->getColumnDimension($columna)->setAutoSize(true);
+            // Convertir última columna a número para usar range de forma segura
+            $num_cols = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($ultima_col);
+            for ($i = 1; $i <= $num_cols; $i++) {
+                $col_letter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($i);
+                $sheet->getColumnDimension($col_letter)->setAutoSize(true);
             }
             
             // Agregar nota importante para insignias_otorgadas
             if ($tipo === 'insignias_otorgadas') {
                 $nota_fila = $ultima_fila + 2;
-                $sheet->setCellValue('A' . $nota_fila, '📌 NOTAS IMPORTANTES:');
-                $sheet->getStyle('A' . $nota_fila)->getFont()->setBold(true)->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'))->setSize(12);
+                $sheet->setCellValue('A' . $nota_fila, 'NOTAS IMPORTANTES:');
+                $nota_style = $sheet->getStyle('A' . $nota_fila);
+                $nota_font = $nota_style->getFont();
+                $nota_font->setBold(true);
+                $nota_font->setColor(new \PhpOffice\PhpSpreadsheet\Style\Color('FF0000'));
+                $nota_font->setSize(12);
                 $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                 
                 $nota_fila++;
-                $sheet->setCellValue('A' . $nota_fila, '• Destinatario: Usa el NOMBRE COMPLETO del estudiante (ej: "Juan Pérez Gómez"). NO uses IDs numéricos.');
-                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
-                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
-                
-                $nota_fila++;
-                $sheet->setCellValue('A' . $nota_fila, '• Codigo_Insignia: Puede estar vacío (se generará automáticamente) o usar un código único. Si ya existe, se generará uno nuevo.');
-                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
-                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
-                
-                $nota_fila++;
-                $sheet->setCellValue('A' . $nota_fila, '• Periodo_Emision, Responsable_Emision: Pueden estar vacíos (se usarán NULL). Si llenas con un ID, debe existir en la base de datos.');
+                $sheet->setCellValue('A' . $nota_fila, '- Destinatario: Usa el NOMBRE COMPLETO del estudiante (ej: "Juan Perez Gomez"). NO uses IDs numericos.');
                 $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                 $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
                 
                 $nota_fila++;
-                $sheet->setCellValue('A' . $nota_fila, '• Estatus: Puede estar vacío (se usará 1 "Activo" por defecto) o usar un ID válido que exista en la tabla estatus.');
+                $sheet->setCellValue('A' . $nota_fila, '- Codigo_Insignia: Puede estar vacio (se generara automaticamente) o usar un codigo unico. Si ya existe, se generara uno nuevo.');
                 $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                 $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
                 
                 $nota_fila++;
-                $sheet->setCellValue('A' . $nota_fila, '• Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15)');
+                $sheet->setCellValue('A' . $nota_fila, '- Periodo_Emision, Responsable_Emision: Pueden estar vacios (se usaran NULL). Si llenas con un ID, debe existir en la base de datos.');
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                
+                $nota_fila++;
+                $sheet->setCellValue('A' . $nota_fila, '- Estatus: Puede estar vacio (se usara 1 "Activo" por defecto) o usar un ID valido que exista en la tabla estatus.');
+                $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
+                $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
+                
+                $nota_fila++;
+                $sheet->setCellValue('A' . $nota_fila, '- Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15)');
                 $sheet->mergeCells('A' . $nota_fila . ':' . $ultima_col . $nota_fila);
                 $sheet->getStyle('A' . $nota_fila)->getFont()->setSize(10);
             }

@@ -1,8 +1,0 @@
-warning: in the working copy of 'GUIA_SUBIR_PROYECTO_SSH.md', LF will be replaced by CRLF the next time Git touches it
-GUIA_SUBIR_PROYECTO_SSH.md
-[33m699bd73[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Actualizar categorías: Formación Integral, Docencia, Academia - Corregir estructura de categorías y subcategorías en formulario de metadatos
-[33mce1eb91[m Corregir SQL backup y agregar conexion.php.example con credenciales del servidor
-[33m07986e8[m Initial commit - Sistema de Insignias Digitales TecNM
-[33m21cc232[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix: Reducir testimonios a solo 4
-[33m948d1b2[m Fix: Quitar 255 del texto inferior y corregir carrusel horizontal de testimonios
-[33m2e8b76a[m Fix: Ajustar tamaño de cuadro instituciones, cambiar texto a 255 y eliminar tarjeta Billetera Digital
