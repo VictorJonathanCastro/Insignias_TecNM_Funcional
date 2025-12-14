@@ -4,45 +4,64 @@
 // Proyecto Insignias TecNM
 // ========================================
 
+// Habilitar reporte de errores para depuración (ANTES de cualquier output)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+
 // Iniciar output buffering para evitar problemas con headers
 if (!ob_get_level()) {
     ob_start();
 }
 
-// Habilitar reporte de errores para depuración
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
 // Iniciar sesión solo si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    @session_start();
 }
 
 // Solo ejecutar el código principal si el archivo se accede directamente
 // (no cuando se incluye desde otro archivo)
 if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
     try {
-        require_once 'conexion.php';
+        // Cargar conexión con supresión de errores para capturarlos manualmente
+        $conexion_loaded = @include_once 'conexion.php';
+        
+        if ($conexion_loaded === false) {
+            throw new Exception("No se pudo cargar el archivo conexion.php");
+        }
         
         // Verificar que la conexión se haya establecido
-        if (!isset($conexion) || !$conexion) {
-            throw new Exception("No se pudo establecer la conexión a la base de datos");
+        if (!isset($conexion)) {
+            throw new Exception("Variable \$conexion no definida después de cargar conexion.php");
+        }
+        
+        if (!$conexion) {
+            throw new Exception("Conexión a base de datos es null o false");
+        }
+        
+        if (isset($conexion->connect_errno) && $conexion->connect_errno) {
+            throw new Exception("Error de conexión a MySQL: " . ($conexion->connect_error ?? "Desconocido"));
         }
         
         // Verificar sesión de administrador
         if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'Admin') {
+            if (ob_get_level()) {
+                ob_clean();
+            }
             header('Location: login.php');
             exit();
         }
     } catch (Exception $e) {
-        // Limpiar cualquier salida previa
-        if (ob_get_level()) {
-            ob_clean();
+        // Limpiar cualquier salida previa (incluyendo de conexion.php)
+        while (ob_get_level()) {
+            ob_end_clean();
         }
         error_log("Error en carga_masiva_excel.php (inicio): " . $e->getMessage());
-        http_response_code(500);
-        header('Content-Type: text/html; charset=UTF-8');
+        // No usar http_response_code(500) aquí, usar 200 para mostrar el error
+        if (!headers_sent()) {
+            http_response_code(200);
+            header('Content-Type: text/html; charset=UTF-8');
+        }
         echo '<!DOCTYPE html>
         <html lang="es">
         <head>
@@ -65,13 +84,16 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
         </html>';
         exit();
     } catch (Error $e) {
-        // Limpiar cualquier salida previa
-        if (ob_get_level()) {
-            ob_clean();
+        // Limpiar cualquier salida previa (incluyendo de conexion.php)
+        while (ob_get_level()) {
+            ob_end_clean();
         }
         error_log("Error fatal en carga_masiva_excel.php (inicio): " . $e->getMessage());
-        http_response_code(500);
-        header('Content-Type: text/html; charset=UTF-8');
+        // No usar http_response_code(500) aquí, usar 200 para mostrar el error
+        if (!headers_sent()) {
+            http_response_code(200);
+            header('Content-Type: text/html; charset=UTF-8');
+        }
         echo '<!DOCTYPE html>
         <html lang="es">
         <head>
