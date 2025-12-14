@@ -12,8 +12,15 @@
         }
     },
     "config": {
-        "disable-tls": true
+        "disable-tls": true,
+        "secure-http": false
     },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "http://repo.packagist.org"
+        }
+    ],
     "minimum-stability": "stable",
     "prefer-stable": true
 }
