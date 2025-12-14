@@ -1450,18 +1450,18 @@ function formatearFecha($fecha) {
                             <div class="insignia-actions">
                                 <?php if ($rol_usuario === 'Admin' || $rol_usuario === 'Administrador' || $rol_usuario === 'SuperUsuario'): ?>
                                     <!-- Enlaces para administradores -->
-                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver" target="_blank">
+                                    <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>&solo=1" class="btn-action btn-ver" target="_blank">
                                         🏆 Ver Certificado
                                     </a>
-                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank">
+                                    <a href="ver_validacion_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank">
                                         🔍 Ver Validación
                                     </a>
                                 <?php else: ?>
                                     <!-- Enlaces para usuarios normales -->
-                                    <a href="ver_insignia_completa.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-ver">
+                                    <a href="ver_insignia_completa_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>&solo=1" class="btn-action btn-ver" target="_blank">
                                         ⭐ Ver Reconocimiento
                                     </a>
-                                    <a href="validacion.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar">
+                                    <a href="ver_validacion_publica.php?insignia=<?php echo urlencode($insignia['clave_insignia']); ?>" class="btn-action btn-validar" target="_blank">
                                         ✓ Ver Validación
                                     </a>
                                 <?php endif; ?>
