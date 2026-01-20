@@ -384,6 +384,186 @@ if (isset($_POST['guardar_subcategoria'])) {
     }
 }
 
+// ============================================
+// PROCESAMIENTO DE OPERACIONES CRUD PARA MODAL OPCIONES
+// ============================================
+
+$mensaje_opciones = '';
+$mensaje_error_opciones = '';
+
+// Operaciones CRUD para Destinatarios
+if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'destinatario') {
+    try {
+        if ($_POST['operacion'] == 'crear') {
+            $nombre = limpiarEntrada($_POST['nombre_completo'] ?? '');
+            $curp = limpiarEntrada($_POST['curp'] ?? '');
+            $correo = limpiarEntrada($_POST['correo'] ?? '');
+            $matricula = limpiarEntrada($_POST['matricula'] ?? '');
+            $itcentro = intval($_POST['itcentro'] ?? 0);
+            
+            $stmt = $conexion->prepare("INSERT INTO destinatario (Nombre_Completo, Curp, Correo, Matricula, ITCentro) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssi", $nombre, $curp, $correo, $matricula, $itcentro);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Destinatario creado exitosamente";
+        } elseif ($_POST['operacion'] == 'editar') {
+            $id = intval($_POST['id']);
+            $nombre = limpiarEntrada($_POST['nombre_completo'] ?? '');
+            $curp = limpiarEntrada($_POST['curp'] ?? '');
+            $correo = limpiarEntrada($_POST['correo'] ?? '');
+            $matricula = limpiarEntrada($_POST['matricula'] ?? '');
+            $itcentro = intval($_POST['itcentro'] ?? 0);
+            
+            $stmt = $conexion->prepare("UPDATE destinatario SET Nombre_Completo=?, Curp=?, Correo=?, Matricula=?, ITCentro=? WHERE ID_destinatario=?");
+            $stmt->bind_param("ssssii", $nombre, $curp, $correo, $matricula, $itcentro, $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Destinatario actualizado exitosamente";
+        } elseif ($_POST['operacion'] == 'eliminar') {
+            $id = intval($_POST['id']);
+            $stmt = $conexion->prepare("DELETE FROM destinatario WHERE ID_destinatario=?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Destinatario eliminado exitosamente";
+        }
+    } catch (Exception $e) {
+        $mensaje_error_opciones = "Error: " . $e->getMessage();
+    }
+}
+
+// Operaciones CRUD para T_insignias
+if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'T_insignias') {
+    try {
+        if ($_POST['operacion'] == 'crear') {
+            $tipo_insignia = intval($_POST['tipo_insignia'] ?? 0);
+            $propone_insignia = intval($_POST['propone_insignia'] ?? 0);
+            $programa = limpiarEntrada($_POST['programa'] ?? '');
+            $descripcion = limpiarEntrada($_POST['descripcion'] ?? '');
+            $criterio = limpiarEntrada($_POST['criterio'] ?? '');
+            $fecha_creacion = $_POST['fecha_creacion'] ?? date('Y-m-d');
+            $fecha_autorizacion = $_POST['fecha_autorizacion'] ?? date('Y-m-d');
+            $nombre_gen_ins = limpiarEntrada($_POST['nombre_gen_ins'] ?? '');
+            $estatus = intval($_POST['estatus'] ?? 1);
+            $archivo_visual = limpiarEntrada($_POST['archivo_visual'] ?? '');
+            
+            $stmt = $conexion->prepare("INSERT INTO T_insignias (Tipo_Insignia, Propone_Insignia, Programa, Descripcion, Criterio, Fecha_Creacion, Fecha_Autorizacion, Nombre_gen_ins, Estatus, Archivo_Visual) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("iissssssis", $tipo_insignia, $propone_insignia, $programa, $descripcion, $criterio, $fecha_creacion, $fecha_autorizacion, $nombre_gen_ins, $estatus, $archivo_visual);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Insignia maestra creada exitosamente";
+        } elseif ($_POST['operacion'] == 'editar') {
+            $id = intval($_POST['id']);
+            $tipo_insignia = intval($_POST['tipo_insignia'] ?? 0);
+            $propone_insignia = intval($_POST['propone_insignia'] ?? 0);
+            $programa = limpiarEntrada($_POST['programa'] ?? '');
+            $descripcion = limpiarEntrada($_POST['descripcion'] ?? '');
+            $criterio = limpiarEntrada($_POST['criterio'] ?? '');
+            $fecha_creacion = $_POST['fecha_creacion'] ?? '';
+            $fecha_autorizacion = $_POST['fecha_autorizacion'] ?? '';
+            $nombre_gen_ins = limpiarEntrada($_POST['nombre_gen_ins'] ?? '');
+            $estatus = intval($_POST['estatus'] ?? 1);
+            $archivo_visual = limpiarEntrada($_POST['archivo_visual'] ?? '');
+            
+            $stmt = $conexion->prepare("UPDATE T_insignias SET Tipo_Insignia=?, Propone_Insignia=?, Programa=?, Descripcion=?, Criterio=?, Fecha_Creacion=?, Fecha_Autorizacion=?, Nombre_gen_ins=?, Estatus=?, Archivo_Visual=? WHERE id=?");
+            $stmt->bind_param("iissssssisi", $tipo_insignia, $propone_insignia, $programa, $descripcion, $criterio, $fecha_creacion, $fecha_autorizacion, $nombre_gen_ins, $estatus, $archivo_visual, $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Insignia maestra actualizada exitosamente";
+        } elseif ($_POST['operacion'] == 'eliminar') {
+            $id = intval($_POST['id']);
+            $stmt = $conexion->prepare("DELETE FROM T_insignias WHERE id=?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Insignia maestra eliminada exitosamente";
+        }
+    } catch (Exception $e) {
+        $mensaje_error_opciones = "Error: " . $e->getMessage();
+    }
+}
+
+// Operaciones CRUD para Categorías
+if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'categorias') {
+    try {
+        if ($_POST['operacion'] == 'editar') {
+            $id = intval($_POST['id']);
+            $nombre = limpiarEntrada($_POST['nombre'] ?? '');
+            
+            $check_id = $conexion->query("SHOW COLUMNS FROM cat_insignias LIKE 'id'");
+            $tiene_id = ($check_id && $check_id->num_rows > 0);
+            $campo_id = $tiene_id ? 'id' : 'ID_cat';
+            
+            $stmt = $conexion->prepare("UPDATE cat_insignias SET Nombre_cat=? WHERE $campo_id=?");
+            $stmt->bind_param("si", $nombre, $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Categoría actualizada exitosamente";
+        } elseif ($_POST['operacion'] == 'eliminar') {
+            $id = intval($_POST['id']);
+            
+            $check_id = $conexion->query("SHOW COLUMNS FROM cat_insignias LIKE 'id'");
+            $tiene_id = ($check_id && $check_id->num_rows > 0);
+            $campo_id = $tiene_id ? 'id' : 'ID_cat';
+            
+            $stmt = $conexion->prepare("DELETE FROM cat_insignias WHERE $campo_id=?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Categoría eliminada exitosamente";
+        }
+    } catch (Exception $e) {
+        $mensaje_error_opciones = "Error: " . $e->getMessage();
+    }
+}
+
+// Operaciones CRUD para Subcategorías
+if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'subcategorias') {
+    try {
+        if ($_POST['operacion'] == 'editar') {
+            $id = intval($_POST['id']);
+            $nombre = limpiarEntrada($_POST['nombre'] ?? '');
+            $categoria_id = intval($_POST['categoria_id'] ?? 0);
+            
+            $check_id = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'id'");
+            $tiene_id = ($check_id && $check_id->num_rows > 0);
+            $campo_id = $tiene_id ? 'id' : 'ID_tipo';
+            
+            $check_nombre = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+            $tiene_nombre_insignia = ($check_nombre && $check_nombre->num_rows > 0);
+            $campo_nombre = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
+            
+            $check_cat = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Cat_ins'");
+            $tiene_cat = ($check_cat && $check_cat->num_rows > 0);
+            
+            if ($tiene_cat) {
+                $stmt = $conexion->prepare("UPDATE tipo_insignia SET $campo_nombre=?, Cat_ins=? WHERE $campo_id=?");
+                $stmt->bind_param("sii", $nombre, $categoria_id, $id);
+            } else {
+                $stmt = $conexion->prepare("UPDATE tipo_insignia SET $campo_nombre=? WHERE $campo_id=?");
+                $stmt->bind_param("si", $nombre, $id);
+            }
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Subcategoría actualizada exitosamente";
+        } elseif ($_POST['operacion'] == 'eliminar') {
+            $id = intval($_POST['id']);
+            
+            $check_id = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'id'");
+            $tiene_id = ($check_id && $check_id->num_rows > 0);
+            $campo_id = $tiene_id ? 'id' : 'ID_tipo';
+            
+            $stmt = $conexion->prepare("DELETE FROM tipo_insignia WHERE $campo_id=?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Subcategoría eliminada exitosamente";
+        }
+    } catch (Exception $e) {
+        $mensaje_error_opciones = "Error: " . $e->getMessage();
+    }
+}
+
 // Registro de Insignia Otorgada
 if (isset($_POST['guardar_insignia_otorgada'])) {
     try {
@@ -1397,6 +1577,68 @@ ob_clean();
         font-size: 12px;
       }
       
+      /* Estilos para Modal Opciones */
+      .tab-opciones-btn.active {
+        background: #6c757d !important;
+        color: white !important;
+        border-bottom: 3px solid #28a745 !important;
+      }
+      
+      .tab-opciones-content {
+        display: none;
+      }
+      
+      .tab-opciones-content.active {
+        display: block;
+      }
+      
+      #modalOpciones table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      
+      #modalOpciones table th,
+      #modalOpciones table td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+      }
+      
+      #modalOpciones table th {
+        background: #6c757d;
+        color: white;
+        font-weight: 600;
+      }
+      
+      #modalOpciones table tr:hover {
+        background: #f8f9fa;
+      }
+      
+      #modalOpciones .btn-accion {
+        padding: 5px 10px;
+        margin: 2px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      
+      #modalOpciones .btn-editar {
+        background: #17a2b8;
+        color: white;
+      }
+      
+      #modalOpciones .btn-eliminar {
+        background: #dc3545;
+        color: white;
+      }
+      
+      #modalOpciones .btn-accion:hover {
+        opacity: 0.8;
+        transform: scale(1.05);
+      }
+      
       th, td {
         padding: 8px 4px;
         font-size: 11px;
@@ -2267,6 +2509,297 @@ ob_clean();
      });
     
     // ========================================
+    // FUNCIONES PARA MODAL OPCIONES CRUD
+    // ========================================
+    
+    function abrirModalOpciones() {
+        document.getElementById('modalOpciones').style.display = 'block';
+        mostrarTabOpciones('tab-destinatarios');
+        cargarDestinatarios();
+    }
+    
+    function cerrarModalOpciones() {
+        document.getElementById('modalOpciones').style.display = 'none';
+    }
+    
+    function mostrarTabOpciones(tabId) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.tab-opciones-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-opciones-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Mostrar el tab seleccionado
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+        
+        // Cargar datos según el tab
+        if (tabId === 'tab-destinatarios') {
+            cargarDestinatarios();
+        } else if (tabId === 'tab-insignias') {
+            cargarInsignias();
+        } else if (tabId === 'tab-categorias') {
+            cargarCategorias();
+        } else if (tabId === 'tab-subcategorias') {
+            cargarSubcategorias();
+        }
+    }
+    
+    // Funciones para cargar listas
+    function cargarDestinatarios() {
+        fetch('ajax_opciones.php?tabla=destinatario&accion=listar')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('lista-destinatarios').innerHTML = html;
+            });
+    }
+    
+    function cargarInsignias() {
+        fetch('ajax_opciones.php?tabla=T_insignias&accion=listar')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('lista-insignias').innerHTML = html;
+            });
+    }
+    
+    function cargarCategorias() {
+        fetch('ajax_opciones.php?tabla=categorias&accion=listar')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('lista-categorias').innerHTML = html;
+            });
+    }
+    
+    function cargarSubcategorias() {
+        fetch('ajax_opciones.php?tabla=subcategorias&accion=listar')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('lista-subcategorias').innerHTML = html;
+            });
+    }
+    
+    // Funciones para mostrar formularios
+    function mostrarFormDestinatario(operacion, id = null) {
+        const formDiv = document.getElementById('form-destinatario');
+        formDiv.style.display = 'block';
+        
+        if (operacion === 'crear') {
+            formDiv.innerHTML = `
+                <h4>Crear Nuevo Destinatario</h4>
+                <form method="POST" onsubmit="return confirmarOperacion('destinatario', 'crear')">
+                    <input type="hidden" name="accion_opciones" value="destinatario">
+                    <input type="hidden" name="operacion" value="crear">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label>Nombre Completo:</label>
+                            <input type="text" name="nombre_completo" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>CURP:</label>
+                            <input type="text" name="curp" maxlength="18" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Correo:</label>
+                            <input type="email" name="correo" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Matrícula:</label>
+                            <input type="text" name="matricula" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>IT Centro:</label>
+                            <input type="number" name="itcentro" required style="width: 100%; padding: 8px;">
+                        </div>
+                    </div>
+                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Guardar</button>
+                    <button type="button" onclick="document.getElementById('form-destinatario').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+                </form>
+            `;
+        } else {
+            // Cargar datos para editar
+            fetch(`ajax_opciones.php?tabla=destinatario&accion=obtener&id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    formDiv.innerHTML = `
+                        <h4>Editar Destinatario</h4>
+                        <form method="POST" onsubmit="return confirmarOperacion('destinatario', 'editar')">
+                            <input type="hidden" name="accion_opciones" value="destinatario">
+                            <input type="hidden" name="operacion" value="editar">
+                            <input type="hidden" name="id" value="${data.ID_destinatario}">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div>
+                                    <label>Nombre Completo:</label>
+                                    <input type="text" name="nombre_completo" value="${data.Nombre_Completo || ''}" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div>
+                                    <label>CURP:</label>
+                                    <input type="text" name="curp" value="${data.Curp || ''}" maxlength="18" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div>
+                                    <label>Correo:</label>
+                                    <input type="email" name="correo" value="${data.Correo || ''}" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div>
+                                    <label>Matrícula:</label>
+                                    <input type="text" name="matricula" value="${data.Matricula || ''}" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div>
+                                    <label>IT Centro:</label>
+                                    <input type="number" name="itcentro" value="${data.ITCentro || ''}" required style="width: 100%; padding: 8px;">
+                                </div>
+                            </div>
+                            <button type="submit" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Actualizar</button>
+                            <button type="button" onclick="document.getElementById('form-destinatario').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+                        </form>
+                    `;
+                });
+        }
+    }
+    
+    function mostrarFormInsignia(operacion, id = null) {
+        const formDiv = document.getElementById('form-insignia');
+        formDiv.style.display = 'block';
+        
+        if (operacion === 'crear') {
+            formDiv.innerHTML = `
+                <h4>Crear Nueva Insignia Maestra</h4>
+                <form method="POST" onsubmit="return confirmarOperacion('T_insignias', 'crear')">
+                    <input type="hidden" name="accion_opciones" value="T_insignias">
+                    <input type="hidden" name="operacion" value="crear">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label>Tipo Insignia (ID):</label>
+                            <input type="number" name="tipo_insignia" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Propone Insignia (ID):</label>
+                            <input type="number" name="propone_insignia" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Programa:</label>
+                            <input type="text" name="programa" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Estatus:</label>
+                            <input type="number" name="estatus" value="1" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label>Descripción:</label>
+                            <textarea name="descripcion" required style="width: 100%; padding: 8px; min-height: 100px;"></textarea>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <label>Criterio:</label>
+                            <textarea name="criterio" required style="width: 100%; padding: 8px; min-height: 80px;"></textarea>
+                        </div>
+                        <div>
+                            <label>Fecha Creación:</label>
+                            <input type="date" name="fecha_creacion" value="${new Date().toISOString().split('T')[0]}" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Fecha Autorización:</label>
+                            <input type="date" name="fecha_autorizacion" value="${new Date().toISOString().split('T')[0]}" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Nombre Gen Ins:</label>
+                            <input type="text" name="nombre_gen_ins" style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Archivo Visual:</label>
+                            <input type="text" name="archivo_visual" style="width: 100%; padding: 8px;">
+                        </div>
+                    </div>
+                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Guardar</button>
+                    <button type="button" onclick="document.getElementById('form-insignia').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+                </form>
+            `;
+        } else {
+            // Similar para editar
+            fetch(`ajax_opciones.php?tabla=T_insignias&accion=obtener&id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    formDiv.innerHTML = `
+                        <h4>Editar Insignia Maestra</h4>
+                        <form method="POST" onsubmit="return confirmarOperacion('T_insignias', 'editar')">
+                            <input type="hidden" name="accion_opciones" value="T_insignias">
+                            <input type="hidden" name="operacion" value="editar">
+                            <input type="hidden" name="id" value="${data.id}">
+                            <!-- Similar estructura pero con valores de data -->
+                            <button type="submit" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Actualizar</button>
+                            <button type="button" onclick="document.getElementById('form-insignia').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+                        </form>
+                    `;
+                });
+        }
+    }
+    
+    function confirmarOperacion(tabla, operacion) {
+        if (operacion === 'eliminar') {
+            return confirm('¿Estás seguro de que deseas eliminar este registro?');
+        }
+        return true;
+    }
+    
+    function eliminarRegistro(tabla, id) {
+        if (confirm('¿Estás seguro de que deseas eliminar este registro?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.innerHTML = `
+                <input type="hidden" name="accion_opciones" value="${tabla}">
+                <input type="hidden" name="operacion" value="eliminar">
+                <input type="hidden" name="id" value="${id}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function editarCategoria(id, nombre) {
+        const nuevoNombre = prompt('Editar nombre de categoría:', nombre);
+        if (nuevoNombre !== null && nuevoNombre.trim() !== '') {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.innerHTML = `
+                <input type="hidden" name="accion_opciones" value="categorias">
+                <input type="hidden" name="operacion" value="editar">
+                <input type="hidden" name="id" value="${id}">
+                <input type="hidden" name="nombre" value="${nuevoNombre}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function editarSubcategoria(id, nombre, categoria_id) {
+        const nuevoNombre = prompt('Editar nombre de subcategoría:', nombre);
+        if (nuevoNombre !== null && nuevoNombre.trim() !== '') {
+            const nuevaCategoria = prompt('Editar ID de categoría:', categoria_id);
+            if (nuevaCategoria !== null) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = `
+                    <input type="hidden" name="accion_opciones" value="subcategorias">
+                    <input type="hidden" name="operacion" value="editar">
+                    <input type="hidden" name="id" value="${id}">
+                    <input type="hidden" name="nombre" value="${nuevoNombre}">
+                    <input type="hidden" name="categoria_id" value="${nuevaCategoria}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    }
+    
+    // Cerrar modal al hacer clic fuera
+    window.onclick = function(event) {
+        const modal = document.getElementById('modalOpciones');
+        if (event.target == modal) {
+            cerrarModalOpciones();
+        }
+    }
+    
+    // ========================================
     // FUNCIONES PARA ASIGNACIÓN DE INSIGNIAS
     // ========================================
     
@@ -2540,6 +3073,7 @@ ob_clean();
         <button onclick="mostrarTab('tab4')">Registro</button>
         <button onclick="window.location.href='historial_insignias.php'">Historial</button>
         <button onclick="window.location.href='carga_masiva_excel.php'" style="background: linear-gradient(135deg, #28a745, #20c997);">📊 Carga Masiva</button>
+        <button onclick="abrirModalOpciones()" style="background: linear-gradient(135deg, #6c757d, #5a6268);">⚙️ Opciones</button>
         <?php if (esSuperUsuario()): ?>
           <button onclick="mostrarTab('tab5')" style="background: linear-gradient(135deg, #dc3545, #c82333);">🔧 Configuración</button>
           <button onclick="mostrarTab('tab6')" style="background: linear-gradient(135deg, #6f42c1, #5a2d91);">👥 Gestión Admin</button>
@@ -3045,6 +3579,96 @@ ob_clean();
       </div>
     </div>
         <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL OPCIONES CRUD -->
+  <div id="modalOpciones" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; overflow-y: auto;">
+    <div style="background: white; margin: 50px auto; max-width: 95%; width: 1200px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative;">
+      <div style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white; padding: 20px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="margin: 0;">⚙️ Opciones de Administración</h2>
+        <button onclick="cerrarModalOpciones()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 15px; border-radius: 5px;">&times;</button>
+      </div>
+      
+      <?php if ($mensaje_opciones): ?>
+        <div style="background: #d4edda; color: #155724; padding: 15px; margin: 15px; border-radius: 5px; border-left: 4px solid #28a745;">
+          <?php echo htmlspecialchars($mensaje_opciones); ?>
+        </div>
+      <?php endif; ?>
+      
+      <?php if ($mensaje_error_opciones): ?>
+        <div style="background: #f8d7da; color: #721c24; padding: 15px; margin: 15px; border-radius: 5px; border-left: 4px solid #dc3545;">
+          <?php echo htmlspecialchars($mensaje_error_opciones); ?>
+        </div>
+      <?php endif; ?>
+      
+      <!-- Pestañas del Modal -->
+      <div style="display: flex; border-bottom: 2px solid #e9ecef; background: #f8f9fa;">
+        <button onclick="mostrarTabOpciones('tab-destinatarios')" class="tab-opciones-btn active" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">👤 Destinatarios</button>
+        <button onclick="mostrarTabOpciones('tab-insignias')" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">🎖️ Insignias Maestras</button>
+        <button onclick="mostrarTabOpciones('tab-categorias')" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📁 Categorías</button>
+        <button onclick="mostrarTabOpciones('tab-subcategorias')" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📂 Subcategorías</button>
+      </div>
+      
+      <div style="padding: 20px;">
+        <!-- Tab Destinatarios -->
+        <div id="tab-destinatarios" class="tab-opciones-content active">
+          <h3>Gestión de Destinatarios</h3>
+          <div style="margin-bottom: 20px;">
+            <button onclick="mostrarFormDestinatario('crear')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">➕ Crear Nuevo</button>
+            <button onclick="cargarDestinatarios()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+          </div>
+          <div id="lista-destinatarios" style="max-height: 500px; overflow-y: auto;">
+            <!-- Se carga dinámicamente -->
+          </div>
+          <div id="form-destinatario" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+            <!-- Formulario se carga dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Tab Insignias Maestras -->
+        <div id="tab-insignias" class="tab-opciones-content">
+          <h3>Gestión de Insignias Maestras (T_insignias)</h3>
+          <div style="margin-bottom: 20px;">
+            <button onclick="mostrarFormInsignia('crear')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">➕ Crear Nueva</button>
+            <button onclick="cargarInsignias()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+          </div>
+          <div id="lista-insignias" style="max-height: 500px; overflow-y: auto;">
+            <!-- Se carga dinámicamente -->
+          </div>
+          <div id="form-insignia" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+            <!-- Formulario se carga dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Tab Categorías -->
+        <div id="tab-categorias" class="tab-opciones-content">
+          <h3>Gestión de Categorías</h3>
+          <div style="margin-bottom: 20px;">
+            <button onclick="cargarCategorias()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+          </div>
+          <div id="lista-categorias" style="max-height: 500px; overflow-y: auto;">
+            <!-- Se carga dinámicamente -->
+          </div>
+          <div id="form-categoria" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+            <!-- Formulario se carga dinámicamente -->
+          </div>
+        </div>
+        
+        <!-- Tab Subcategorías -->
+        <div id="tab-subcategorias" class="tab-opciones-content">
+          <h3>Gestión de Subcategorías</h3>
+          <div style="margin-bottom: 20px;">
+            <button onclick="cargarSubcategorias()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+          </div>
+          <div id="lista-subcategorias" style="max-height: 500px; overflow-y: auto;">
+            <!-- Se carga dinámicamente -->
+          </div>
+          <div id="form-subcategoria" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+            <!-- Formulario se carga dinámicamente -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
