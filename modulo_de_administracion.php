@@ -1585,11 +1585,11 @@ ob_clean();
       }
       
       .tab-opciones-content {
-        display: none;
+        display: none !important;
       }
       
       .tab-opciones-content.active {
-        display: block;
+        display: block !important;
       }
       
       #modalOpciones table {
@@ -2513,9 +2513,19 @@ ob_clean();
     // ========================================
     
     function abrirModalOpciones() {
-        document.getElementById('modalOpciones').style.display = 'block';
-        mostrarTabOpciones('tab-destinatarios');
-        cargarDestinatarios();
+        const modal = document.getElementById('modalOpciones');
+        if (!modal) {
+            console.error('No se encontró el modal modalOpciones');
+            return;
+        }
+        modal.style.display = 'block';
+        // Activar la primera pestaña y cargar sus datos
+        const firstBtn = document.querySelector('.tab-opciones-btn');
+        if (firstBtn) {
+            mostrarTabOpciones('tab-destinatarios', firstBtn);
+        } else {
+            mostrarTabOpciones('tab-destinatarios');
+        }
     }
     
     function cerrarModalOpciones() {
@@ -2551,47 +2561,112 @@ ob_clean();
         }
         
         // Cargar datos según el tab
+        console.log('Cambiando a pestaña:', tabId);
         if (tabId === 'tab-destinatarios') {
+            console.log('Cargando destinatarios...');
             cargarDestinatarios();
         } else if (tabId === 'tab-insignias') {
+            console.log('Cargando insignias...');
             cargarInsignias();
         } else if (tabId === 'tab-categorias') {
+            console.log('Cargando categorías...');
             cargarCategorias();
         } else if (tabId === 'tab-subcategorias') {
+            console.log('Cargando subcategorías...');
             cargarSubcategorias();
         }
     }
     
     // Funciones para cargar listas
     function cargarDestinatarios() {
+        const listaDiv = document.getElementById('lista-destinatarios');
+        if (!listaDiv) {
+            console.error('No se encontró el elemento lista-destinatarios');
+            return;
+        }
+        listaDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
         fetch('ajax_opciones.php?tabla=destinatario&accion=listar')
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta: ' + response.status);
+                }
+                return response.text();
+            })
             .then(html => {
-                document.getElementById('lista-destinatarios').innerHTML = html;
+                listaDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error al cargar destinatarios:', error);
+                listaDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error al cargar los datos: ' + error.message + '</div>';
             });
     }
     
     function cargarInsignias() {
+        const listaDiv = document.getElementById('lista-insignias');
+        if (!listaDiv) {
+            console.error('No se encontró el elemento lista-insignias');
+            return;
+        }
+        listaDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
         fetch('ajax_opciones.php?tabla=T_insignias&accion=listar')
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta: ' + response.status);
+                }
+                return response.text();
+            })
             .then(html => {
-                document.getElementById('lista-insignias').innerHTML = html;
+                listaDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error al cargar insignias:', error);
+                listaDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error al cargar los datos: ' + error.message + '</div>';
             });
     }
     
     function cargarCategorias() {
+        const listaDiv = document.getElementById('lista-categorias');
+        if (!listaDiv) {
+            console.error('No se encontró el elemento lista-categorias');
+            return;
+        }
+        listaDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
         fetch('ajax_opciones.php?tabla=categorias&accion=listar')
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta: ' + response.status);
+                }
+                return response.text();
+            })
             .then(html => {
-                document.getElementById('lista-categorias').innerHTML = html;
+                listaDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error al cargar categorías:', error);
+                listaDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error al cargar los datos: ' + error.message + '</div>';
             });
     }
     
     function cargarSubcategorias() {
+        const listaDiv = document.getElementById('lista-subcategorias');
+        if (!listaDiv) {
+            console.error('No se encontró el elemento lista-subcategorias');
+            return;
+        }
+        listaDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
         fetch('ajax_opciones.php?tabla=subcategorias&accion=listar')
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta: ' + response.status);
+                }
+                return response.text();
+            })
             .then(html => {
-                document.getElementById('lista-subcategorias').innerHTML = html;
+                listaDiv.innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error al cargar subcategorías:', error);
+                listaDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error al cargar los datos: ' + error.message + '</div>';
             });
     }
     
