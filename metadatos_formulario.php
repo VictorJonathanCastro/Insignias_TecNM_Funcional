@@ -2190,10 +2190,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button type="button" class="btn-primary" style="background:#ffc107 !important; border:none !important; color:#000 !important;" onclick="abrirModalFirmaSAT()">
-                <i class="fas fa-file-signature"></i>
-                Firma electrónica (SAT)
-            </button>
             <button type="submit" class="btn-primary" id="btnRegistrar">
                 <i class="fas fa-medal"></i>
                 Registrar Reconocimiento
@@ -2278,104 +2274,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
     </script>
 
-    <!-- Modal Firma Electrónica (SAT) para firmar tras el registro -->
-    <div id="modalFirmaSAT" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999;">
-        <div style="max-width: 620px; margin: 60px auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.4);">
-            <div style="background: linear-gradient(135deg, #1b396a, #002855); color: white; padding: 16px 20px; display:flex; align-items:center; justify-content:space-between;">
-                <div style="font-weight: 800;">🔏 Firma electrónica (e.firma SAT)</div>
-                <button onclick="cerrarModalFirmaSAT()" style="background: transparent; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
-            </div>
-            <form id="formEFirmaSat" method="POST" action="firmar_certificado.php" enctype="multipart/form-data" style="padding: 20px;">
-                <!-- Campos de contexto (se llenan con JS usando los valores del formulario o sesión) -->
-                <input type="hidden" name="codigo_insignia" id="ef_codigo" value="<?php echo isset($_SESSION['insignia_data']['codigo']) ? htmlspecialchars($_SESSION['insignia_data']['codigo']) : ''; ?>">
-                <input type="hidden" name="destinatario" id="ef_destinatario">
-                <input type="hidden" name="nombre_insignia" id="ef_nombre_insignia">
-                <input type="hidden" name="fecha_emision" id="ef_fecha_emision">
-                <input type="hidden" name="responsable" id="ef_responsable">
-                <input type="hidden" name="cargo" value="RESPONSABLE DE EMISIÓN">
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom: 14px;">
-                    <div>
-                        <label style="display:block; font-weight:700; margin-bottom:6px; color:#1b396a;">Certificado (.cer)</label>
-                        <input type="file" name="certificado" accept=".cer" required style="width:100%; padding:10px; border:1px solid #e0e0e0; border-radius:8px;">
-                    </div>
-                    <div>
-                        <label style="display:block; font-weight:700; margin-bottom:6px; color:#1b396a;">Clave privada (.key)</label>
-                        <input type="file" name="clave" accept=".key" required style="width:100%; padding:10px; border:1px solid #e0e0e0; border-radius:8px;">
-                    </div>
-                </div>
-                <div style="margin-bottom: 14px;">
-                    <label style="display:block; font-weight:700; margin-bottom:6px; color:#1b396a;">Contraseña de la e.firma</label>
-                    <input type="password" name="contrasena" required style="width:100%; padding:10px; border:1px solid #e0e0e0; border-radius:8px;">
-                </div>
-                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:10px;">
-                    <button type="button" onclick="cerrarModalFirmaSAT()" class="btn btn-secondary" style="background:#6c757d; color:white; border:none; padding:12px 20px; border-radius:8px; min-width:160px; font-weight:600; display:inline-flex; align-items:center; justify-content:center;">Cancelar</button>
-                    <button type="submit" class="btn-primary" style="background:#0d6efd; border:none; padding:12px 20px; min-width:180px;">Firmar y guardar</button>
-                </div>
-                <p style="margin-top:10px; color:#6B7280; font-size:13px;">Se firmará el certificado con los datos capturados. Los archivos se usan únicamente para generar la firma.</p>
-            </form>
-        </div>
-    </div>
 
     <script>
-      // Abre/cierra modal
-      function abrirModalFirmaSAT(){
-        // Tomar valores del formulario principal sin alterar su envío
-        const form = document.querySelector('.metadatos-form form');
-        const getVal = (name) => (form.querySelector(`[name="${name}"]`)||{}).value || '';
-        
-        // Guardar datos del formulario en campos ocultos para enviarlos al firmar
-        // Estos datos se usarán para restaurar el formulario después de firmar
-        const formData = {
-          categoria: getVal('categoria'),
-          subcategoria: getVal('subcategoria'),
-          estudiante: getVal('estudiante'),
-          curp: getVal('curp'),
-          correo: getVal('correo'),
-          matricula: getVal('matricula'),
-          periodo: getVal('periodo'),
-          responsable: getVal('responsable'),
-          estatus: getVal('estatus'),
-          clave: getVal('clave'),
-          fecha_otorgamiento: getVal('fecha_otorgamiento'),
-          fecha_autorizacion: getVal('fecha_autorizacion'),
-          evidencia: getVal('evidencia'),
-          descripcion: getVal('descripcion'),
-          insignia: document.getElementById('insignia-hidden').value || ''
-        };
-        
-        // Agregar campos ocultos al formulario de firma para enviar todos los datos
-        const formFirma = document.getElementById('formEFirmaSat');
-        Object.keys(formData).forEach(key => {
-          let hiddenInput = formFirma.querySelector(`input[name="form_${key}"]`);
-          if (!hiddenInput) {
-            hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = `form_${key}`;
-            formFirma.appendChild(hiddenInput);
-          }
-          hiddenInput.value = formData[key];
-        });
-        
-        // Obtener código de insignia desde el campo hidden (ya tiene valor de sesión) o del formulario
-        const codigoHidden = document.getElementById('ef_codigo').value;
-        const codigoForm = getVal('clave');
-        if (!codigoHidden && codigoForm) {
-            document.getElementById('ef_codigo').value = codigoForm;
-        }
-        
-        // Llenar campos ocultos del modal de firma
-        document.getElementById('ef_destinatario').value = getVal('estudiante');
-        // Nombre de la insignia desde el hidden que se actualiza al elegir subcategoría
-        document.getElementById('ef_nombre_insignia').value = document.getElementById('insignia-hidden').value || 'Insignia TecNM';
-        document.getElementById('ef_fecha_emision').value = getVal('fecha_otorgamiento');
-        document.getElementById('ef_responsable').value = getVal('responsable');
-        document.getElementById('modalFirmaSAT').style.display = 'block';
-      }
-      function cerrarModalFirmaSAT(){
-        document.getElementById('modalFirmaSAT').style.display = 'none';
-      }
-
       // Restaurar campos del formulario desde sesión después de firmar
       <?php if (isset($_SESSION['formulario_datos']) && !empty($_SESSION['formulario_datos'])): ?>
       document.addEventListener('DOMContentLoaded', function() {

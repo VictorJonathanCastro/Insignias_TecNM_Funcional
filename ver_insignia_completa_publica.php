@@ -1009,12 +1009,7 @@ if (!empty($insignia_data['responsable_id'])) {
                         
                     <!-- Firma en la esquina inferior derecha -->
                     <div style="position: absolute; bottom: 25px; right: 60px; text-align: left; font-size: 9px; color: #333; max-width: 300px;">
-                        <?php if (!empty($insignia_data['firma_digital_base64'])): ?>
-                        <!-- Mostrar solo el SELLO DIGITAL REAL del SAT completo (tamaño más grande) -->
-                        <div style="font-size: 6px; font-family: 'Courier New', monospace; color: #333; word-break: break-all; line-height: 1.2; margin-bottom: 6px; letter-spacing: -0.1px;">
-                            &lt;sello&gt;<?php echo htmlspecialchars($insignia_data['firma_digital_base64']); ?>&lt;/sello&gt;
-                            </div>
-                            <?php endif; ?>
+                        <div style="font-weight: bold; color: #1b396a; margin-bottom: 8px; font-size: 12px;">Emitido por el Tecnologico Nacional de Mexico</div>
                         <div style="font-weight: bold; color: #1b396a; margin-top: 4px; font-size: 11px;"><?php echo htmlspecialchars($insignia_data['responsable']); ?></div>
                         <div style="font-size: 8px; color: #666; margin-top: 2px;"><?php echo htmlspecialchars($insignia_data['cargo_responsable'] ?? 'RESPONSABLE DE EMISIÓN'); ?></div>
                     </div>

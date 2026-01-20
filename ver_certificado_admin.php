@@ -559,18 +559,8 @@ $url_validacion = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_
                     
                     <!-- Firma Digital en la esquina inferior derecha -->
                     <div style="position: absolute; bottom: 20px; right: 40px; text-align: center; font-size: 8px; color: #333; background: white; padding: 10px 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 130px; border: 1px solid #e3f2fd;">
-                        <!-- Hash de verificación visible -->
-                        <?php 
-                        if (!empty($insignia['hash_verificacion'])):
-                            $hash_display = $insignia['hash_verificacion'];
-                        elseif (!empty($insignia['firma_digital_base64'])):
-                            $hash_display = hash('sha256', $insignia['firma_digital_base64']);
-                        else:
-                            $hash_display = hash('sha256', $insignia['clave_insignia'] . $insignia['destinatario']);
-                        endif;
-                        ?>
-                        <div style="font-size: 4px; color: #0066CC; font-family: monospace; background: #e3f2fd; padding: 4px 6px; border-radius: 4px; margin-bottom: 6px; text-align: center; word-break: break-all; border: 1px solid #90caf9; line-height: 1.3;">
-                            <?php echo $hash_display; ?>
+                        <div style="font-weight: bold; color: #003366; font-size: 8px; margin-bottom: 6px; text-align: center;">
+                            Emitido por el Tecnologico Nacional de Mexico
                         </div>
                         
                         <div style="border-bottom: 2px solid #003366; width: 100%; margin-bottom: 6px; position: relative;"></div>
