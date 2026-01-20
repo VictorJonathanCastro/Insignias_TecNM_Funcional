@@ -2522,7 +2522,7 @@ ob_clean();
         document.getElementById('modalOpciones').style.display = 'none';
     }
     
-    function mostrarTabOpciones(tabId) {
+    function mostrarTabOpciones(tabId, element = null) {
         // Ocultar todos los tabs
         document.querySelectorAll('.tab-opciones-content').forEach(tab => {
             tab.classList.remove('active');
@@ -2532,8 +2532,23 @@ ob_clean();
         });
         
         // Mostrar el tab seleccionado
-        document.getElementById(tabId).classList.add('active');
-        event.target.classList.add('active');
+        const tabContent = document.getElementById(tabId);
+        if (tabContent) {
+            tabContent.classList.add('active');
+        }
+        
+        // Activar el botón correspondiente
+        if (element) {
+            element.classList.add('active');
+        } else {
+            // Buscar el botón por el tabId
+            const buttons = document.querySelectorAll('.tab-opciones-btn');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
         
         // Cargar datos según el tab
         if (tabId === 'tab-destinatarios') {
@@ -3605,10 +3620,10 @@ ob_clean();
       
       <!-- Pestañas del Modal -->
       <div style="display: flex; border-bottom: 2px solid #e9ecef; background: #f8f9fa;">
-        <button onclick="mostrarTabOpciones('tab-destinatarios')" class="tab-opciones-btn active" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">👤 Destinatarios</button>
-        <button onclick="mostrarTabOpciones('tab-insignias')" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">🎖️ Insignias Maestras</button>
-        <button onclick="mostrarTabOpciones('tab-categorias')" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📁 Categorías</button>
-        <button onclick="mostrarTabOpciones('tab-subcategorias')" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📂 Subcategorías</button>
+        <button onclick="mostrarTabOpciones('tab-destinatarios', this)" class="tab-opciones-btn active" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">👤 Destinatarios</button>
+        <button onclick="mostrarTabOpciones('tab-insignias', this)" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">🎖️ Insignias Maestras</button>
+        <button onclick="mostrarTabOpciones('tab-categorias', this)" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📁 Categorías</button>
+        <button onclick="mostrarTabOpciones('tab-subcategorias', this)" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📂 Subcategorías</button>
       </div>
       
       <div style="padding: 20px;">
