@@ -2518,8 +2518,23 @@ ob_clean();
             console.error('No se encontró el modal modalOpciones');
             return;
         }
+        
+        // Primero ocultar TODAS las pestañas
+        document.querySelectorAll('.tab-opciones-content').forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.display = 'none';
+        });
+        
+        // Desactivar todos los botones
+        document.querySelectorAll('.tab-opciones-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.borderBottom = '3px solid transparent';
+        });
+        
+        // Mostrar el modal
         modal.style.display = 'block';
-        // Activar la primera pestaña y cargar sus datos
+        
+        // Activar SOLO la primera pestaña (Destinatarios)
         const firstBtn = document.querySelector('.tab-opciones-btn');
         if (firstBtn) {
             mostrarTabOpciones('tab-destinatarios', firstBtn);
@@ -2533,34 +2548,47 @@ ob_clean();
     }
     
     function mostrarTabOpciones(tabId, element = null) {
-        // Ocultar todos los tabs
+        // Ocultar TODOS los tabs primero (forzar ocultamiento)
         document.querySelectorAll('.tab-opciones-content').forEach(tab => {
             tab.classList.remove('active');
-        });
-        document.querySelectorAll('.tab-opciones-btn').forEach(btn => {
-            btn.classList.remove('active');
+            tab.style.display = 'none'; // Forzar ocultamiento
         });
         
-        // Mostrar el tab seleccionado
+        // Desactivar todos los botones
+        document.querySelectorAll('.tab-opciones-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.borderBottom = '3px solid transparent';
+            btn.style.color = '';
+        });
+        
+        // Mostrar SOLO el tab seleccionado
         const tabContent = document.getElementById(tabId);
         if (tabContent) {
             tabContent.classList.add('active');
+            tabContent.style.display = 'block'; // Forzar visualización
+        } else {
+            console.error('No se encontró el tab:', tabId);
+            return;
         }
         
         // Activar el botón correspondiente
         if (element) {
             element.classList.add('active');
+            element.style.borderBottom = '3px solid #28a745';
+            element.style.color = '#6c757d';
         } else {
             // Buscar el botón por el tabId
             const buttons = document.querySelectorAll('.tab-opciones-btn');
             buttons.forEach(btn => {
                 if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
                     btn.classList.add('active');
+                    btn.style.borderBottom = '3px solid #28a745';
+                    btn.style.color = '#6c757d';
                 }
             });
         }
         
-        // Cargar datos según el tab
+        // Cargar datos SOLO del tab seleccionado
         console.log('Cambiando a pestaña:', tabId);
         if (tabId === 'tab-destinatarios') {
             console.log('Cargando destinatarios...');
