@@ -793,16 +793,10 @@ $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
                 <?php echo htmlspecialchars($insignia['evidencia']); ?>
             </div>
             
-            <!-- Archivo Visual -->
-            <div class="section-title">Archivo Visual de la InsigniaTecNM</div>
-            <div class="section-content">
-                <?php echo htmlspecialchars($insignia['archivo_visual']); ?> (archivo)
-            </div>
-            
             <!-- Footer con responsable -->
             <div class="footer-section">
                 <div class="footer-label">Responsable de la captura de los Metadatos</div>
-                <div>Nombre completo del usuario con permisos de generador de insignia: <?php echo htmlspecialchars($insignia['responsable']); ?></div>
+                <div><?php echo htmlspecialchars($insignia['responsable']); ?></div>
                 <div style="margin-top: 10px;">
                     <span class="footer-label">Código de identificación del Responsable de la captura de los Metadatos:</span>
                     <?php echo htmlspecialchars($insignia['codigo_responsable']); ?>
