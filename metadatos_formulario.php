@@ -1735,6 +1735,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Datos de insignias disponibles
         const insigniasData = <?php echo json_encode($subcategorias_insignias); ?>;
         
+        // Debug: Verificar que los datos se cargaron correctamente
+        console.log('Datos de insignias cargados:', insigniasData);
+        
         // Datos de instituciones para filtrado
         const institucionesData = <?php echo json_encode($instituciones); ?>;
         
@@ -1776,22 +1779,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             subcategoriaSelect.innerHTML = '<option value="">Selecciona una subcategoría...</option>';
             insigniaInfo.style.display = 'none';
             
-            if (categoriaSelect.value) {
+            if (categoriaSelect && categoriaSelect.value) {
                 const categoriaId = parseInt(categoriaSelect.value);
                 
+                // Verificar que insigniasData existe y tiene datos
+                if (!insigniasData || !Array.isArray(insigniasData)) {
+                    console.error('insigniasData no está disponible o no es un array');
+                    return;
+                }
+                
                 // Filtrar subcategorías por categoría seleccionada
-                const subcategoriasFiltradas = insigniasData.filter(insignia => 
-                    insignia.categoria_id == categoriaId
-                );
+                // Convertir ambos valores a número para comparación estricta
+                const subcategoriasFiltradas = insigniasData.filter(insignia => {
+                    if (!insignia || insignia.categoria_id === null || insignia.categoria_id === undefined) {
+                        return false;
+                    }
+                    // Convertir ambos a número para comparación
+                    const insigniaCatId = parseInt(insignia.categoria_id);
+                    return !isNaN(insigniaCatId) && !isNaN(categoriaId) && insigniaCatId === categoriaId;
+                });
                 
                 // Agregar opciones de subcategorías
-                subcategoriasFiltradas.forEach(insignia => {
+                if (subcategoriasFiltradas.length > 0) {
+                    subcategoriasFiltradas.forEach(insignia => {
+                        const option = document.createElement('option');
+                        option.value = insignia.id;
+                        option.textContent = insignia.nombre_insignia || 'Sin nombre';
+                        option.dataset.descripcion = insignia.descripcion || 'Descripción no disponible';
+                        subcategoriaSelect.appendChild(option);
+                    });
+                } else {
+                    // Si no hay subcategorías, mostrar mensaje
                     const option = document.createElement('option');
-                    option.value = insignia.id;
-                    option.textContent = insignia.nombre_insignia;
-                    option.dataset.descripcion = insignia.descripcion || 'Descripción no disponible';
+                    option.value = '';
+                    option.textContent = 'No hay subcategorías disponibles para esta categoría';
+                    option.disabled = true;
                     subcategoriaSelect.appendChild(option);
-                });
+                }
             }
         }
         
