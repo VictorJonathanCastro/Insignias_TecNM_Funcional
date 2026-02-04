@@ -71,14 +71,12 @@ try {
                                  FROM tipo_insignia ti 
                                  LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
                                  LEFT JOIN T_insignias tins ON ti.$campo_id_tipo = tins.Tipo_Insignia
-                                 WHERE ti.Cat_ins IS NOT NULL
                                  GROUP BY ti.$campo_id_tipo, ti.$campo_nombre_tipo, ti.Cat_ins, ci.Nombre_cat
                                  ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
         } else {
             $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria, '' as descripcion
                                  FROM tipo_insignia ti 
                                  LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
-                                 WHERE ti.Cat_ins IS NOT NULL
                                  ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
         }
     } else {
@@ -1789,11 +1787,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             insigniaInfo.style.display = 'none';
             
             if (categoriaSelect && categoriaSelect.value) {
-                const categoriaId = parseInt(categoriaSelect.value);
-                const categoriaNombre = categoriaSelect.options[categoriaSelect.selectedIndex].textContent;
-                
-                console.log('=== DEBUG: updateSubcategorias ===');
-                console.log('Categoría seleccionada - ID:', categoriaId, 'Nombre:', categoriaNombre);
+                const categoriaId = categoriaSelect.value; // Mantener como string para comparación flexible
                 
                 // Verificar que insigniasData existe y tiene datos
                 if (!insigniasData || !Array.isArray(insigniasData)) {
@@ -1801,32 +1795,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     return;
                 }
                 
-                console.log('Total subcategorías disponibles:', insigniasData.length);
-                
-                // Mostrar todas las subcategorías con sus categoria_id para debugging
-                console.log('Subcategorías con sus categoria_id:');
-                insigniasData.forEach((insignia, index) => {
-                    console.log(`  ${index + 1}. ${insignia.nombre_insignia || 'Sin nombre'} - categoria_id: ${insignia.categoria_id} (tipo: ${typeof insignia.categoria_id})`);
-                });
-                
                 // Filtrar subcategorías por categoría seleccionada
-                // Convertir ambos valores a número para comparación estricta
+                // Usar comparación flexible (==) para manejar strings y números
                 const subcategoriasFiltradas = insigniasData.filter(insignia => {
-                    if (!insignia || insignia.categoria_id === null || insignia.categoria_id === undefined) {
+                    if (!insignia) {
                         return false;
                     }
-                    // Convertir ambos a número para comparación
-                    const insigniaCatId = parseInt(insignia.categoria_id);
-                    const coincide = !isNaN(insigniaCatId) && !isNaN(categoriaId) && insigniaCatId === categoriaId;
-                    
-                    if (coincide) {
-                        console.log(`✓ Coincide: ${insignia.nombre_insignia} (categoria_id: ${insigniaCatId})`);
-                    }
-                    
-                    return coincide;
+                    // Comparación flexible que funciona con strings y números
+                    return insignia.categoria_id == categoriaId;
                 });
-                
-                console.log('Subcategorías filtradas encontradas:', subcategoriasFiltradas.length);
                 
                 // Agregar opciones de subcategorías
                 if (subcategoriasFiltradas.length > 0) {
@@ -1837,7 +1814,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         option.dataset.descripcion = insignia.descripcion || 'Descripción no disponible';
                         subcategoriaSelect.appendChild(option);
                     });
-                    console.log('✓ Subcategorías agregadas al select');
                 } else {
                     // Si no hay subcategorías, mostrar mensaje
                     const option = document.createElement('option');
@@ -1845,10 +1821,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     option.textContent = 'No hay subcategorías disponibles para esta categoría';
                     option.disabled = true;
                     subcategoriaSelect.appendChild(option);
-                    console.warn('⚠ No se encontraron subcategorías para la categoría ID:', categoriaId);
                 }
-            } else {
-                console.log('No se seleccionó ninguna categoría');
             }
         }
         
