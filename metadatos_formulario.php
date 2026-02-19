@@ -40,8 +40,8 @@ try {
     
     if ($result_categorias && $result_categorias->num_rows > 0) {
         while ($row = $result_categorias->fetch_assoc()) {
-            // Asegurar que id sea un entero para comparación consistente
-            if (isset($row['id'])) {
+            // Asegurar que id sea un entero para comparación consistente (solo si no es NULL)
+            if (isset($row['id']) && $row['id'] !== null) {
                 $row['id'] = (int)$row['id'];
             }
             $categorias_insignias[] = $row;
@@ -75,12 +75,14 @@ try {
                                  FROM tipo_insignia ti 
                                  LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
                                  LEFT JOIN T_insignias tins ON ti.$campo_id_tipo = tins.Tipo_Insignia
+                                 WHERE ti.Cat_ins IS NOT NULL
                                  GROUP BY ti.$campo_id_tipo, ti.$campo_nombre_tipo, ti.Cat_ins, ci.Nombre_cat
                                  ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
         } else {
             $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria, '' as descripcion
                                  FROM tipo_insignia ti 
                                  LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
+                                 WHERE ti.Cat_ins IS NOT NULL
                                  ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
         }
     } else {
@@ -148,12 +150,12 @@ try {
     
     if ($result_subcategorias && $result_subcategorias->num_rows > 0) {
         while ($row = $result_subcategorias->fetch_assoc()) {
-            // Asegurar que categoria_id sea un entero para comparación consistente
-            if (isset($row['categoria_id'])) {
+            // Asegurar que categoria_id sea un entero para comparación consistente (solo si no es NULL)
+            if (isset($row['categoria_id']) && $row['categoria_id'] !== null) {
                 $row['categoria_id'] = (int)$row['categoria_id'];
             }
             // Asegurar que id sea un entero
-            if (isset($row['id'])) {
+            if (isset($row['id']) && $row['id'] !== null) {
                 $row['id'] = (int)$row['id'];
             }
             $subcategorias_insignias[] = $row;
@@ -1761,6 +1763,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (insigniasData && insigniasData.length > 0) {
             console.log('Ejemplo de subcategoría:', insigniasData[0]);
             console.log('Tipos de categoria_id en datos:', [...new Set(insigniasData.map(i => typeof i.categoria_id))]);
+            // Mostrar todas las categorías únicas disponibles
+            const categoriasUnicas = [...new Set(insigniasData.map(i => i.categoria_id).filter(id => id !== null && id !== undefined))];
+            console.log('IDs de categorías disponibles en subcategorías:', categoriasUnicas);
+        } else {
+            console.warn('⚠️ No se cargaron subcategorías desde PHP');
+        }
+        
+        // Verificar IDs de categorías disponibles
+        if (categoriasData && categoriasData.length > 0) {
+            const idsCategorias = categoriasData.map(c => c.id);
+            console.log('IDs de categorías en el select:', idsCategorias);
         }
         
         // Datos de instituciones para filtrado
@@ -1826,22 +1839,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Filtrar subcategorías por categoría seleccionada
-                // Convertir ambos a número para comparación consistente (más robusto)
-                const categoriaIdNum = parseInt(categoriaId, 10);
+                // Usar comparación flexible que maneja strings y números
                 const subcategoriasFiltradas = insigniasData.filter(insignia => {
-                    if (!insignia || insignia.categoria_id === null || insignia.categoria_id === undefined) {
+                    if (!insignia) {
                         return false;
                     }
-                    // Convertir categoria_id a número para comparación
-                    const insigniaCategoriaIdNum = parseInt(insignia.categoria_id, 10);
-                    // Comparar tanto como número como string para mayor compatibilidad
-                    return insigniaCategoriaIdNum === categoriaIdNum || 
-                           String(insignia.categoria_id) === String(categoriaId);
+                    // Verificar que categoria_id existe
+                    if (insignia.categoria_id === null || insignia.categoria_id === undefined) {
+                        return false;
+                    }
+                    // Comparación flexible: funciona con strings y números
+                    // Usar == en lugar de === para comparación flexible
+                    const coincide = insignia.categoria_id == categoriaId;
+                    return coincide;
                 });
                 
                 console.log('Subcategorías filtradas:', subcategoriasFiltradas.length);
+                console.log('Categoría ID buscada:', categoriaId, 'Tipo:', typeof categoriaId);
                 if (subcategoriasFiltradas.length > 0) {
                     console.log('Primeras subcategorías encontradas:', subcategoriasFiltradas.slice(0, 3));
+                } else {
+                    // Mostrar todas las categorías disponibles en los datos para debugging
+                    const categoriasUnicas = [...new Set(insigniasData.map(i => i.categoria_id))];
+                    console.log('Categorías disponibles en datos:', categoriasUnicas);
+                    console.log('¿Coincide alguna?', categoriasUnicas.some(cat => cat == categoriaId));
                 }
                 
                 // Agregar opciones de subcategorías
@@ -2380,18 +2401,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
       
       // Asegurar que la función se ejecute cuando se carga la página si hay una categoría seleccionada
+      // Este listener se ejecuta siempre, incluso si no hay datos de sesión
       document.addEventListener('DOMContentLoaded', function() {
-        const categoriaSelect = document.getElementById('categoria');
-        if (categoriaSelect && categoriaSelect.value) {
-          // Si hay una categoría seleccionada al cargar, actualizar subcategorías
-          updateSubcategorias();
-        }
-        
-        // Agregar listener adicional como respaldo del onchange
-        if (categoriaSelect) {
-          categoriaSelect.addEventListener('change', function() {
-            updateSubcategorias();
-          });
+        // Verificar que la función existe antes de usarla
+        if (typeof updateSubcategorias === 'function') {
+          const categoriaSelect = document.getElementById('categoria');
+          if (categoriaSelect) {
+            // Agregar listener adicional como respaldo del onchange
+            categoriaSelect.addEventListener('change', function() {
+              console.log('Evento change detectado en categoría');
+              updateSubcategorias();
+            });
+            
+            // Si hay una categoría seleccionada al cargar, actualizar subcategorías
+            if (categoriaSelect.value) {
+              console.log('Categoría preseleccionada encontrada:', categoriaSelect.value);
+              updateSubcategorias();
+            }
+          }
+        } else {
+          console.error('La función updateSubcategorias no está definida');
         }
       });
     </script>
