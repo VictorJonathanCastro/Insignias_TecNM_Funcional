@@ -70,19 +70,23 @@ try {
     if ($tiene_cat_ins) {
         // Si existe T_insignias, incluir la descripción desde ahí
         if ($tiene_t_insignias) {
-            $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria, 
-                                 COALESCE(tins.Descripcion, '') as descripcion
+            // Usar subconsulta para obtener la descripción sin afectar los resultados
+            $sql_subcategorias = "SELECT DISTINCT 
+                                 ti.$campo_id_tipo as id, 
+                                 ti.$campo_nombre_tipo as nombre_insignia, 
+                                 ti.Cat_ins as categoria_id, 
+                                 ci.Nombre_cat as nombre_categoria,
+                                 (SELECT COALESCE(tins.Descripcion, '') 
+                                  FROM T_insignias tins 
+                                  WHERE tins.Tipo_Insignia = ti.$campo_id_tipo 
+                                  LIMIT 1) as descripcion
                                  FROM tipo_insignia ti 
                                  LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
-                                 LEFT JOIN T_insignias tins ON ti.$campo_id_tipo = tins.Tipo_Insignia
-                                 WHERE ti.Cat_ins IS NOT NULL
-                                 GROUP BY ti.$campo_id_tipo, ti.$campo_nombre_tipo, ti.Cat_ins, ci.Nombre_cat
                                  ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
         } else {
             $sql_subcategorias = "SELECT ti.$campo_id_tipo as id, ti.$campo_nombre_tipo as nombre_insignia, ti.Cat_ins as categoria_id, ci.Nombre_cat as nombre_categoria, '' as descripcion
                                  FROM tipo_insignia ti 
                                  LEFT JOIN cat_insignias ci ON ti.Cat_ins = ci.$campo_id_cat 
-                                 WHERE ti.Cat_ins IS NOT NULL
                                  ORDER BY ci.Nombre_cat, ti.$campo_nombre_tipo";
         }
     } else {
@@ -1844,14 +1848,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!insignia) {
                         return false;
                     }
-                    // Verificar que categoria_id existe
-                    if (insignia.categoria_id === null || insignia.categoria_id === undefined) {
+                    // Solo filtrar por NULL si realmente no tiene categoria_id
+                    // Permitir que se muestren todas las subcategorías que coincidan
+                    if (insignia.categoria_id === null || insignia.categoria_id === undefined || insignia.categoria_id === '') {
                         return false;
                     }
                     // Comparación flexible: funciona con strings y números
                     // Usar == en lugar de === para comparación flexible
-                    const coincide = insignia.categoria_id == categoriaId;
-                    return coincide;
+                    return insignia.categoria_id == categoriaId;
                 });
                 
                 console.log('Subcategorías filtradas:', subcategoriasFiltradas.length);
