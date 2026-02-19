@@ -1543,9 +1543,9 @@ if ($conexion && !$conexion->connect_errno) {
     <div class="stats-grid">
       <a href="tipos_insignias.php" style="text-decoration: none; color: inherit; display: block; height: 100%;">
         <div class="stat-card" style="cursor: pointer;">
-          <div class="stat-number">+7</div>
-          <div class="stat-label">Tipos de Insignias</div>
-        </div>
+        <div class="stat-number">+7</div>
+        <div class="stat-label">Tipos de Insignias</div>
+      </div>
       </a>
       <div class="stat-card">
         <div class="stat-number">+570,000</div>

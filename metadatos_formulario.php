@@ -40,6 +40,10 @@ try {
     
     if ($result_categorias && $result_categorias->num_rows > 0) {
         while ($row = $result_categorias->fetch_assoc()) {
+            // Asegurar que id sea un entero para comparación consistente
+            if (isset($row['id'])) {
+                $row['id'] = (int)$row['id'];
+            }
             $categorias_insignias[] = $row;
         }
     }
@@ -144,6 +148,14 @@ try {
     
     if ($result_subcategorias && $result_subcategorias->num_rows > 0) {
         while ($row = $result_subcategorias->fetch_assoc()) {
+            // Asegurar que categoria_id sea un entero para comparación consistente
+            if (isset($row['categoria_id'])) {
+                $row['categoria_id'] = (int)$row['categoria_id'];
+            }
+            // Asegurar que id sea un entero
+            if (isset($row['id'])) {
+                $row['id'] = (int)$row['id'];
+            }
             $subcategorias_insignias[] = $row;
         }
     }
@@ -1745,6 +1757,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         console.log('Total categorías:', categoriasData ? categoriasData.length : 0);
         console.log('Total subcategorías:', insigniasData ? insigniasData.length : 0);
         
+        // Verificar estructura de datos de subcategorías
+        if (insigniasData && insigniasData.length > 0) {
+            console.log('Ejemplo de subcategoría:', insigniasData[0]);
+            console.log('Tipos de categoria_id en datos:', [...new Set(insigniasData.map(i => typeof i.categoria_id))]);
+        }
+        
         // Datos de instituciones para filtrado
         const institucionesData = <?php echo json_encode($instituciones); ?>;
         
@@ -1787,7 +1805,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             insigniaInfo.style.display = 'none';
             
             if (categoriaSelect && categoriaSelect.value) {
-                const categoriaId = categoriaSelect.value; // Mantener como string para comparación flexible
+                const categoriaId = categoriaSelect.value;
+                
+                // Debug: Verificar datos
+                console.log('=== DEBUG updateSubcategorias ===');
+                console.log('Categoría seleccionada (valor):', categoriaId);
+                console.log('Tipo de categoría seleccionada:', typeof categoriaId);
+                console.log('Total insigniasData:', insigniasData ? insigniasData.length : 0);
                 
                 // Verificar que insigniasData existe y tiene datos
                 if (!insigniasData || !Array.isArray(insigniasData)) {
@@ -1795,15 +1819,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     return;
                 }
                 
+                // Debug: Mostrar algunas subcategorías para verificar estructura
+                if (insigniasData.length > 0) {
+                    console.log('Primeras 3 subcategorías:', insigniasData.slice(0, 3));
+                    console.log('Tipos de categoria_id en datos:', [...new Set(insigniasData.slice(0, 5).map(i => typeof i.categoria_id))]);
+                }
+                
                 // Filtrar subcategorías por categoría seleccionada
-                // Usar comparación flexible (==) para manejar strings y números
+                // Convertir ambos a número para comparación consistente (más robusto)
+                const categoriaIdNum = parseInt(categoriaId, 10);
                 const subcategoriasFiltradas = insigniasData.filter(insignia => {
-                    if (!insignia) {
+                    if (!insignia || insignia.categoria_id === null || insignia.categoria_id === undefined) {
                         return false;
                     }
-                    // Comparación flexible que funciona con strings y números
-                    return insignia.categoria_id == categoriaId;
+                    // Convertir categoria_id a número para comparación
+                    const insigniaCategoriaIdNum = parseInt(insignia.categoria_id, 10);
+                    // Comparar tanto como número como string para mayor compatibilidad
+                    return insigniaCategoriaIdNum === categoriaIdNum || 
+                           String(insignia.categoria_id) === String(categoriaId);
                 });
+                
+                console.log('Subcategorías filtradas:', subcategoriasFiltradas.length);
+                if (subcategoriasFiltradas.length > 0) {
+                    console.log('Primeras subcategorías encontradas:', subcategoriasFiltradas.slice(0, 3));
+                }
                 
                 // Agregar opciones de subcategorías
                 if (subcategoriasFiltradas.length > 0) {
@@ -1821,6 +1860,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     option.textContent = 'No hay subcategorías disponibles para esta categoría';
                     option.disabled = true;
                     subcategoriaSelect.appendChild(option);
+                    console.warn('No se encontraron subcategorías para la categoría:', categoriaId);
                 }
             }
         }
@@ -2338,6 +2378,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
       });
       <?php endif; ?>
+      
+      // Asegurar que la función se ejecute cuando se carga la página si hay una categoría seleccionada
+      document.addEventListener('DOMContentLoaded', function() {
+        const categoriaSelect = document.getElementById('categoria');
+        if (categoriaSelect && categoriaSelect.value) {
+          // Si hay una categoría seleccionada al cargar, actualizar subcategorías
+          updateSubcategorias();
+        }
+        
+        // Agregar listener adicional como respaldo del onchange
+        if (categoriaSelect) {
+          categoriaSelect.addEventListener('change', function() {
+            updateSubcategorias();
+          });
+        }
+      });
     </script>
 
   <!-- FOOTER AZUL PROFESIONAL -->
