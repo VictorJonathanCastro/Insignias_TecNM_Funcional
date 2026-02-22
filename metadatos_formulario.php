@@ -279,6 +279,16 @@ if (empty($estatus_disponibles)) {
     ];
 }
 
+// Deduplicar por nombre: solo una opción por cada estatus (evita duplicados en BD)
+$estatus_unicos = [];
+foreach ($estatus_disponibles as $e) {
+    $nombre = trim($e['nombre_estatus']);
+    if ($nombre !== '' && !isset($estatus_unicos[$nombre])) {
+        $estatus_unicos[$nombre] = $e;
+    }
+}
+$estatus_disponibles = array_values($estatus_unicos);
+
 if (empty($responsables_emision)) {
     $responsables_emision = [
         ['id' => 1, 'nombre_completo' => 'Director Tecnológico de San Marcos', 'cargo' => 'Director'],
