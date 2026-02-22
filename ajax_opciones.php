@@ -140,21 +140,58 @@ try {
         }
         $html .= '</tbody></table>';
         echo $html;
-    } elseif ($tabla === 'certificados' && $accion === 'listar') {
+    } elseif (($tabla === 'certificados' || $tabla === 'insigniasotorgadas') && $accion === 'listar') {
         header('Content-Type: text/html; charset=utf-8');
-        echo '<div style="text-align: center; padding: 24px; color: #6c757d;">Gestión de certificados. Use este espacio para listar certificados cuando esté configurado.</div>';
-    } elseif ($tabla === 'insigniasotorgadas' && $accion === 'listar') {
-        header('Content-Type: text/html; charset=utf-8');
-        $result = @$conexion->query("SELECT io.id, io.clave_insignia, d.Nombre_Completo, io.fecha_otorgamiento FROM insigniasotorgadas io LEFT JOIN destinatario d ON io.destinatario_id = d.ID_destinatario ORDER BY io.id DESC LIMIT 100");
-        if ($result && $result->num_rows > 0) {
-            $html = '<table><thead><tr><th>ID</th><th>Clave insignia</th><th>Destinatario</th><th>Fecha otorgamiento</th></tr></thead><tbody>';
-            while ($row = $result->fetch_assoc()) {
-                $html .= '<tr><td>' . htmlspecialchars($row['id'] ?? '') . '</td><td>' . htmlspecialchars($row['clave_insignia'] ?? '') . '</td><td>' . htmlspecialchars($row['Nombre_Completo'] ?? '') . '</td><td>' . htmlspecialchars($row['fecha_otorgamiento'] ?? '') . '</td></tr>';
+        $html = '';
+        $tabla_io_existe = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        $tabla_io_existe = ($tabla_io_existe && $tabla_io_existe->num_rows > 0);
+        $campo_id_dest = ($conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'") && $conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'")->num_rows > 0) ? 'id' : 'ID_destinatario';
+
+        if ($tabla_io_existe) {
+            $col_codigo = $conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'Codigo_Insignia'");
+            $esquema_viejo = ($col_codigo && $col_codigo->num_rows > 0);
+            if ($esquema_viejo) {
+                $sql = "SELECT io.ID_otorgada as id, io.Codigo_Insignia as clave_insignia, d.Nombre_Completo, io.Fecha_Emision as fecha_otorgamiento FROM insigniasotorgadas io LEFT JOIN destinatario d ON io.Destinatario = d.$campo_id_dest ORDER BY io.ID_otorgada DESC LIMIT 200";
+            } else {
+                $sql = "SELECT io.id, io.clave_insignia, d.Nombre_Completo, io.fecha_otorgamiento FROM insigniasotorgadas io LEFT JOIN destinatario d ON io.destinatario_id = d.$campo_id_dest ORDER BY io.id DESC LIMIT 200";
             }
-            $html .= '</tbody></table>';
-            echo $html;
+            $result = @$conexion->query($sql);
+            if ($result && $result->num_rows > 0) {
+                $html = '<table><thead><tr><th>ID</th><th>Código / Clave</th><th>Destinatario</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+                while ($row = $result->fetch_assoc()) {
+                    $id = (int)($row['id'] ?? 0);
+                    $clave = htmlspecialchars($row['clave_insignia'] ?? '');
+                    $nombre = htmlspecialchars($row['Nombre_Completo'] ?? '');
+                    $fecha = htmlspecialchars($row['fecha_otorgamiento'] ?? '');
+                    $ver_url = (isset($row['id']) && $row['id'] !== '' && is_numeric($row['id'])) ? 'ver_certificado_admin.php?id=' . $id : 'ver_certificado_admin.php?id=' . urlencode($row['clave_insignia'] ?? '');
+                    $html .= '<tr><td>' . $id . '</td><td>' . $clave . '</td><td>' . $nombre . '</td><td>' . $fecha . '</td><td><a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Ver certificado</a></td></tr>';
+                }
+                $html .= '</tbody></table>';
+            }
+        }
+        if (empty($html)) {
+            $tabla_t_existe = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+            if ($tabla_t_existe && $tabla_t_existe->num_rows > 0) {
+                $sql_t = "SELECT tio.id, CONCAT(ti.id, '-', COALESCE(pe.Nombre_Periodo, '')) as clave_insignia, d.Nombre_Completo, tio.Fecha_Emision as fecha_otorgamiento FROM T_insignias_otorgadas tio LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario ORDER BY tio.id DESC LIMIT 200";
+                $result_t = @$conexion->query($sql_t);
+                if ($result_t && $result_t->num_rows > 0) {
+                    $html = '<table><thead><tr><th>ID</th><th>Código / Clave</th><th>Destinatario</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+                    while ($row = $result_t->fetch_assoc()) {
+                        $id = (int)($row['id'] ?? 0);
+                        $clave = htmlspecialchars($row['clave_insignia'] ?? '');
+                        $nombre = htmlspecialchars($row['Nombre_Completo'] ?? '');
+                        $fecha = htmlspecialchars($row['fecha_otorgamiento'] ?? '');
+                        $ver_url = 'ver_certificado_admin.php?id=' . $id;
+                        $html .= '<tr><td>' . $id . '</td><td>' . $clave . '</td><td>' . $nombre . '</td><td>' . $fecha . '</td><td><a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Ver certificado</a></td></tr>';
+                    }
+                    $html .= '</tbody></table>';
+                }
+            }
+        }
+        if (empty($html)) {
+            echo '<div style="text-align: center; padding: 24px; color: #6c757d;">No hay registros. Las insignias otorgadas y certificados se listan aquí cuando existan en la base de datos.</div>';
         } else {
-            echo '<div style="text-align: center; padding: 24px; color: #6c757d;">No hay insignias otorgadas registradas.</div>';
+            echo $html;
         }
     } else {
         header('Content-Type: application/json; charset=utf-8');
