@@ -3778,18 +3778,18 @@ ob_clean();
           <div id="dropdown-mas-opciones" style="display: none; position: absolute; top: 100%; left: 0; min-width: 280px; background: #1e3a5f; color: white; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 10001; margin-top: 4px; overflow: hidden;">
             <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); font-weight: 600;">Más opciones</div>
             <div style="padding: 8px 0;">
-              <div class="mas-opciones-fila" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+              <div class="mas-opciones-fila" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer;" onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-certificados');" title="Abrir gestión de Certificados (como Insignias Maestras / Categorías / Subcategorías)">
                 <span style="flex: 1;">📄 Certificados</span>
-                <span style="display: flex; gap: 8px;">
+                <span style="display: flex; gap: 8px;" onclick="event.stopPropagation();">
                   <button type="button" onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-certificados');" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Editar</button>
-                  <button type="button" onclick="cerrarDropdownMasOpciones(); accionEliminar('Certificados');" style="background: rgba(220,53,69,0.8); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Eliminar</button>
+                  <button type="button" onclick="event.stopPropagation(); cerrarDropdownMasOpciones(); accionEliminar('Certificados');" style="background: rgba(220,53,69,0.8); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Eliminar</button>
                 </span>
               </div>
-              <div class="mas-opciones-fila" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+              <div class="mas-opciones-fila" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer;" onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-insignias-otorgadas');" title="Abrir gestión de Insignias Otorgadas (como Insignias Maestras / Categorías / Subcategorías)">
                 <span style="flex: 1;">🎖️ Insignias Otorgadas</span>
-                <span style="display: flex; gap: 8px;">
+                <span style="display: flex; gap: 8px;" onclick="event.stopPropagation();">
                   <button type="button" onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-insignias-otorgadas');" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Editar</button>
-                  <button type="button" onclick="cerrarDropdownMasOpciones(); accionEliminar('Insignias Otorgadas');" style="background: rgba(220,53,69,0.8); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Eliminar</button>
+                  <button type="button" onclick="event.stopPropagation(); cerrarDropdownMasOpciones(); accionEliminar('Insignias Otorgadas');" style="background: rgba(220,53,69,0.8); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Eliminar</button>
                 </span>
               </div>
             </div>
