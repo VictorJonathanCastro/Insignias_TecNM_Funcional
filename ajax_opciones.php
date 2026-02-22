@@ -140,6 +140,22 @@ try {
         }
         $html .= '</tbody></table>';
         echo $html;
+    } elseif ($tabla === 'certificados' && $accion === 'listar') {
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<div style="text-align: center; padding: 24px; color: #6c757d;">Gestión de certificados. Use este espacio para listar certificados cuando esté configurado.</div>';
+    } elseif ($tabla === 'insigniasotorgadas' && $accion === 'listar') {
+        header('Content-Type: text/html; charset=utf-8');
+        $result = @$conexion->query("SELECT io.id, io.clave_insignia, d.Nombre_Completo, io.fecha_otorgamiento FROM insigniasotorgadas io LEFT JOIN destinatario d ON io.destinatario_id = d.ID_destinatario ORDER BY io.id DESC LIMIT 100");
+        if ($result && $result->num_rows > 0) {
+            $html = '<table><thead><tr><th>ID</th><th>Clave insignia</th><th>Destinatario</th><th>Fecha otorgamiento</th></tr></thead><tbody>';
+            while ($row = $result->fetch_assoc()) {
+                $html .= '<tr><td>' . htmlspecialchars($row['id'] ?? '') . '</td><td>' . htmlspecialchars($row['clave_insignia'] ?? '') . '</td><td>' . htmlspecialchars($row['Nombre_Completo'] ?? '') . '</td><td>' . htmlspecialchars($row['fecha_otorgamiento'] ?? '') . '</td></tr>';
+            }
+            $html .= '</tbody></table>';
+            echo $html;
+        } else {
+            echo '<div style="text-align: center; padding: 24px; color: #6c757d;">No hay insignias otorgadas registradas.</div>';
+        }
     } else {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['error' => 'Acción no válida']);
