@@ -322,7 +322,10 @@ try {
                     'Embajador del Deporte Bronce Demo' => 'EmbajadordelDeporteBronceDemo.png',
                     'EmbajadordelDeporteOroDemo' => 'EmbajadordelDeporteOroDemo.png',
                     'EmbajadordelDeportePlataDemo' => 'EmbajadordelDeportePlataDemo.png',
-                    'EmbajadordelDeporteBronceDemo' => 'EmbajadordelDeporteBronceDemo.png'
+                    'EmbajadordelDeporteBronceDemo' => 'EmbajadordelDeporteBronceDemo.png',
+                    'EmbajadordelDeporteOro' => 'EmbajadordelDeporteOro.png',
+                    'EmbajadordelDeportePlata' => 'EmbajadordelDeportePlata.png',
+                    'EmbajadordelDeporteBronce' => 'EmbajadordelDeporteBronce.png'
                 ];
                 
                 // 1. Intentar determinar por código

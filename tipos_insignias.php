@@ -15,18 +15,18 @@ $insignias = [
         'descripcion' => 'Destaca la excelencia deportiva y el compromiso con la actividad física. Se otorga a estudiantes que representan al TecNM en competencias deportivas, promueven el deporte y demuestran valores como disciplina, trabajo en equipo y perseverancia.'
     ],
     [
-        'nombre' => 'EmbajadordelDeporteOroDemo',
-        'imagen' => 'imagen/Insignias/EmbajadordelDeporteOroDemo.png',
+        'nombre' => 'EmbajadordelDeporteOro',
+        'imagen' => 'imagen/Insignias/EmbajadordelDeporteOro.png',
         'descripcion' => 'Reconoce al primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.'
     ],
     [
-        'nombre' => 'EmbajadordelDeportePlataDemo',
-        'imagen' => 'imagen/Insignias/EmbajadordelDeportePlataDemo.png',
+        'nombre' => 'EmbajadordelDeportePlata',
+        'imagen' => 'imagen/Insignias/EmbajadordelDeportePlata.png',
         'descripcion' => 'Reconoce al segundo lugar en el evento deportivo TecNM. Destaca el desempeño de estudiantes que obtienen el subcampeonato en las justas deportivas a nivel nacional del Tecnológico Nacional de México.'
     ],
     [
-        'nombre' => 'EmbajadordelDeporteBronceDemo',
-        'imagen' => 'imagen/Insignias/EmbajadordelDeporteBronceDemo.png',
+        'nombre' => 'EmbajadordelDeporteBronce',
+        'imagen' => 'imagen/Insignias/EmbajadordelDeporteBronce.png',
         'descripcion' => 'Reconoce al tercer lugar en el evento deportivo TecNM. Valora el mérito de estudiantes que logran el tercer puesto en las competencias deportivas nacionales del Tecnológico Nacional de México.'
     ],
     [
