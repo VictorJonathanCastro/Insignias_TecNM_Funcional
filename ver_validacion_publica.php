@@ -194,6 +194,15 @@ if ($nombre_insignia !== '' && isset($mapeo_nombre_imagen[$nombre_insignia])) {
     $imagen_path = 'imagen/Insignias/MovilidadeIntercambio.png';
 }
 
+// Descripción por variante (Bronce = 3er lugar, Plata = 2do, Oro = 1er) - evitar que use por defecto la de Oro
+if (stripos($codigo_insignia, 'EMB-BRONCE') !== false) {
+    $insignia['descripcion'] = 'Insignia otorgada por obtener el tercer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el tercer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando el esfuerzo y la dedicación en el ámbito deportivo.';
+} elseif (stripos($codigo_insignia, 'EMB-PLATA') !== false) {
+    $insignia['descripcion'] = 'Insignia otorgada por obtener el segundo lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el segundo puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia en el ámbito deportivo.';
+} elseif (stripos($codigo_insignia, 'EMB-ORO') !== false) {
+    $insignia['descripcion'] = 'Insignia otorgada por obtener el primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.';
+}
+
 // Formatear fecha
 $fecha_formateada = date('d-m-Y', strtotime($insignia['fecha_emision']));
 ?>
