@@ -2640,7 +2640,7 @@ ob_clean();
             return;
         }
         listaDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
-        fetch('ajax_opciones.php?tabla=T_insignias&accion=listar')
+        fetch('ajax_opciones.php?tabla=T_insignias&accion=listar&_=' + Date.now(), { cache: 'no-store' })
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Error en la respuesta: ' + response.status);
