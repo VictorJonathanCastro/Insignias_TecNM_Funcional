@@ -531,9 +531,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Generar clave única si no se proporcionó
             if (empty($clave)) {
                 // Crear clave más específica: TECNM-SEV-[PERIODO]-[TIPO]-[NUMERO]
-                $tipo_codigo = strtoupper(substr($tipo_insignia_nombre, 0, 3)); // Primeras 3 letras del tipo
-                $tipo_codigo = preg_replace('/[^A-Z]/', '', $tipo_codigo); // Solo letras
-                if (strlen($tipo_codigo) < 3) $tipo_codigo = 'INS'; // Fallback
+                // Para Embajador del Deporte variantes: EMB-ORO, EMB-PLATA, EMB-BRONCE
+                if (stripos($tipo_insignia_nombre ?? '', 'EmbajadordelDeporteOro') !== false) {
+                    $tipo_codigo = 'EMB-ORO';
+                } elseif (stripos($tipo_insignia_nombre ?? '', 'EmbajadordelDeportePlata') !== false) {
+                    $tipo_codigo = 'EMB-PLATA';
+                } elseif (stripos($tipo_insignia_nombre ?? '', 'EmbajadordelDeporteBronce') !== false) {
+                    $tipo_codigo = 'EMB-BRONCE';
+                } else {
+                    $tipo_codigo = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $tipo_insignia_nombre ?? ''), 0, 3));
+                    if (strlen($tipo_codigo) < 3) $tipo_codigo = 'INS';
+                }
                 
                 $clave = "TECNM-SEV-" . $periodo . "-" . $tipo_codigo . "-" . str_pad(rand(100, 999), 3, '0', STR_PAD_LEFT);
                 
@@ -1999,14 +2007,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Crear código de tipo basado en el nombre de la insignia
                 let tipoCodigo = '';
-                const nombreLower = nombreInsignia.toLowerCase().trim();
+                const nombreLower = nombreInsignia.toLowerCase().trim().replace(/\s/g, '');
                 
-                // Mapeo completo de nombres de insignias a códigos
-                if (nombreLower.includes('movilidad') || nombreLower.includes('intercambio')) {
+                // Embajador del Deporte variantes: Oro, Plata, Bronce (clave con EMB-ORO, EMB-PLATA, EMB-BRONCE)
+                if (nombreLower.includes('embajadordeldeporteoro')) {
+                    tipoCodigo = 'EMB-ORO';
+                } else if (nombreLower.includes('embajadordeldeporteplata')) {
+                    tipoCodigo = 'EMB-PLATA';
+                } else if (nombreLower.includes('embajadordeldeportebronce')) {
+                    tipoCodigo = 'EMB-BRONCE';
+                } else if (nombreLower.includes('movilidad') || nombreLower.includes('intercambio')) {
                     tipoCodigo = 'MOV';
-                } else if (nombreLower.includes('deporte') || nombreLower.includes('embajador del deporte')) {
+                } else if (nombreLower.includes('deporte') || nombreLower.includes('embajadordeldeporte')) {
                     tipoCodigo = 'EMB';
-                } else if (nombreLower.includes('arte') || nombreLower.includes('embajador del arte')) {
+                } else if (nombreLower.includes('arte') || nombreLower.includes('embajadordelarte')) {
                     tipoCodigo = 'ART';
                 } else if (nombreLower.includes('formación') || nombreLower.includes('actualización')) {
                     tipoCodigo = 'FOR';
