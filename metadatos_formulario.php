@@ -297,6 +297,16 @@ if (empty($responsables_emision)) {
     ];
 }
 
+// Deduplicar responsables por nombre y cargo: solo una opción por cada responsable (evita duplicados en BD)
+$responsables_unicos = [];
+foreach ($responsables_emision as $r) {
+    $clave = trim($r['nombre_completo'] ?? '') . '|' . trim($r['cargo'] ?? '');
+    if ($clave !== '|' && !isset($responsables_unicos[$clave])) {
+        $responsables_unicos[$clave] = $r;
+    }
+}
+$responsables_emision = array_values($responsables_unicos);
+
 // Procesar formulario si se envió
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo "<!-- DEBUG: Formulario enviado -->";
