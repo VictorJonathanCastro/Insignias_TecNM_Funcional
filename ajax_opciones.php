@@ -157,14 +157,18 @@ try {
             }
             $result = @$conexion->query($sql);
             if ($result && $result->num_rows > 0) {
-                $html = '<table><thead><tr><th>ID</th><th>Código / Clave</th><th>Destinatario</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+                $html = '<table style="min-width: 850px;"><thead><tr><th>ID</th><th>Código / Clave</th><th>Destinatario</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
                 while ($row = $result->fetch_assoc()) {
                     $id = (int)($row['id'] ?? 0);
                     $clave = htmlspecialchars($row['clave_insignia'] ?? '');
                     $nombre = htmlspecialchars($row['Nombre_Completo'] ?? '');
                     $fecha = htmlspecialchars($row['fecha_otorgamiento'] ?? '');
                     $ver_url = (isset($row['id']) && $row['id'] !== '' && is_numeric($row['id'])) ? 'ver_certificado_admin.php?id=' . $id : 'ver_certificado_admin.php?id=' . urlencode($row['clave_insignia'] ?? '');
-                    $html .= '<tr><td>' . $id . '</td><td>' . $clave . '</td><td>' . $nombre . '</td><td>' . $fecha . '</td><td><a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Ver certificado</a></td></tr>';
+                    $html .= '<tr><td>' . $id . '</td><td>' . $clave . '</td><td>' . $nombre . '</td><td>' . $fecha . '</td><td>';
+                    $html .= '<a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Ver certificado</a> ';
+                    $html .= '<a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Editar</a> ';
+                    $html .= '<button type="button" class="btn-accion btn-eliminar" onclick="eliminarRegistro(\'insigniasotorgadas\', ' . $id . ')">Eliminar</button>';
+                    $html .= '</td></tr>';
                 }
                 $html .= '</tbody></table>';
             }
@@ -175,14 +179,18 @@ try {
                 $sql_t = "SELECT tio.id, CONCAT(ti.id, '-', COALESCE(pe.Nombre_Periodo, '')) as clave_insignia, d.Nombre_Completo, tio.Fecha_Emision as fecha_otorgamiento FROM T_insignias_otorgadas tio LEFT JOIN T_insignias ti ON tio.Id_Insignia = ti.id LEFT JOIN periodo_emision pe ON tio.Id_Periodo_Emision = pe.id LEFT JOIN destinatario d ON tio.Id_Destinatario = d.ID_destinatario ORDER BY tio.id DESC LIMIT 200";
                 $result_t = @$conexion->query($sql_t);
                 if ($result_t && $result_t->num_rows > 0) {
-                    $html = '<table><thead><tr><th>ID</th><th>Código / Clave</th><th>Destinatario</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
+                    $html = '<table style="min-width: 850px;"><thead><tr><th>ID</th><th>Código / Clave</th><th>Destinatario</th><th>Fecha</th><th>Acciones</th></tr></thead><tbody>';
                     while ($row = $result_t->fetch_assoc()) {
                         $id = (int)($row['id'] ?? 0);
                         $clave = htmlspecialchars($row['clave_insignia'] ?? '');
                         $nombre = htmlspecialchars($row['Nombre_Completo'] ?? '');
                         $fecha = htmlspecialchars($row['fecha_otorgamiento'] ?? '');
                         $ver_url = 'ver_certificado_admin.php?id=' . $id;
-                        $html .= '<tr><td>' . $id . '</td><td>' . $clave . '</td><td>' . $nombre . '</td><td>' . $fecha . '</td><td><a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Ver certificado</a></td></tr>';
+                        $html .= '<tr><td>' . $id . '</td><td>' . $clave . '</td><td>' . $nombre . '</td><td>' . $fecha . '</td><td>';
+                        $html .= '<a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Ver certificado</a> ';
+                        $html .= '<a href="' . $ver_url . '" target="_blank" class="btn-accion btn-editar">Editar</a> ';
+                        $html .= '<button type="button" class="btn-accion btn-eliminar" onclick="eliminarRegistro(\'T_insignias_otorgadas\', ' . $id . ')">Eliminar</button>';
+                        $html .= '</td></tr>';
                     }
                     $html .= '</tbody></table>';
                 }

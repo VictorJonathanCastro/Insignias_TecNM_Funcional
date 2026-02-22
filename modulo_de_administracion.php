@@ -568,6 +568,47 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'subcategor
     }
 }
 
+// Eliminar insignia otorgada / certificado (soporta esquema viejo ID_otorgada o nuevo id)
+if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'insigniasotorgadas' && isset($_POST['operacion']) && $_POST['operacion'] === 'eliminar') {
+    try {
+        $id = intval($_POST['id'] ?? 0);
+        if ($id < 1) {
+            throw new Exception('ID no válido');
+        }
+        $tabla_io = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+        if ($tabla_io && $tabla_io->num_rows > 0) {
+            $col_otorgada = $conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'ID_otorgada'");
+            $pk = ($col_otorgada && $col_otorgada->num_rows > 0) ? 'ID_otorgada' : 'id';
+            $stmt = $conexion->prepare("DELETE FROM insigniasotorgadas WHERE $pk = ?");
+            $stmt->bind_param("i", $id);
+            $stmt->execute();
+            $stmt->close();
+            $mensaje_opciones = "Insignia otorgada / certificado eliminado correctamente";
+        } else {
+            $mensaje_error_opciones = "No existe la tabla insigniasotorgadas";
+        }
+    } catch (Exception $e) {
+        $mensaje_error_opciones = "Error al eliminar: " . $e->getMessage();
+    }
+}
+
+// Eliminar T_insignias_otorgadas
+if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'T_insignias_otorgadas' && isset($_POST['operacion']) && $_POST['operacion'] === 'eliminar') {
+    try {
+        $id = intval($_POST['id'] ?? 0);
+        if ($id < 1) {
+            throw new Exception('ID no válido');
+        }
+        $stmt = $conexion->prepare("DELETE FROM T_insignias_otorgadas WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $stmt->close();
+        $mensaje_opciones = "Insignia otorgada eliminada correctamente";
+    } catch (Exception $e) {
+        $mensaje_error_opciones = "Error al eliminar: " . $e->getMessage();
+    }
+}
+
 // Registro de Insignia Otorgada
 if (isset($_POST['guardar_insignia_otorgada'])) {
     try {
@@ -3808,7 +3849,7 @@ ob_clean();
             <button onclick="mostrarFormInsignia('crear')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">➕ Crear Nueva</button>
             <button onclick="cargarInsignias()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
           </div>
-          <div id="lista-insignias" style="max-height: 280px; overflow-y: auto;">
+          <div id="lista-insignias" style="max-height: 280px; overflow: auto; min-width: 0;">
             <!-- Se carga dinámicamente -->
           </div>
           <div id="form-insignia" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; max-height: 65vh; overflow-y: auto;">
@@ -3903,7 +3944,7 @@ ob_clean();
           <div style="margin-bottom: 20px;">
             <button onclick="cargarCertificados()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
           </div>
-          <div id="lista-certificados" style="max-height: 500px; overflow-y: auto;">
+          <div id="lista-certificados" style="max-height: 280px; overflow: auto; min-width: 0;">
             <div style="text-align: center; padding: 20px; color: #6c757d;">Use «Actualizar Lista» para cargar certificados.</div>
           </div>
         </div>
@@ -3914,7 +3955,7 @@ ob_clean();
           <div style="margin-bottom: 20px;">
             <button onclick="cargarInsigniasOtorgadas()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
           </div>
-          <div id="lista-insignias-otorgadas" style="max-height: 500px; overflow-y: auto;">
+          <div id="lista-insignias-otorgadas" style="max-height: 280px; overflow: auto; min-width: 0;">
             <div style="text-align: center; padding: 20px; color: #6c757d;">Use «Actualizar Lista» para cargar insignias otorgadas.</div>
           </div>
         </div>
