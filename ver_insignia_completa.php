@@ -341,7 +341,10 @@ try {
             'Responsabilidad Social Demo' => 'ResponsabilidadSocial.png',
             'Embajador del Deporte Oro Demo' => 'EmbajadordelDeporteOroDemo.png',
             'Embajador del Deporte Plata Demo' => 'EmbajadordelDeportePlataDemo.png',
-            'Embajador del Deporte Bronce Demo' => 'EmbajadordelDeporteBronceDemo.png'
+            'Embajador del Deporte Bronce Demo' => 'EmbajadordelDeporteBronceDemo.png',
+            'EmbajadordelDeporteOroDemo' => 'EmbajadordelDeporteOroDemo.png',
+            'EmbajadordelDeportePlataDemo' => 'EmbajadordelDeportePlataDemo.png',
+            'EmbajadordelDeporteBronceDemo' => 'EmbajadordelDeporteBronceDemo.png'
         ];
         
         foreach ($mapeo_codigos as $codigo => $tipo) {

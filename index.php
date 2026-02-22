@@ -1662,16 +1662,16 @@ if ($conexion && !$conexion->connect_errno) {
             <p class="badge-name">Embajador del Deporte</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/EmbajadordelDeporteOroDemo.png" alt="Embajador del Deporte Oro Demo" class="badge-image">
-            <p class="badge-name">Embajador del Deporte Oro Demo</p>
+            <img src="imagen/Insignias/EmbajadordelDeporteOroDemo.png" alt="EmbajadordelDeporteOroDemo" class="badge-image">
+            <p class="badge-name">EmbajadordelDeporteOroDemo</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/EmbajadordelDeportePlataDemo.png" alt="Embajador del Deporte Plata Demo" class="badge-image">
-            <p class="badge-name">Embajador del Deporte Plata Demo</p>
+            <img src="imagen/Insignias/EmbajadordelDeportePlataDemo.png" alt="EmbajadordelDeportePlataDemo" class="badge-image">
+            <p class="badge-name">EmbajadordelDeportePlataDemo</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/EmbajadordelDeporteBronceDemo.png" alt="Embajador del Deporte Bronce Demo" class="badge-image">
-            <p class="badge-name">Embajador del Deporte Bronce Demo</p>
+            <img src="imagen/Insignias/EmbajadordelDeporteBronceDemo.png" alt="EmbajadordelDeporteBronceDemo" class="badge-image">
+            <p class="badge-name">EmbajadordelDeporteBronceDemo</p>
           </div>
           <div class="badge-item">
             <img src="imagen/Insignias/FormacionyActualizacion.png" alt="Formación y Actualización" class="badge-image">
