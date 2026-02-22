@@ -1543,7 +1543,7 @@ if ($conexion && !$conexion->connect_errno) {
     <div class="stats-grid">
       <a href="tipos_insignias.php" style="text-decoration: none; color: inherit; display: block; height: 100%;">
         <div class="stat-card" style="cursor: pointer;">
-        <div class="stat-number">+7</div>
+        <div class="stat-number">+10</div>
         <div class="stat-label">Tipos de Insignias</div>
       </div>
       </a>
@@ -1682,7 +1682,7 @@ if ($conexion && !$conexion->connect_errno) {
             <p class="badge-name">Movilidad e Intercambio</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/ResponsabilidadSocial.png" alt="Responsabilidad Social" class="badge-image">
+            <img src="imagen/Insignias/ResponsabilidadSocial.png<?php echo file_exists('imagen/Insignias/ResponsabilidadSocial.png') ? '?v=' . filemtime('imagen/Insignias/ResponsabilidadSocial.png') : ''; ?>" alt="Responsabilidad Social" class="badge-image">
             <p class="badge-name">Responsabilidad Social</p>
           </div>
           <div class="badge-item">
@@ -1690,7 +1690,7 @@ if ($conexion && !$conexion->connect_errno) {
             <p class="badge-name">Talento Científico</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/TalentoInnovador.png" alt="Talento Innovador" class="badge-image">
+            <img src="imagen/Insignias/TalentoInnovador.png<?php echo file_exists('imagen/Insignias/TalentoInnovador.png') ? '?v=' . filemtime('imagen/Insignias/TalentoInnovador.png') : ''; ?>" alt="Talento Innovador" class="badge-image">
             <p class="badge-name">Talento Innovador</p>
           </div>
             </div>
