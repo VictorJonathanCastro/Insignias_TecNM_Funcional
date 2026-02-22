@@ -261,28 +261,29 @@ try {
             $nombre_categoria = 'Formación Integral'; // Valor por defecto
             
             if ($tiene_cat_ins) {
-                // Buscar el tipo_insignia basándose en el nombre de la insignia
-                $nombre_insignia_buscar = $row['nombre_insignia'];
-                
-                $sql_categoria = "
-                    SELECT cat.Nombre_cat
-                    FROM tipo_insignia ti
-                    LEFT JOIN cat_insignias cat ON ti.Cat_ins = cat." . $campo_id_cat . "
-                    WHERE ti." . $campo_nombre_tipo . " LIKE ?
-                    LIMIT 1
-                ";
-                
-                $stmt_cat = $conexion->prepare($sql_categoria);
-                if ($stmt_cat) {
-                    $buscar_like = '%' . $nombre_insignia_buscar . '%';
-                    $stmt_cat->bind_param("s", $buscar_like);
-                    if ($stmt_cat->execute()) {
-                        $result_cat = $stmt_cat->get_result();
-                        if ($row_cat = $result_cat->fetch_assoc()) {
-                            $nombre_categoria = $row_cat['Nombre_cat'] ?? 'Formación Integral';
+                try {
+                    $nombre_insignia_buscar = $row['nombre_insignia'];
+                    $sql_categoria = "
+                        SELECT cat.Nombre_cat
+                        FROM tipo_insignia ti
+                        LEFT JOIN cat_insignias cat ON ti.Cat_ins = cat." . $campo_id_cat . "
+                        WHERE ti." . $campo_nombre_tipo . " LIKE ?
+                        LIMIT 1
+                    ";
+                    $stmt_cat = $conexion->prepare($sql_categoria);
+                    if ($stmt_cat) {
+                        $buscar_like = '%' . $nombre_insignia_buscar . '%';
+                        $stmt_cat->bind_param("s", $buscar_like);
+                        if ($stmt_cat->execute()) {
+                            $result_cat = $stmt_cat->get_result();
+                            if ($result_cat && ($row_cat = $result_cat->fetch_assoc())) {
+                                $nombre_categoria = $row_cat['Nombre_cat'] ?? 'Formación Integral';
+                            }
                         }
+                        $stmt_cat->close();
                     }
-                    $stmt_cat->close();
+                } catch (Throwable $e) {
+                    error_log("validacion.php categoria: " . $e->getMessage());
                 }
             }
             
@@ -370,6 +371,9 @@ try {
             if (!file_exists($imagen_path)) {
                 echo "<!-- DEBUG: Archivo '$imagen_path' no existe, buscando alternativa -->";
                 $mapeo_imagenes = [
+                    'EmbajadordelDeporteOro.png',
+                    'EmbajadordelDeportePlata.png',
+                    'EmbajadordelDeporteBronce.png',
                     'MovilidadeIntercambio.png',
                     'EmbajadordelDeporte.png',
                     'EmbajadordelDeporteOroDemo.png',
@@ -394,40 +398,14 @@ try {
             
             echo "<!-- DEBUG: imagen_path final = '$imagen_path' -->";
             
-            // Descripción por variante (Bronce = 3er lugar, Plata = 2do, Oro = 1er)
+            // Descripción por variante (Bronce = 3er, Plata = 2do, Oro = 1er) - solo textos fijos, sin consulta extra (como ver_validacion_publica)
             $descripcion_final = null;
-            $variante = null;
-            if (stripos($row['codigo_insignia'], 'EMB-BRONCE') !== false) $variante = 'Bronce';
-            elseif (stripos($row['codigo_insignia'], 'EMB-ORO') !== false) $variante = 'Oro';
-            elseif (stripos($row['codigo_insignia'], 'EMB-PLATA') !== false) $variante = 'Plata';
-            if ($variante) {
-                try {
-                    $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
-                    $campo_tipo = ($check_tipo && $check_tipo->num_rows > 0) ? 'Nombre_Insignia' : 'Nombre_ins';
-                    $like_var = '%' . $variante . '%';
-                    $stmt_desc = $conexion->prepare("SELECT ti.Descripcion FROM T_insignias ti JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id WHERE tin." . $campo_tipo . " LIKE ? LIMIT 1");
-                    if ($stmt_desc) {
-                        $stmt_desc->bind_param("s", $like_var);
-                        if ($stmt_desc->execute()) {
-                            $res_desc = $stmt_desc->get_result();
-                            if ($res_desc && ($r = $res_desc->fetch_assoc()) && !empty(trim($r['Descripcion'] ?? ''))) {
-                                $descripcion_final = $r['Descripcion'];
-                            }
-                        }
-                        $stmt_desc->close();
-                    }
-                } catch (Throwable $e) {
-                    error_log("validacion.php descripcion variante: " . $e->getMessage());
-                }
-                if (empty($descripcion_final)) {
-                    if ($variante === 'Bronce') {
-                        $descripcion_final = 'Insignia otorgada por obtener el tercer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el tercer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando el esfuerzo y la dedicación en el ámbito deportivo.';
-                    } elseif ($variante === 'Plata') {
-                        $descripcion_final = 'Insignia otorgada por obtener el segundo lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el segundo puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia en el ámbito deportivo.';
-                    } else {
-                        $descripcion_final = 'Insignia otorgada por obtener el primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.';
-                    }
-                }
+            if (stripos($row['codigo_insignia'], 'EMB-BRONCE') !== false) {
+                $descripcion_final = 'Insignia otorgada por obtener el tercer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el tercer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando el esfuerzo y la dedicación en el ámbito deportivo.';
+            } elseif (stripos($row['codigo_insignia'], 'EMB-PLATA') !== false) {
+                $descripcion_final = 'Insignia otorgada por obtener el segundo lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el segundo puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia en el ámbito deportivo.';
+            } elseif (stripos($row['codigo_insignia'], 'EMB-ORO') !== false) {
+                $descripcion_final = 'Insignia otorgada por obtener el primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.';
             }
             if (empty($descripcion_final)) {
                 $descripcion_final = "Insignia de " . $row['nombre_insignia'] . " otorgada por el Tecnológico Nacional de México";
