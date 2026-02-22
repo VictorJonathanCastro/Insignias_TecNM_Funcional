@@ -1653,24 +1653,27 @@ if ($conexion && !$conexion->connect_errno) {
           </button>
           <div class="carousel-track-wrapper">
             <?php
-          // Resolver nombres reales de archivos en carpeta Insignias (como en la carpeta: EmbajadordelDeporteOroDemo, etc.)
-          $dir_insignias = 'imagen/Insignias';
+          // Ruta base para URLs (funciona en subdirectorio o en raíz)
+          $script_dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+          $base_href = ($script_dir === '/' || $script_dir === '' || $script_dir === '.') ? '' : rtrim($script_dir, '/');
+          // Resolver imágenes Oro/Plata/Bronce desde carpeta Insignias (archivos .png)
+          $dir_fisico = __DIR__ . DIRECTORY_SEPARATOR . 'imagen' . DIRECTORY_SEPARATOR . 'Insignias';
           $buscar_demo = ['EmbajadordelDeporteOroDemo', 'EmbajadordelDeportePlataDemo', 'EmbajadordelDeporteBronceDemo'];
           $src_demo = [];
-          if (is_dir($dir_insignias)) {
-            $archivos = scandir($dir_insignias);
+          foreach ($buscar_demo as $base) {
+            $archivo = $base . '.png';
+            $ruta_fisica = $dir_fisico . DIRECTORY_SEPARATOR . $archivo;
+            $src_demo[$base] = $base_href . '/imagen/Insignias/' . (file_exists($ruta_fisica) ? $archivo : $base . '.png');
+          }
+          if (is_dir($dir_fisico)) {
+            $archivos = scandir($dir_fisico);
             foreach ($buscar_demo as $base) {
-              $src_demo[$base] = $dir_insignias . '/' . $base . '.png';
               foreach ($archivos as $f) {
-                if ($f !== '.' && $f !== '..' && stripos($f, $base) === 0) {
-                  $src_demo[$base] = $dir_insignias . '/' . $f;
+                if ($f !== '.' && $f !== '..' && stripos($f, $base) === 0 && (strtolower(substr($f, -4)) === '.png' || strpos($f, '.') !== false)) {
+                  $src_demo[$base] = $base_href . '/imagen/Insignias/' . $f;
                   break;
                 }
               }
-            }
-          } else {
-            foreach ($buscar_demo as $base) {
-              $src_demo[$base] = $dir_insignias . '/' . $base . '.png';
             }
           }
           ?>
