@@ -1652,32 +1652,7 @@ if ($conexion && !$conexion->connect_errno) {
             <i class="fas fa-chevron-left"></i>
           </button>
           <div class="carousel-track-wrapper">
-            <?php
-          // Ruta base para URLs (funciona en subdirectorio o en raíz)
-          $script_dir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
-          $base_href = ($script_dir === '/' || $script_dir === '' || $script_dir === '.') ? '' : rtrim($script_dir, '/');
-          // Resolver imágenes Oro/Plata/Bronce desde carpeta Insignias (archivos .png)
-          $dir_fisico = __DIR__ . DIRECTORY_SEPARATOR . 'imagen' . DIRECTORY_SEPARATOR . 'Insignias';
-          $buscar_demo = ['EmbajadordelDeporteOroDemo', 'EmbajadordelDeportePlataDemo', 'EmbajadordelDeporteBronceDemo'];
-          $src_demo = [];
-          foreach ($buscar_demo as $base) {
-            $archivo = $base . '.png';
-            $ruta_fisica = $dir_fisico . DIRECTORY_SEPARATOR . $archivo;
-            $src_demo[$base] = $base_href . '/imagen/Insignias/' . (file_exists($ruta_fisica) ? $archivo : $base . '.png');
-          }
-          if (is_dir($dir_fisico)) {
-            $archivos = scandir($dir_fisico);
-            foreach ($buscar_demo as $base) {
-              foreach ($archivos as $f) {
-                if ($f !== '.' && $f !== '..' && stripos($f, $base) === 0 && (strtolower(substr($f, -4)) === '.png' || strpos($f, '.') !== false)) {
-                  $src_demo[$base] = $base_href . '/imagen/Insignias/' . $f;
-                  break;
-                }
-              }
-            }
-          }
-          ?>
-          <div class="carousel-track" id="carouselTrack">
+            <div class="carousel-track" id="carouselTrack">
           <div class="badge-item">
             <img src="imagen/Insignias/EmbajadordelArte.png" alt="Embajador del Arte" class="badge-image">
             <p class="badge-name">Embajador del Arte</p>
@@ -1687,15 +1662,15 @@ if ($conexion && !$conexion->connect_errno) {
             <p class="badge-name">Embajador del Deporte</p>
           </div>
           <div class="badge-item">
-            <img src="<?php echo htmlspecialchars($src_demo['EmbajadordelDeporteOroDemo']); ?>" alt="EmbajadordelDeporteOroDemo" class="badge-image">
+            <img src="imagen/Insignias/EmbajadordelDeporteOroDemo.png" alt="EmbajadordelDeporteOroDemo" class="badge-image">
             <p class="badge-name">EmbajadordelDeporteOroDemo</p>
           </div>
           <div class="badge-item">
-            <img src="<?php echo htmlspecialchars($src_demo['EmbajadordelDeportePlataDemo']); ?>" alt="EmbajadordelDeportePlataDemo" class="badge-image">
+            <img src="imagen/Insignias/EmbajadordelDeportePlataDemo.png" alt="EmbajadordelDeportePlataDemo" class="badge-image">
             <p class="badge-name">EmbajadordelDeportePlataDemo</p>
           </div>
           <div class="badge-item">
-            <img src="<?php echo htmlspecialchars($src_demo['EmbajadordelDeporteBronceDemo']); ?>" alt="EmbajadordelDeporteBronceDemo" class="badge-image">
+            <img src="imagen/Insignias/EmbajadordelDeporteBronceDemo.png" alt="EmbajadordelDeporteBronceDemo" class="badge-image">
             <p class="badge-name">EmbajadordelDeporteBronceDemo</p>
           </div>
           <div class="badge-item">
