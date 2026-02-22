@@ -219,6 +219,9 @@ try {
             d.Nombre_Completo as destinatario,
             io.Fecha_Emision as fecha_emision,
             CASE 
+                WHEN io.Codigo_Insignia LIKE '%EMB-BRONCE%' THEN 'EmbajadordelDeporteBronce'
+                WHEN io.Codigo_Insignia LIKE '%EMB-ORO%' THEN 'EmbajadordelDeporteOro'
+                WHEN io.Codigo_Insignia LIKE '%EMB-PLATA%' THEN 'EmbajadordelDeportePlata'
                 WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
                 WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                 WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
@@ -296,10 +299,15 @@ try {
             
             // Función para determinar la insignia dinámicamente basándose en el código
             function determinarInsigniaDinamica($codigo_insignia, $nombre_insignia) {
-                // Mapeo de códigos a tipos de insignia
+                if (stripos($codigo_insignia, 'EMB-BRONCE') !== false) return 'EmbajadordelDeporteBronce.png';
+                if (stripos($codigo_insignia, 'EMB-ORO') !== false) return 'EmbajadordelDeporteOro.png';
+                if (stripos($codigo_insignia, 'EMB-PLATA') !== false) return 'EmbajadordelDeportePlata.png';
+                if (stripos($nombre_insignia, 'EmbajadordelDeporteBronce') !== false) return 'EmbajadordelDeporteBronce.png';
+                if (stripos($nombre_insignia, 'EmbajadordelDeporteOro') !== false) return 'EmbajadordelDeporteOro.png';
+                if (stripos($nombre_insignia, 'EmbajadordelDeportePlata') !== false) return 'EmbajadordelDeportePlata.png';
                 $mapeo_codigos = [
                     'ART' => 'Embajador del Arte',
-                    'EMB' => 'Embajador del Deporte', 
+                    'EMB' => 'Embajador del Deporte',
                     'TAL' => 'Talento Científico',
                     'INN' => 'Talento Innovador',
                     'SOC' => 'Responsabilidad Social',
@@ -386,13 +394,48 @@ try {
             
             echo "<!-- DEBUG: imagen_path final = '$imagen_path' -->";
             
+            // Descripción por variante (Bronce = 3er lugar, Plata = 2do, Oro = 1er)
+            $descripcion_final = null;
+            $variante = null;
+            if (stripos($row['codigo_insignia'], 'EMB-BRONCE') !== false) $variante = 'Bronce';
+            elseif (stripos($row['codigo_insignia'], 'EMB-ORO') !== false) $variante = 'Oro';
+            elseif (stripos($row['codigo_insignia'], 'EMB-PLATA') !== false) $variante = 'Plata';
+            if ($variante) {
+                $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+                $campo_tipo = ($check_tipo && $check_tipo->num_rows > 0) ? 'Nombre_Insignia' : 'Nombre_ins';
+                $like_var = '%' . $variante . '%';
+                $stmt_desc = $conexion->prepare("SELECT ti.Descripcion FROM T_insignias ti JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id WHERE tin." . $campo_tipo . " LIKE ? LIMIT 1");
+                if ($stmt_desc) {
+                    $stmt_desc->bind_param("s", $like_var);
+                    if ($stmt_desc->execute()) {
+                        $res_desc = $stmt_desc->get_result();
+                        if ($res_desc && ($r = $res_desc->fetch_assoc()) && !empty(trim($r['Descripcion'] ?? ''))) {
+                            $descripcion_final = $r['Descripcion'];
+                        }
+                    }
+                    $stmt_desc->close();
+                }
+                if (empty($descripcion_final)) {
+                    if ($variante === 'Bronce') {
+                        $descripcion_final = 'Insignia otorgada por obtener el tercer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el tercer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando el esfuerzo y la dedicación en el ámbito deportivo.';
+                    } elseif ($variante === 'Plata') {
+                        $descripcion_final = 'Insignia otorgada por obtener el segundo lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el segundo puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia en el ámbito deportivo.';
+                    } else {
+                        $descripcion_final = 'Insignia otorgada por obtener el primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.';
+                    }
+                }
+            }
+            if (empty($descripcion_final)) {
+                $descripcion_final = "Insignia de " . $row['nombre_insignia'] . " otorgada por el Tecnológico Nacional de México";
+            }
+            
             // Convertir datos de BD al formato de sesión (igual que ver_insignia_completa.php)
             $insignia_data = [
                 'codigo' => $row['codigo_insignia'],
                 'nombre' => $row['nombre_insignia'],
                 'categoria' => $row['nombre_categoria'],
                 'destinatario' => $row['destinatario'],
-                'descripcion' => "Insignia de " . $row['nombre_insignia'] . " otorgada por el Tecnológico Nacional de México",
+                'descripcion' => $descripcion_final,
                 'criterios' => "Para obtener esta insignia de " . $row['nombre_insignia'] . ", el estudiante debe haber demostrado competencias específicas.",
                 'fecha_emision' => $row['fecha_emision'],
                 'emisor' => 'TecNM / ' . $row['nombre_instituto'],
