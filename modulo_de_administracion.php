@@ -3672,7 +3672,7 @@ ob_clean();
 
   <!-- MODAL OPCIONES CRUD -->
   <div id="modalOpciones" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; overflow-y: auto;">
-    <div style="background: white; margin: 50px auto; max-width: 95%; width: 1200px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative;">
+    <div style="background: white; margin: 30px auto; max-width: 95%; width: 1200px; min-height: 85vh; max-height: 92vh; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); position: relative; display: flex; flex-direction: column;">
       <div style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white; padding: 20px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;">
         <h2 style="margin: 0;">⚙️ Opciones de Administración</h2>
         <button onclick="cerrarModalOpciones()" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px 15px; border-radius: 5px;">&times;</button>
@@ -3698,7 +3698,7 @@ ob_clean();
         <button onclick="mostrarTabOpciones('tab-subcategorias', this)" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📂 Subcategorías</button>
       </div>
       
-      <div style="padding: 20px;">
+      <div style="padding: 20px; overflow-y: auto; flex: 1; min-height: 0;">
         <!-- Tab Destinatarios -->
         <div id="tab-destinatarios" class="tab-opciones-content active">
           <h3>Gestión de Destinatarios</h3>
@@ -3721,10 +3721,10 @@ ob_clean();
             <button onclick="mostrarFormInsignia('crear')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">➕ Crear Nueva</button>
             <button onclick="cargarInsignias()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
           </div>
-          <div id="lista-insignias" style="max-height: 500px; overflow-y: auto;">
+          <div id="lista-insignias" style="max-height: 280px; overflow-y: auto;">
             <!-- Se carga dinámicamente -->
           </div>
-          <div id="form-insignia" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+          <div id="form-insignia" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px; max-height: 65vh; overflow-y: auto;">
             <div id="form-insignia-crear">
               <h4>Crear Nueva Insignia Maestra</h4>
               <form method="POST" onsubmit="return confirmarOperacion('T_insignias', 'crear')">
