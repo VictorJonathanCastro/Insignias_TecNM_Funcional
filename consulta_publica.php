@@ -145,6 +145,9 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                     'Programa no especificado' as Programa,
                     COALESCE(d.Curp, '') as curp,
                     CASE 
+                        WHEN io.Codigo_Insignia LIKE '%EMB-BRONCE%' THEN 'EmbajadordelDeporteBronce'
+                        WHEN io.Codigo_Insignia LIKE '%EMB-ORO%' THEN 'EmbajadordelDeporteOro'
+                        WHEN io.Codigo_Insignia LIKE '%EMB-PLATA%' THEN 'EmbajadordelDeportePlata'
                         WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
                         WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                         WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
@@ -262,6 +265,9 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                     'Programa no especificado' as Programa,
                     COALESCE(d.Curp, '') as curp,
                     CASE 
+                        WHEN io.Codigo_Insignia LIKE '%EMB-BRONCE%' THEN 'EmbajadordelDeporteBronce'
+                        WHEN io.Codigo_Insignia LIKE '%EMB-ORO%' THEN 'EmbajadordelDeporteOro'
+                        WHEN io.Codigo_Insignia LIKE '%EMB-PLATA%' THEN 'EmbajadordelDeportePlata'
                         WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
                         WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                         WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
@@ -365,6 +371,9 @@ if (!$usar_tabla_t && !$usar_tabla_i) {
                     'Programa no especificado' as Programa,
                     COALESCE(d.Curp, '') as curp,
                     CASE 
+                        WHEN io.Codigo_Insignia LIKE '%EMB-BRONCE%' THEN 'EmbajadordelDeporteBronce'
+                        WHEN io.Codigo_Insignia LIKE '%EMB-ORO%' THEN 'EmbajadordelDeporteOro'
+                        WHEN io.Codigo_Insignia LIKE '%EMB-PLATA%' THEN 'EmbajadordelDeportePlata'
                         WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
                         WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                         WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
@@ -466,9 +475,16 @@ function formatearFecha($fecha) {
 
 // Función para determinar la imagen de la insignia dinámicamente
 function determinarImagenInsignia($codigo_insignia, $nombre_insignia) {
+    // Variantes Embajador del Deporte: imagen por código antes del genérico EMB
+    if (stripos($codigo_insignia, 'EMB-BRONCE') !== false) return 'imagen/Insignias/EmbajadordelDeporteBronce.png';
+    if (stripos($codigo_insignia, 'EMB-ORO') !== false) return 'imagen/Insignias/EmbajadordelDeporteOro.png';
+    if (stripos($codigo_insignia, 'EMB-PLATA') !== false) return 'imagen/Insignias/EmbajadordelDeportePlata.png';
+    if (stripos($nombre_insignia, 'EmbajadordelDeporteBronce') !== false) return 'imagen/Insignias/EmbajadordelDeporteBronce.png';
+    if (stripos($nombre_insignia, 'EmbajadordelDeporteOro') !== false) return 'imagen/Insignias/EmbajadordelDeporteOro.png';
+    if (stripos($nombre_insignia, 'EmbajadordelDeportePlata') !== false) return 'imagen/Insignias/EmbajadordelDeportePlata.png';
     $mapeo_codigos = [
         'ART' => 'Embajador del Arte',
-        'EMB' => 'Embajador del Deporte', 
+        'EMB' => 'Embajador del Deporte',
         'TAL' => 'Talento Científico',
         'INN' => 'Talento Innovador',
         'SOC' => 'Responsabilidad Social',
