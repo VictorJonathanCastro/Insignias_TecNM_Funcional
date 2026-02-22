@@ -185,35 +185,13 @@ if (!empty($insignia_data['responsable_id'])) {
     }
     }
     
-    // Descripción: para EMB-BRONCE/ORO/PLATA siempre la de la variante (3er/2do/1er lugar)
-    $variante = null;
-    if (stripos($codigo_insignia, 'EMB-BRONCE') !== false) $variante = 'Bronce';
-    elseif (stripos($codigo_insignia, 'EMB-ORO') !== false) $variante = 'Oro';
-    elseif (stripos($codigo_insignia, 'EMB-PLATA') !== false) $variante = 'Plata';
-    if ($variante) {
-        $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
-        $campo_tipo = ($check_tipo && $check_tipo->num_rows > 0) ? 'Nombre_Insignia' : 'Nombre_ins';
-        $like_var = '%' . $variante . '%';
-        $stmt_desc = $conexion->prepare("SELECT ti.Descripcion FROM T_insignias ti JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id WHERE tin." . $campo_tipo . " LIKE ? LIMIT 1");
-        if ($stmt_desc) {
-            $stmt_desc->bind_param("s", $like_var);
-            if ($stmt_desc->execute()) {
-                $res_desc = $stmt_desc->get_result();
-                if ($res_desc && ($r = $res_desc->fetch_assoc()) && !empty(trim($r['Descripcion'] ?? ''))) {
-                    $insignia_data['descripcion'] = $r['Descripcion'];
-                }
-            }
-            $stmt_desc->close();
-        }
-        if (empty($insignia_data['descripcion']) || $insignia_data['descripcion'] === null) {
-            if ($variante === 'Bronce') {
-                $insignia_data['descripcion'] = 'Insignia otorgada por obtener el tercer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el tercer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando el esfuerzo y la dedicación en el ámbito deportivo.';
-            } elseif ($variante === 'Plata') {
-                $insignia_data['descripcion'] = 'Insignia otorgada por obtener el segundo lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el segundo puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia en el ámbito deportivo.';
-            } else {
-                $insignia_data['descripcion'] = 'Insignia otorgada por obtener el primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.';
-            }
-        }
+    // Descripción: para EMB-BRONCE/ORO/PLATA siempre la de la variante (3er/2do/1er lugar) - textos fijos para no mostrar Oro en Bronce
+    if (stripos($codigo_insignia, 'EMB-BRONCE') !== false) {
+        $insignia_data['descripcion'] = 'Insignia otorgada por obtener el tercer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el tercer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando el esfuerzo y la dedicación en el ámbito deportivo.';
+    } elseif (stripos($codigo_insignia, 'EMB-PLATA') !== false) {
+        $insignia_data['descripcion'] = 'Insignia otorgada por obtener el segundo lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el segundo puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia en el ámbito deportivo.';
+    } elseif (stripos($codigo_insignia, 'EMB-ORO') !== false) {
+        $insignia_data['descripcion'] = 'Insignia otorgada por obtener el primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.';
     } else {
         if (empty($insignia_data['descripcion']) || $insignia_data['descripcion'] === null) {
             if (isset($_SESSION['insignia_data']) && is_array($_SESSION['insignia_data'])) {
