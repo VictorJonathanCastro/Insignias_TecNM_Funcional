@@ -1652,7 +1652,29 @@ if ($conexion && !$conexion->connect_errno) {
             <i class="fas fa-chevron-left"></i>
           </button>
           <div class="carousel-track-wrapper">
-            <div class="carousel-track" id="carouselTrack">
+            <?php
+          // Resolver nombres reales de archivos en carpeta Insignias (como en la carpeta: EmbajadordelDeporteOroDemo, etc.)
+          $dir_insignias = 'imagen/Insignias';
+          $buscar_demo = ['EmbajadordelDeporteOroDemo', 'EmbajadordelDeportePlataDemo', 'EmbajadordelDeporteBronceDemo'];
+          $src_demo = [];
+          if (is_dir($dir_insignias)) {
+            $archivos = scandir($dir_insignias);
+            foreach ($buscar_demo as $base) {
+              $src_demo[$base] = $dir_insignias . '/' . $base . '.png';
+              foreach ($archivos as $f) {
+                if ($f !== '.' && $f !== '..' && stripos($f, $base) === 0) {
+                  $src_demo[$base] = $dir_insignias . '/' . $f;
+                  break;
+                }
+              }
+            }
+          } else {
+            foreach ($buscar_demo as $base) {
+              $src_demo[$base] = $dir_insignias . '/' . $base . '.png';
+            }
+          }
+          ?>
+          <div class="carousel-track" id="carouselTrack">
           <div class="badge-item">
             <img src="imagen/Insignias/EmbajadordelArte.png" alt="Embajador del Arte" class="badge-image">
             <p class="badge-name">Embajador del Arte</p>
@@ -1662,15 +1684,15 @@ if ($conexion && !$conexion->connect_errno) {
             <p class="badge-name">Embajador del Deporte</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/EmbajadordelDeporteOroDemo.png" alt="EmbajadordelDeporteOroDemo" class="badge-image">
+            <img src="<?php echo htmlspecialchars($src_demo['EmbajadordelDeporteOroDemo']); ?>" alt="EmbajadordelDeporteOroDemo" class="badge-image">
             <p class="badge-name">EmbajadordelDeporteOroDemo</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/EmbajadordelDeportePlataDemo.png" alt="EmbajadordelDeportePlataDemo" class="badge-image">
+            <img src="<?php echo htmlspecialchars($src_demo['EmbajadordelDeportePlataDemo']); ?>" alt="EmbajadordelDeportePlataDemo" class="badge-image">
             <p class="badge-name">EmbajadordelDeportePlataDemo</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/EmbajadordelDeporteBronceDemo.png" alt="EmbajadordelDeporteBronceDemo" class="badge-image">
+            <img src="<?php echo htmlspecialchars($src_demo['EmbajadordelDeporteBronceDemo']); ?>" alt="EmbajadordelDeporteBronceDemo" class="badge-image">
             <p class="badge-name">EmbajadordelDeporteBronceDemo</p>
           </div>
           <div class="badge-item">
