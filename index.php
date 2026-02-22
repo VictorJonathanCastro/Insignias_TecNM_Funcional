@@ -1681,6 +1681,18 @@ if ($conexion && !$conexion->connect_errno) {
             <img src="imagen/Insignias/TalentoInnovador.png" alt="Talento Innovador" class="badge-image">
             <p class="badge-name">Talento Innovador</p>
           </div>
+          <div class="badge-item">
+            <img src="imagen/Insignias/Embajadordeldeporte1erlugar.png" alt="Embajador del Deporte 1er Lugar" class="badge-image">
+            <p class="badge-name">Embajador del Deporte - 1er Lugar</p>
+          </div>
+          <div class="badge-item">
+            <img src="imagen/Insignias/Embajadordeldeporte2dolugar.png" alt="Embajador del Deporte 2do Lugar" class="badge-image">
+            <p class="badge-name">Embajador del Deporte - 2do Lugar</p>
+          </div>
+          <div class="badge-item">
+            <img src="imagen/Insignias/Embajadordeldeporte3erlugar.png" alt="Embajador del Deporte 3er Lugar" class="badge-image">
+            <p class="badge-name">Embajador del Deporte - 3er Lugar</p>
+          </div>
             </div>
           </div>
           <button class="carousel-btn carousel-btn-next" onclick="moveCarousel(1)">
@@ -1691,6 +1703,7 @@ if ($conexion && !$conexion->connect_errno) {
           <span class="dot active" onclick="goToSlide(0)"></span>
           <span class="dot" onclick="goToSlide(1)"></span>
           <span class="dot" onclick="goToSlide(2)"></span>
+          <span class="dot" onclick="goToSlide(3)"></span>
         </div>
       </div>
     </div>
