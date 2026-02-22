@@ -2549,7 +2549,41 @@ ob_clean();
     
     function cerrarModalOpciones() {
         document.getElementById('modalOpciones').style.display = 'none';
+        cerrarDropdownMasOpciones();
     }
+
+    function toggleDropdownMasOpciones(event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        var d = document.getElementById('dropdown-mas-opciones');
+        if (!d) return;
+        if (d.style.display === 'block') {
+            d.style.display = 'none';
+        } else {
+            d.style.display = 'block';
+        }
+    }
+
+    function cerrarDropdownMasOpciones() {
+        var d = document.getElementById('dropdown-mas-opciones');
+        if (d) d.style.display = 'none';
+    }
+
+    function accionEliminar(nombre) {
+        if (confirm('¿Desea eliminar el elemento seleccionado de «' + nombre + '»? Esta acción puede ser irreversible.')) {
+            alert('Función de eliminación para «' + nombre + '» en desarrollo. Conecte aquí su lógica de borrado.');
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        var d = document.getElementById('dropdown-mas-opciones');
+        var btn = document.getElementById('btn-mas-opciones');
+        if (!d || d.style.display !== 'block') return;
+        if (d.contains(e.target) || (btn && btn.contains(e.target))) return;
+        cerrarDropdownMasOpciones();
+    });
     
     function mostrarTabOpciones(tabId, element = null) {
         // Ocultar TODOS los tabs primero (forzar ocultamiento)
@@ -2606,6 +2640,10 @@ ob_clean();
         } else if (tabId === 'tab-subcategorias') {
             console.log('Cargando subcategorías...');
             cargarSubcategorias();
+        } else if (tabId === 'tab-certificados') {
+            cargarCertificados();
+        } else if (tabId === 'tab-insignias-otorgadas') {
+            cargarInsigniasOtorgadas();
         }
     }
     
@@ -2699,6 +2737,30 @@ ob_clean();
             .catch(error => {
                 console.error('Error al cargar subcategorías:', error);
                 listaDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: red;">Error al cargar los datos: ' + error.message + '</div>';
+            });
+    }
+
+    function cargarCertificados() {
+        const listaDiv = document.getElementById('lista-certificados');
+        if (!listaDiv) return;
+        listaDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
+        fetch('ajax_opciones.php?tabla=certificados&accion=listar&_=' + Date.now(), { cache: 'no-store' })
+            .then(response => response.ok ? response.text() : Promise.reject(new Error('No disponible')))
+            .then(html => { listaDiv.innerHTML = html; })
+            .catch(() => {
+                listaDiv.innerHTML = '<div style="text-align: center; padding: 24px; color: #6c757d;">Gestión de certificados. Conecte aquí el listado cuando disponga de backend (tabla certificados).</div>';
+            });
+    }
+
+    function cargarInsigniasOtorgadas() {
+        const listaDiv = document.getElementById('lista-insignias-otorgadas');
+        if (!listaDiv) return;
+        listaDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Cargando...</div>';
+        fetch('ajax_opciones.php?tabla=insigniasotorgadas&accion=listar&_=' + Date.now(), { cache: 'no-store' })
+            .then(response => response.ok ? response.text() : Promise.reject(new Error('No disponible')))
+            .then(html => { listaDiv.innerHTML = html; })
+            .catch(() => {
+                listaDiv.innerHTML = '<div style="text-align: center; padding: 24px; color: #6c757d;">Gestión de insignias otorgadas. Conecte aquí el listado cuando disponga de backend (tabla insigniasotorgadas).</div>';
             });
     }
     
@@ -3706,11 +3768,33 @@ ob_clean();
       <?php endif; ?>
       
       <!-- Pestañas del Modal -->
-      <div style="display: flex; border-bottom: 2px solid #e9ecef; background: #f8f9fa;">
-        <button onclick="mostrarTabOpciones('tab-destinatarios', this)" class="tab-opciones-btn active" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">👤 Destinatarios</button>
-        <button onclick="mostrarTabOpciones('tab-insignias', this)" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">🎖️ Insignias Maestras</button>
-        <button onclick="mostrarTabOpciones('tab-categorias', this)" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📁 Categorías</button>
-        <button onclick="mostrarTabOpciones('tab-subcategorias', this)" class="tab-opciones-btn" style="flex: 1; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📂 Subcategorías</button>
+      <div style="display: flex; border-bottom: 2px solid #e9ecef; background: #f8f9fa; flex-wrap: wrap; align-items: stretch;">
+        <button onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-destinatarios', this)" class="tab-opciones-btn active" style="flex: 1; min-width: 100px; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">👤 Destinatarios</button>
+        <button onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-insignias', this)" class="tab-opciones-btn" style="flex: 1; min-width: 100px; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">🎖️ Insignias Maestras</button>
+        <button onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-categorias', this)" class="tab-opciones-btn" style="flex: 1; min-width: 100px; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📁 Categorías</button>
+        <button onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-subcategorias', this)" class="tab-opciones-btn" style="flex: 1; min-width: 100px; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">📂 Subcategorías</button>
+        <div style="position: relative; flex: 1; min-width: 120px;">
+          <button type="button" onclick="toggleDropdownMasOpciones(event)" class="tab-opciones-btn" id="btn-mas-opciones" style="width: 100%; padding: 15px; border: none; background: transparent; cursor: pointer; font-weight: 600; border-bottom: 3px solid transparent;">⋮ Más Opciones</button>
+          <div id="dropdown-mas-opciones" style="display: none; position: absolute; top: 100%; left: 0; min-width: 280px; background: #1e3a5f; color: white; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 10001; margin-top: 4px; overflow: hidden;">
+            <div style="padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.15); font-weight: 600;">Más opciones</div>
+            <div style="padding: 8px 0;">
+              <div class="mas-opciones-fila" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <span style="flex: 1;">📄 Certificados</span>
+                <span style="display: flex; gap: 8px;">
+                  <button type="button" onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-certificados');" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Editar</button>
+                  <button type="button" onclick="cerrarDropdownMasOpciones(); accionEliminar('Certificados');" style="background: rgba(220,53,69,0.8); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Eliminar</button>
+                </span>
+              </div>
+              <div class="mas-opciones-fila" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px;">
+                <span style="flex: 1;">🎖️ Insignias Otorgadas</span>
+                <span style="display: flex; gap: 8px;">
+                  <button type="button" onclick="cerrarDropdownMasOpciones(); mostrarTabOpciones('tab-insignias-otorgadas');" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Editar</button>
+                  <button type="button" onclick="cerrarDropdownMasOpciones(); accionEliminar('Insignias Otorgadas');" style="background: rgba(220,53,69,0.8); color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px;">Eliminar</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div style="padding: 20px; overflow-y: auto; flex: 1; min-height: 0;">
@@ -3822,6 +3906,28 @@ ob_clean();
           </div>
           <div id="form-subcategoria" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
             <!-- Formulario se carga dinámicamente -->
+          </div>
+        </div>
+
+        <!-- Tab Certificados (desde Más Opciones) -->
+        <div id="tab-certificados" class="tab-opciones-content">
+          <h3>Gestión de Certificados</h3>
+          <div style="margin-bottom: 20px;">
+            <button onclick="cargarCertificados()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+          </div>
+          <div id="lista-certificados" style="max-height: 500px; overflow-y: auto;">
+            <div style="text-align: center; padding: 20px; color: #6c757d;">Use «Actualizar Lista» para cargar certificados.</div>
+          </div>
+        </div>
+
+        <!-- Tab Insignias Otorgadas (desde Más Opciones) -->
+        <div id="tab-insignias-otorgadas" class="tab-opciones-content">
+          <h3>Gestión de Insignias Otorgadas</h3>
+          <div style="margin-bottom: 20px;">
+            <button onclick="cargarInsigniasOtorgadas()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+          </div>
+          <div id="lista-insignias-otorgadas" style="max-height: 500px; overflow-y: auto;">
+            <div style="text-align: center; padding: 20px; color: #6c757d;">Use «Actualizar Lista» para cargar insignias otorgadas.</div>
           </div>
         </div>
       </div>
