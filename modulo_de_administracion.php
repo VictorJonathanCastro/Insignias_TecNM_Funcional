@@ -390,6 +390,7 @@ if (isset($_POST['guardar_subcategoria'])) {
 
 $mensaje_opciones = '';
 $mensaje_error_opciones = '';
+$abrir_modal_tab_insignias = false; // true después de crear/editar/eliminar insignia maestra para refrescar lista
 
 // Operaciones CRUD para Destinatarios
 if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'destinatario') {
@@ -452,6 +453,7 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'T_insignia
             $stmt->execute();
             $stmt->close();
             $mensaje_opciones = "Insignia maestra creada exitosamente";
+            $abrir_modal_tab_insignias = true;
         } elseif ($_POST['operacion'] == 'editar') {
             $id = intval($_POST['id']);
             $tipo_insignia = intval($_POST['tipo_insignia'] ?? 0);
@@ -470,6 +472,7 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'T_insignia
             $stmt->execute();
             $stmt->close();
             $mensaje_opciones = "Insignia maestra actualizada exitosamente";
+            $abrir_modal_tab_insignias = true;
         } elseif ($_POST['operacion'] == 'eliminar') {
             $id = intval($_POST['id']);
             $stmt = $conexion->prepare("DELETE FROM T_insignias WHERE id=?");
@@ -477,6 +480,7 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'T_insignia
             $stmt->execute();
             $stmt->close();
             $mensaje_opciones = "Insignia maestra eliminada exitosamente";
+            $abrir_modal_tab_insignias = true;
         }
     } catch (Exception $e) {
         $mensaje_error_opciones = "Error: " . $e->getMessage();
@@ -3127,6 +3131,17 @@ ob_clean();
             });
         }, 500);
     }
+
+    // Después de guardar/editar/eliminar insignia maestra: abrir modal en pestaña Insignias y refrescar lista
+    <?php if (!empty($abrir_modal_tab_insignias)): ?>
+    document.addEventListener('DOMContentLoaded', function() {
+        abrirModalOpciones();
+        var btnInsignias = document.querySelector('.tab-opciones-btn[onclick*="tab-insignias"]');
+        if (btnInsignias) mostrarTabOpciones('tab-insignias', btnInsignias);
+        var formInsignia = document.getElementById('form-insignia');
+        if (formInsignia) formInsignia.style.display = 'none';
+    });
+    <?php endif; ?>
   </script>
 </head>
 <body>
