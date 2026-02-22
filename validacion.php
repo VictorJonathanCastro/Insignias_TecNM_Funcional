@@ -401,19 +401,23 @@ try {
             elseif (stripos($row['codigo_insignia'], 'EMB-ORO') !== false) $variante = 'Oro';
             elseif (stripos($row['codigo_insignia'], 'EMB-PLATA') !== false) $variante = 'Plata';
             if ($variante) {
-                $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
-                $campo_tipo = ($check_tipo && $check_tipo->num_rows > 0) ? 'Nombre_Insignia' : 'Nombre_ins';
-                $like_var = '%' . $variante . '%';
-                $stmt_desc = $conexion->prepare("SELECT ti.Descripcion FROM T_insignias ti JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id WHERE tin." . $campo_tipo . " LIKE ? LIMIT 1");
-                if ($stmt_desc) {
-                    $stmt_desc->bind_param("s", $like_var);
-                    if ($stmt_desc->execute()) {
-                        $res_desc = $stmt_desc->get_result();
-                        if ($res_desc && ($r = $res_desc->fetch_assoc()) && !empty(trim($r['Descripcion'] ?? ''))) {
-                            $descripcion_final = $r['Descripcion'];
+                try {
+                    $check_tipo = $conexion->query("SHOW COLUMNS FROM tipo_insignia LIKE 'Nombre_Insignia'");
+                    $campo_tipo = ($check_tipo && $check_tipo->num_rows > 0) ? 'Nombre_Insignia' : 'Nombre_ins';
+                    $like_var = '%' . $variante . '%';
+                    $stmt_desc = $conexion->prepare("SELECT ti.Descripcion FROM T_insignias ti JOIN tipo_insignia tin ON ti.Tipo_Insignia = tin.id WHERE tin." . $campo_tipo . " LIKE ? LIMIT 1");
+                    if ($stmt_desc) {
+                        $stmt_desc->bind_param("s", $like_var);
+                        if ($stmt_desc->execute()) {
+                            $res_desc = $stmt_desc->get_result();
+                            if ($res_desc && ($r = $res_desc->fetch_assoc()) && !empty(trim($r['Descripcion'] ?? ''))) {
+                                $descripcion_final = $r['Descripcion'];
+                            }
                         }
+                        $stmt_desc->close();
                     }
-                    $stmt_desc->close();
+                } catch (Throwable $e) {
+                    error_log("validacion.php descripcion variante: " . $e->getMessage());
                 }
                 if (empty($descripcion_final)) {
                     if ($variante === 'Bronce') {
