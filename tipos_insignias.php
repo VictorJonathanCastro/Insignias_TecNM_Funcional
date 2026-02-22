@@ -15,19 +15,19 @@ $insignias = [
         'descripcion' => 'Destaca la excelencia deportiva y el compromiso con la actividad física. Se otorga a estudiantes que representan al TecNM en competencias deportivas, promueven el deporte y demuestran valores como disciplina, trabajo en equipo y perseverancia.'
     ],
     [
-        'nombre' => 'Evento Nacional TecNM - 1er. Lugar',
+        'nombre' => 'Embajadordeldeporte1erlugar',
         'imagen' => 'imagen/Insignias/Embajadordeldeporte1erlugar.png',
-        'descripcion' => 'Reconoce al primer lugar en competencias del Evento Nacional TecNM. Se otorga a estudiantes que alcanzan la máxima posición en las justas deportivas, académicas o culturales que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente.'
+        'descripcion' => 'Reconoce al primer lugar en el evento deportivo TecNM. Se otorga a estudiantes que alcanzan el primer puesto en las competencias deportivas que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente en el ámbito deportivo.'
     ],
     [
-        'nombre' => 'Evento Nacional TecNM - 2do. Lugar',
+        'nombre' => 'Embajadordeldeporte2dolugar',
         'imagen' => 'imagen/Insignias/Embajadordeldeporte2dolugar.png',
-        'descripcion' => 'Reconoce al segundo lugar en competencias del Evento Nacional TecNM. Destaca el desempeño destacado de estudiantes que obtienen el subcampeonato en eventos deportivos, académicos o culturales a nivel nacional del TecNM.'
+        'descripcion' => 'Reconoce al segundo lugar en el evento deportivo TecNM. Destaca el desempeño de estudiantes que obtienen el subcampeonato en las justas deportivas a nivel nacional del Tecnológico Nacional de México.'
     ],
     [
-        'nombre' => 'Evento Nacional TecNM - 3er. Lugar',
+        'nombre' => 'Embajadordeldeporte3erlugar',
         'imagen' => 'imagen/Insignias/Embajadordeldeporte3erlugar.png',
-        'descripcion' => 'Reconoce al tercer lugar en competencias del Evento Nacional TecNM. Valora el mérito de estudiantes que logran el tercer puesto en las competencias nacionales del Tecnológico Nacional de México en las distintas disciplinas.'
+        'descripcion' => 'Reconoce al tercer lugar en el evento deportivo TecNM. Valora el mérito de estudiantes que logran el tercer puesto en las competencias deportivas nacionales del Tecnológico Nacional de México.'
     ],
     [
         'nombre' => 'Formación y Actualización',

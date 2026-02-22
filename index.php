@@ -1662,16 +1662,16 @@ if ($conexion && !$conexion->connect_errno) {
             <p class="badge-name">Embajador del Deporte</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/Embajadordeldeporte1erlugar.png" alt="Evento Nacional TecNM - 1er. Lugar" class="badge-image">
-            <p class="badge-name">Evento Nacional TecNM - 1er. Lugar</p>
+            <img src="imagen/Insignias/Embajadordeldeporte1erlugar.png" alt="Embajadordeldeporte1erlugar" class="badge-image">
+            <p class="badge-name">Embajadordeldeporte1erlugar</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/Embajadordeldeporte2dolugar.png" alt="Evento Nacional TecNM - 2do. Lugar" class="badge-image">
-            <p class="badge-name">Evento Nacional TecNM - 2do. Lugar</p>
+            <img src="imagen/Insignias/Embajadordeldeporte2dolugar.png" alt="Embajadordeldeporte2dolugar" class="badge-image">
+            <p class="badge-name">Embajadordeldeporte2dolugar</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/Embajadordeldeporte3erlugar.png" alt="Evento Nacional TecNM - 3er. Lugar" class="badge-image">
-            <p class="badge-name">Evento Nacional TecNM - 3er. Lugar</p>
+            <img src="imagen/Insignias/Embajadordeldeporte3erlugar.png" alt="Embajadordeldeporte3erlugar" class="badge-image">
+            <p class="badge-name">Embajadordeldeporte3erlugar</p>
           </div>
           <div class="badge-item">
             <img src="imagen/Insignias/FormacionyActualizacion.png" alt="Formación y Actualización" class="badge-image">
