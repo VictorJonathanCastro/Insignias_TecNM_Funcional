@@ -163,7 +163,11 @@ if (!empty($codigo_insignia)) {
             'Formación y Actualización' => 'FormacionyActualizacion.png',
             'Talento Científico' => 'TalentoCientifico.png',
             'Talento Innovador' => 'TalentoInnovador.png',
-            'Responsabilidad Social' => 'ResponsabilidadSocial.png'
+            'Responsabilidad Social' => 'ResponsabilidadSocial.png',
+            'Responsabilidad Social Demo' => 'ResponsabilidadSocial.png',
+            'Embajador del Deporte Oro Demo' => 'EmbajadordelDeporteOroDemo.png',
+            'Embajador del Deporte Plata Demo' => 'EmbajadordelDeportePlataDemo.png',
+            'Embajador del Deporte Bronce Demo' => 'EmbajadordelDeporteBronceDemo.png'
         ];
         
         $imagen_path = 'imagen/Insignias/ResponsabilidadSocial.png'; // Por defecto

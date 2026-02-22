@@ -307,7 +307,7 @@ try {
                     'MOV' => 'Movilidad e Intercambio'
                 ];
                 
-                // Mapeo de nombres de insignias a archivos PNG
+                // Mapeo de nombres de insignias a archivos PNG (como en carpeta Insignias)
                 $mapeo_imagenes = [
                     'Movilidad e Intercambio' => 'MovilidadeIntercambio.png',
                     'Embajador del Deporte' => 'EmbajadordelDeporte.png',
@@ -315,7 +315,11 @@ try {
                     'Formación y Actualización' => 'FormacionyActualizacion.png',
                     'Talento Científico' => 'TalentoCientifico.png',
                     'Talento Innovador' => 'TalentoInnovador.png',
-                    'Responsabilidad Social' => 'ResponsabilidadSocial.png'
+                    'Responsabilidad Social' => 'ResponsabilidadSocial.png',
+                    'Responsabilidad Social Demo' => 'ResponsabilidadSocial.png',
+                    'Embajador del Deporte Oro Demo' => 'EmbajadordelDeporteOroDemo.png',
+                    'Embajador del Deporte Plata Demo' => 'EmbajadordelDeportePlataDemo.png',
+                    'Embajador del Deporte Bronce Demo' => 'EmbajadordelDeporteBronceDemo.png'
                 ];
                 
                 // 1. Intentar determinar por código
@@ -353,7 +357,10 @@ try {
                 echo "<!-- DEBUG: Archivo '$imagen_path' no existe, buscando alternativa -->";
                 $mapeo_imagenes = [
                     'MovilidadeIntercambio.png',
-                    'EmbajadordelDeporte.png', 
+                    'EmbajadordelDeporte.png',
+                    'EmbajadordelDeporteOroDemo.png',
+                    'EmbajadordelDeportePlataDemo.png',
+                    'EmbajadordelDeporteBronceDemo.png',
                     'EmbajadordelArte.png',
                     'FormacionyActualizacion.png',
                     'TalentoCientifico.png',

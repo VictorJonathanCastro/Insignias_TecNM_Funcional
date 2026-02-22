@@ -138,9 +138,25 @@ if (!$insignia) {
     die('Insignia no encontrada');
 }
 
-// Determinar la ruta de la imagen basada en el código de insignia
+// Determinar la ruta de la imagen: primero por nombre (como en carpeta Insignias), luego por código
+$mapeo_nombre_imagen = [
+    'Responsabilidad Social' => 'ResponsabilidadSocial.png',
+    'Responsabilidad Social Demo' => 'ResponsabilidadSocial.png',
+    'Embajador del Deporte Oro Demo' => 'EmbajadordelDeporteOroDemo.png',
+    'Embajador del Deporte Plata Demo' => 'EmbajadordelDeportePlataDemo.png',
+    'Embajador del Deporte Bronce Demo' => 'EmbajadordelDeporteBronceDemo.png',
+    'Embajador del Arte' => 'EmbajadordelArte.png',
+    'Embajador del Deporte' => 'EmbajadordelDeporte.png',
+    'Formación y Actualización' => 'FormacionyActualizacion.png',
+    'Movilidad e Intercambio' => 'MovilidadeIntercambio.png',
+    'Talento Científico' => 'TalentoCientifico.png',
+    'Talento Innovador' => 'TalentoInnovador.png'
+];
+$nombre_insignia = isset($insignia['nombre_insignia']) ? trim($insignia['nombre_insignia']) : '';
 $imagen_path = 'imagen/Insignias/ResponsabilidadSocial.png';
-if (strpos($insignia['codigo'], 'ART') !== false) {
+if ($nombre_insignia !== '' && isset($mapeo_nombre_imagen[$nombre_insignia])) {
+    $imagen_path = 'imagen/Insignias/' . $mapeo_nombre_imagen[$nombre_insignia];
+} elseif (strpos($insignia['codigo'], 'ART') !== false) {
     $imagen_path = 'imagen/Insignias/EmbajadordelArte.png';
 } elseif (strpos($insignia['codigo'], 'EMB') !== false) {
     $imagen_path = 'imagen/Insignias/EmbajadordelDeporte.png';
