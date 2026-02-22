@@ -1654,24 +1654,36 @@ if ($conexion && !$conexion->connect_errno) {
           <div class="carousel-track-wrapper">
             <div class="carousel-track" id="carouselTrack">
           <div class="badge-item">
-            <img src="imagen/Insignias/ResponsabilidadSocial.png" alt="Responsabilidad Social" class="badge-image">
-            <p class="badge-name">Responsabilidad Social</p>
+            <img src="imagen/Insignias/EmbajadordelArte.png" alt="Embajador del Arte" class="badge-image">
+            <p class="badge-name">Embajador del Arte</p>
           </div>
           <div class="badge-item">
             <img src="imagen/Insignias/EmbajadordelDeporte.png" alt="Embajador del Deporte" class="badge-image">
             <p class="badge-name">Embajador del Deporte</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/EmbajadordelArte.png" alt="Embajador del Arte" class="badge-image">
-            <p class="badge-name">Embajador del Arte</p>
+            <img src="imagen/Insignias/Embajadordeldeporte1erlugar.png" alt="Evento Nacional TecNM - 1er. Lugar" class="badge-image">
+            <p class="badge-name">Evento Nacional TecNM - 1er. Lugar</p>
+          </div>
+          <div class="badge-item">
+            <img src="imagen/Insignias/Embajadordeldeporte2dolugar.png" alt="Evento Nacional TecNM - 2do. Lugar" class="badge-image">
+            <p class="badge-name">Evento Nacional TecNM - 2do. Lugar</p>
+          </div>
+          <div class="badge-item">
+            <img src="imagen/Insignias/Embajadordeldeporte3erlugar.png" alt="Evento Nacional TecNM - 3er. Lugar" class="badge-image">
+            <p class="badge-name">Evento Nacional TecNM - 3er. Lugar</p>
+          </div>
+          <div class="badge-item">
+            <img src="imagen/Insignias/FormacionyActualizacion.png" alt="Formación y Actualización" class="badge-image">
+            <p class="badge-name">Formación y Actualización</p>
           </div>
           <div class="badge-item">
             <img src="imagen/Insignias/MovilidadeIntercambio.png" alt="Movilidad e Intercambio" class="badge-image">
             <p class="badge-name">Movilidad e Intercambio</p>
           </div>
           <div class="badge-item">
-            <img src="imagen/Insignias/FormacionyActualizacion.png" alt="Formación y Actualización" class="badge-image">
-            <p class="badge-name">Formación y Actualización</p>
+            <img src="imagen/Insignias/ResponsabilidadSocial.png" alt="Responsabilidad Social" class="badge-image">
+            <p class="badge-name">Responsabilidad Social</p>
           </div>
           <div class="badge-item">
             <img src="imagen/Insignias/TalentoCientifico.png" alt="Talento Científico" class="badge-image">
@@ -1680,18 +1692,6 @@ if ($conexion && !$conexion->connect_errno) {
           <div class="badge-item">
             <img src="imagen/Insignias/TalentoInnovador.png" alt="Talento Innovador" class="badge-image">
             <p class="badge-name">Talento Innovador</p>
-          </div>
-          <div class="badge-item">
-            <img src="imagen/Insignias/Embajadordeldeporte1erlugar.png" alt="Embajador del Deporte 1er Lugar" class="badge-image">
-            <p class="badge-name">Embajador del Deporte - 1er Lugar</p>
-          </div>
-          <div class="badge-item">
-            <img src="imagen/Insignias/Embajadordeldeporte2dolugar.png" alt="Embajador del Deporte 2do Lugar" class="badge-image">
-            <p class="badge-name">Embajador del Deporte - 2do Lugar</p>
-          </div>
-          <div class="badge-item">
-            <img src="imagen/Insignias/Embajadordeldeporte3erlugar.png" alt="Embajador del Deporte 3er Lugar" class="badge-image">
-            <p class="badge-name">Embajador del Deporte - 3er Lugar</p>
           </div>
             </div>
           </div>
