@@ -41,6 +41,9 @@ try {
                 d.Curp as curp,
                 d.Matricula as matricula,
                 CASE 
+                    WHEN io.Codigo_Insignia LIKE '%EMB-BRONCE%' THEN 'EmbajadordelDeporteBronce'
+                    WHEN io.Codigo_Insignia LIKE '%EMB-ORO%' THEN 'EmbajadordelDeporteOro'
+                    WHEN io.Codigo_Insignia LIKE '%EMB-PLATA%' THEN 'EmbajadordelDeportePlata'
                     WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
                     WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                     WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
@@ -165,22 +168,29 @@ $mapeo_nombre_imagen = [
     'Talento Innovador' => 'TalentoInnovador.png'
 ];
 $nombre_insignia = isset($insignia['nombre_insignia']) ? trim($insignia['nombre_insignia']) : '';
+$codigo_insignia = isset($insignia['codigo']) ? $insignia['codigo'] : '';
 $imagen_path = 'imagen/Insignias/ResponsabilidadSocial.png';
 if ($nombre_insignia !== '' && isset($mapeo_nombre_imagen[$nombre_insignia])) {
     $imagen_path = 'imagen/Insignias/' . $mapeo_nombre_imagen[$nombre_insignia];
-} elseif (strpos($insignia['codigo'], 'ART') !== false) {
+} elseif (stripos($codigo_insignia, 'EMB-ORO') !== false) {
+    $imagen_path = 'imagen/Insignias/EmbajadordelDeporteOro.png';
+} elseif (stripos($codigo_insignia, 'EMB-PLATA') !== false) {
+    $imagen_path = 'imagen/Insignias/EmbajadordelDeportePlata.png';
+} elseif (stripos($codigo_insignia, 'EMB-BRONCE') !== false) {
+    $imagen_path = 'imagen/Insignias/EmbajadordelDeporteBronce.png';
+} elseif (strpos($codigo_insignia, 'ART') !== false) {
     $imagen_path = 'imagen/Insignias/EmbajadordelArte.png';
-} elseif (strpos($insignia['codigo'], 'EMB') !== false) {
+} elseif (strpos($codigo_insignia, 'EMB') !== false) {
     $imagen_path = 'imagen/Insignias/EmbajadordelDeporte.png';
-} elseif (strpos($insignia['codigo'], 'TAL') !== false) {
+} elseif (strpos($codigo_insignia, 'TAL') !== false) {
     $imagen_path = 'imagen/Insignias/TalentoCientifico.png';
-} elseif (strpos($insignia['codigo'], 'INN') !== false) {
+} elseif (strpos($codigo_insignia, 'INN') !== false) {
     $imagen_path = 'imagen/Insignias/TalentoInnovador.png';
-} elseif (strpos($insignia['codigo'], 'SOC') !== false) {
+} elseif (strpos($codigo_insignia, 'SOC') !== false) {
     $imagen_path = 'imagen/Insignias/ResponsabilidadSocial.png';
-} elseif (strpos($insignia['codigo'], 'FOR') !== false) {
+} elseif (strpos($codigo_insignia, 'FOR') !== false) {
     $imagen_path = 'imagen/Insignias/FormacionyActualizacion.png';
-} elseif (strpos($insignia['codigo'], 'MOV') !== false) {
+} elseif (strpos($codigo_insignia, 'MOV') !== false) {
     $imagen_path = 'imagen/Insignias/MovilidadeIntercambio.png';
 }
 
