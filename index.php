@@ -1662,15 +1662,15 @@ if ($conexion && !$conexion->connect_errno) {
             <p class="badge-name">Embajador del Deporte</p>
           </div>
           <div class="badge-item">
-            <img src="servir_insignia.php?f=EmbajadordelDeporteOro.png" alt="EmbajadordelDeporteOro" class="badge-image">
+            <img src="imagen/Insignias/EmbajadordelDeporteOro.png" alt="EmbajadordelDeporteOro" class="badge-image">
             <p class="badge-name">EmbajadordelDeporteOro</p>
           </div>
           <div class="badge-item">
-            <img src="servir_insignia.php?f=EmbajadordelDeportePlata.png" alt="EmbajadordelDeportePlata" class="badge-image">
+            <img src="imagen/Insignias/EmbajadordelDeportePlata.png" alt="EmbajadordelDeportePlata" class="badge-image">
             <p class="badge-name">EmbajadordelDeportePlata</p>
           </div>
           <div class="badge-item">
-            <img src="servir_insignia.php?f=EmbajadordelDeporteBronce.png" alt="EmbajadordelDeporteBronce" class="badge-image">
+            <img src="imagen/Insignias/EmbajadordelDeporteBronce.png" alt="EmbajadordelDeporteBronce" class="badge-image">
             <p class="badge-name">EmbajadordelDeporteBronce</p>
           </div>
           <div class="badge-item">
