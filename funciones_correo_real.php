@@ -738,10 +738,15 @@ function generarUrlImagenInsignia($nombre_insignia, $base_url = '') {
         $base_url = $protocol . '://' . $host . dirname($_SERVER['PHP_SELF']);
     }
     
-    // Mapeo de nombres de insignias a archivos de imagen
+    // Mapeo de nombres de insignias a archivos de imagen (carpeta imagen/Insignias)
     $mapeo_imagenes = [
         'Embajador del Arte' => 'EmbajadordelArte.png',
+        'EmbajadordelArte' => 'EmbajadordelArte.png',
         'Embajador del Deporte' => 'EmbajadordelDeporte.png',
+        'EmbajadordelDeporte' => 'EmbajadordelDeporte.png',
+        'EmbajadordelDeporteOro' => 'EmbajadordelDeporteOro.png',
+        'EmbajadordelDeportePlata' => 'EmbajadordelDeportePlata.png',
+        'EmbajadordelDeporteBronce' => 'EmbajadordelDeporteBronce.png',
         'Talento Científico' => 'TalentoCientifico.png',
         'Talento Innovador' => 'TalentoInnovador.png',
         'Innovacion' => 'TalentoInnovador.png',
@@ -754,13 +759,15 @@ function generarUrlImagenInsignia($nombre_insignia, $base_url = '') {
         'Sustentabilidad' => 'Sustentabilidad.png'
     ];
     
-    // Buscar el nombre de la insignia en el mapeo
-    $archivo_imagen = 'insignia_default.png'; // Por defecto
+    $archivo_imagen = 'insignia_default.png';
     foreach ($mapeo_imagenes as $nombre => $archivo) {
         if (stripos($nombre_insignia, $nombre) !== false || stripos($nombre, $nombre_insignia) !== false) {
             $archivo_imagen = $archivo;
             break;
         }
+    }
+    if ($archivo_imagen === 'insignia_default.png') {
+        $archivo_imagen = preg_replace('/\s+/', '', $nombre_insignia) . '.png';
     }
     
     return $base_url . '/imagen/Insignias/' . $archivo_imagen;

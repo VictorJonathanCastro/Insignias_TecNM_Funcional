@@ -164,6 +164,31 @@ try {
             }
             $subcategorias_insignias[] = $row;
         }
+        // Rellenar descripción desde insignia maestra (T_insignias) para variantes Oro/Plata/Bronce
+        if ($tiene_t_insignias) {
+            foreach ($subcategorias_insignias as &$item) {
+                $desc = trim($item['descripcion'] ?? '');
+                if ($desc === '') {
+                    $nombre = $item['nombre_insignia'] ?? '';
+                    $base = preg_replace('/(Oro|Plata|Bronce)$/i', '', $nombre);
+                    $base = trim($base);
+                    if ($base !== '') {
+                        $like = '%' . str_replace('del', '%', $base) . '%';
+                        $stmt_desc = $conexion->prepare("SELECT Descripcion FROM T_insignias WHERE Programa LIKE ? OR Nombre_gen_ins LIKE ? LIMIT 1");
+                        if ($stmt_desc) {
+                            $stmt_desc->bind_param("ss", $like, $like);
+                            $stmt_desc->execute();
+                            $res_desc = $stmt_desc->get_result();
+                            if ($res_desc && ($r = $res_desc->fetch_assoc()) && trim($r['Descripcion'] ?? '') !== '') {
+                                $item['descripcion'] = $r['Descripcion'];
+                            }
+                            $stmt_desc->close();
+                        }
+                    }
+                }
+            }
+            unset($item);
+        }
     }
     
     // Consultar periodos de emisión (verificar estructura)
@@ -910,7 +935,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $base_url = $protocol . '://' . $host . dirname($_SERVER['PHP_SELF']);
                             $mapeo_imagenes = [
                                 'Embajador del Arte' => 'EmbajadordelArte.png',
+                                'EmbajadordelArte' => 'EmbajadordelArte.png',
                                 'Embajador del Deporte' => 'EmbajadordelDeporte.png',
+                                'EmbajadordelDeporte' => 'EmbajadordelDeporte.png',
+                                'EmbajadordelDeporteOro' => 'EmbajadordelDeporteOro.png',
+                                'EmbajadordelDeportePlata' => 'EmbajadordelDeportePlata.png',
+                                'EmbajadordelDeporteBronce' => 'EmbajadordelDeporteBronce.png',
                                 'Talento Científico' => 'TalentoCientifico.png',
                                 'Talento Innovador' => 'TalentoInnovador.png',
                                 'Innovacion' => 'TalentoInnovador.png',
@@ -925,6 +955,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     $archivo_imagen = $archivo;
                                     break;
                                 }
+                            }
+                            if ($archivo_imagen === 'insignia_default.png') {
+                                $candidato = preg_replace('/\s+/', '', $nombre_insignia_para_imagen) . '.png';
+                                $archivo_imagen = $candidato;
                             }
                             $url_imagen_insignia = $base_url . '/imagen/Insignias/' . $archivo_imagen;
                         }
