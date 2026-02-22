@@ -2,12 +2,12 @@
 session_start();
 require_once 'conexion.php';
 
-// Definir las insignias con sus descripciones
+// Definir las insignias con sus descripciones (mismo orden que el carrusel en index.php)
 $insignias = [
     [
-        'nombre' => 'Responsabilidad Social',
-        'imagen' => 'imagen/Insignias/ResponsabilidadSocial.png',
-        'descripcion' => 'Reconoce el compromiso y participación activa de los estudiantes en actividades de responsabilidad social, servicio comunitario y proyectos que benefician a la sociedad. Esta insignia valora el impacto positivo y el desarrollo de valores cívicos y éticos.'
+        'nombre' => 'Embajador del Arte',
+        'imagen' => 'imagen/Insignias/EmbajadordelArte.png',
+        'descripcion' => 'Reconoce el talento artístico y la contribución cultural de los estudiantes. Esta insignia celebra la creatividad, la expresión artística y la participación en actividades culturales que enriquecen la vida estudiantil y la identidad institucional.'
     ],
     [
         'nombre' => 'Embajador del Deporte',
@@ -15,9 +15,24 @@ $insignias = [
         'descripcion' => 'Destaca la excelencia deportiva y el compromiso con la actividad física. Se otorga a estudiantes que representan al TecNM en competencias deportivas, promueven el deporte y demuestran valores como disciplina, trabajo en equipo y perseverancia.'
     ],
     [
-        'nombre' => 'Embajador del Arte',
-        'imagen' => 'imagen/Insignias/EmbajadordelArte.png',
-        'descripcion' => 'Reconoce el talento artístico y la contribución cultural de los estudiantes. Esta insignia celebra la creatividad, la expresión artística y la participación en actividades culturales que enriquecen la vida estudiantil y la identidad institucional.'
+        'nombre' => 'Evento Nacional TecNM - 1er. Lugar',
+        'imagen' => 'imagen/Insignias/Embajadordeldeporte1erlugar.png',
+        'descripcion' => 'Reconoce al primer lugar en competencias del Evento Nacional TecNM. Se otorga a estudiantes que alcanzan la máxima posición en las justas deportivas, académicas o culturales que organiza el Tecnológico Nacional de México, representando la excelencia y el esfuerzo sobresaliente.'
+    ],
+    [
+        'nombre' => 'Evento Nacional TecNM - 2do. Lugar',
+        'imagen' => 'imagen/Insignias/Embajadordeldeporte2dolugar.png',
+        'descripcion' => 'Reconoce al segundo lugar en competencias del Evento Nacional TecNM. Destaca el desempeño destacado de estudiantes que obtienen el subcampeonato en eventos deportivos, académicos o culturales a nivel nacional del TecNM.'
+    ],
+    [
+        'nombre' => 'Evento Nacional TecNM - 3er. Lugar',
+        'imagen' => 'imagen/Insignias/Embajadordeldeporte3erlugar.png',
+        'descripcion' => 'Reconoce al tercer lugar en competencias del Evento Nacional TecNM. Valora el mérito de estudiantes que logran el tercer puesto en las competencias nacionales del Tecnológico Nacional de México en las distintas disciplinas.'
+    ],
+    [
+        'nombre' => 'Formación y Actualización',
+        'imagen' => 'imagen/Insignias/FormacionyActualizacion.png',
+        'descripcion' => 'Reconoce el compromiso continuo con el aprendizaje y el desarrollo profesional. Esta insignia se otorga a estudiantes que participan activamente en cursos de actualización, talleres, certificaciones y programas de formación complementaria que enriquecen su perfil académico.'
     ],
     [
         'nombre' => 'Movilidad e Intercambio',
@@ -25,9 +40,9 @@ $insignias = [
         'descripcion' => 'Valora la experiencia internacional y el intercambio académico. Se otorga a estudiantes que participan en programas de movilidad estudiantil, intercambios culturales y experiencias académicas en otras instituciones, fomentando la diversidad y el aprendizaje global.'
     ],
     [
-        'nombre' => 'Formación y Actualización',
-        'imagen' => 'imagen/Insignias/FormacionyActualizacion.png',
-        'descripcion' => 'Reconoce el compromiso continuo con el aprendizaje y el desarrollo profesional. Esta insignia se otorga a estudiantes que participan activamente en cursos de actualización, talleres, certificaciones y programas de formación complementaria que enriquecen su perfil académico.'
+        'nombre' => 'Responsabilidad Social',
+        'imagen' => 'imagen/Insignias/ResponsabilidadSocial.png',
+        'descripcion' => 'Reconoce el compromiso y participación activa de los estudiantes en actividades de responsabilidad social, servicio comunitario y proyectos que benefician a la sociedad. Esta insignia valora el impacto positivo y el desarrollo de valores cívicos y éticos.'
     ],
     [
         'nombre' => 'Talento Científico',
