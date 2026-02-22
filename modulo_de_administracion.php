@@ -2778,77 +2778,46 @@ ob_clean();
     
     function mostrarFormInsignia(operacion, id = null) {
         const formDiv = document.getElementById('form-insignia');
+        const formCrear = document.getElementById('form-insignia-crear');
+        const formEditar = document.getElementById('form-insignia-editar');
         formDiv.style.display = 'block';
         
         if (operacion === 'crear') {
-            formDiv.innerHTML = `
-                <h4>Crear Nueva Insignia Maestra</h4>
-                <form method="POST" onsubmit="return confirmarOperacion('T_insignias', 'crear')">
-                    <input type="hidden" name="accion_opciones" value="T_insignias">
-                    <input type="hidden" name="operacion" value="crear">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                        <div>
-                            <label>Tipo Insignia (ID):</label>
-                            <input type="number" name="tipo_insignia" required style="width: 100%; padding: 8px;">
-                        </div>
-                        <div>
-                            <label>Propone Insignia (ID):</label>
-                            <input type="number" name="propone_insignia" required style="width: 100%; padding: 8px;">
-                        </div>
-                        <div>
-                            <label>Programa:</label>
-                            <input type="text" name="programa" required style="width: 100%; padding: 8px;">
-                        </div>
-                        <div>
-                            <label>Estatus:</label>
-                            <input type="number" name="estatus" value="1" required style="width: 100%; padding: 8px;">
-                        </div>
-                        <div style="grid-column: 1 / -1;">
-                            <label>Descripción:</label>
-                            <textarea name="descripcion" required style="width: 100%; padding: 8px; min-height: 100px;"></textarea>
-                        </div>
-                        <div style="grid-column: 1 / -1;">
-                            <label>Criterio:</label>
-                            <textarea name="criterio" required style="width: 100%; padding: 8px; min-height: 80px;"></textarea>
-                        </div>
-                        <div>
-                            <label>Fecha Creación:</label>
-                            <input type="date" name="fecha_creacion" value="${new Date().toISOString().split('T')[0]}" required style="width: 100%; padding: 8px;">
-                        </div>
-                        <div>
-                            <label>Fecha Autorización:</label>
-                            <input type="date" name="fecha_autorizacion" value="${new Date().toISOString().split('T')[0]}" required style="width: 100%; padding: 8px;">
-                        </div>
-                        <div>
-                            <label>Nombre Gen Ins:</label>
-                            <input type="text" name="nombre_gen_ins" style="width: 100%; padding: 8px;">
-                        </div>
-                        <div>
-                            <label>Archivo Visual:</label>
-                            <input type="text" name="archivo_visual" style="width: 100%; padding: 8px;">
-                        </div>
-                    </div>
-                    <button type="submit" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Guardar</button>
-                    <button type="button" onclick="document.getElementById('form-insignia').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
-                </form>
-            `;
+            if (formCrear) formCrear.style.display = 'block';
+            if (formEditar) { formEditar.style.display = 'none'; formEditar.innerHTML = ''; }
         } else {
-            // Similar para editar
-            fetch(`ajax_opciones.php?tabla=T_insignias&accion=obtener&id=${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    formDiv.innerHTML = `
-                        <h4>Editar Insignia Maestra</h4>
-                        <form method="POST" onsubmit="return confirmarOperacion('T_insignias', 'editar')">
-                            <input type="hidden" name="accion_opciones" value="T_insignias">
-                            <input type="hidden" name="operacion" value="editar">
-                            <input type="hidden" name="id" value="${data.id}">
-                            <!-- Similar estructura pero con valores de data -->
-                            <button type="submit" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Actualizar</button>
-                            <button type="button" onclick="document.getElementById('form-insignia').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
-                        </form>
-                    `;
-                });
+            if (formCrear) formCrear.style.display = 'none';
+            if (formEditar) {
+                formEditar.style.display = 'block';
+                formEditar.innerHTML = '<p style="padding: 20px;">Cargando...</p>';
+                fetch('ajax_opciones.php?tabla=T_insignias&accion=obtener&id=' + id)
+                    .then(response => response.json())
+                    .then(data => {
+                        formEditar.innerHTML = `
+                            <h4>Editar Insignia Maestra</h4>
+                            <form method="POST" onsubmit="return confirmarOperacion('T_insignias', 'editar')">
+                                <input type="hidden" name="accion_opciones" value="T_insignias">
+                                <input type="hidden" name="operacion" value="editar">
+                                <input type="hidden" name="id" value="${data.id}">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                    <div><label>Tipo Insignia (ID):</label><input type="number" name="tipo_insignia" value="${data.Tipo_Insignia || ''}" required style="width: 100%; padding: 8px;"></div>
+                                    <div><label>Propone Insignia (ID):</label><input type="number" name="propone_insignia" value="${data.Propone_Insignia || ''}" required style="width: 100%; padding: 8px;"></div>
+                                    <div><label>Programa:</label><input type="text" name="programa" value="${(data.Programa || '').replace(/"/g, '&quot;')}" required style="width: 100%; padding: 8px;"></div>
+                                    <div><label>Estatus:</label><input type="number" name="estatus" value="${data.Estatus ?? 1}" required style="width: 100%; padding: 8px;"></div>
+                                    <div style="grid-column: 1 / -1;"><label>Descripción:</label><textarea name="descripcion" required style="width: 100%; padding: 8px; min-height: 100px;">${(data.Descripcion || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea></div>
+                                    <div style="grid-column: 1 / -1;"><label>Criterio:</label><textarea name="criterio" required style="width: 100%; padding: 8px; min-height: 80px;">${(data.Criterio || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea></div>
+                                    <div><label>Fecha Creación:</label><input type="date" name="fecha_creacion" value="${data.Fecha_Creacion || ''}" required style="width: 100%; padding: 8px;"></div>
+                                    <div><label>Fecha Autorización:</label><input type="date" name="fecha_autorizacion" value="${data.Fecha_Autorizacion || ''}" required style="width: 100%; padding: 8px;"></div>
+                                    <div><label>Nombre Gen Ins:</label><input type="text" name="nombre_gen_ins" value="${(data.Nombre_gen_ins || '').replace(/"/g, '&quot;')}" style="width: 100%; padding: 8px;"></div>
+                                    <div><label>Archivo Visual:</label><input type="text" name="archivo_visual" value="${(data.Archivo_Visual || '').replace(/"/g, '&quot;')}" style="width: 100%; padding: 8px;"></div>
+                                </div>
+                                <button type="submit" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Actualizar</button>
+                                <button type="button" onclick="document.getElementById('form-insignia').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+                            </form>
+                        `;
+                    })
+                    .catch(err => { formEditar.innerHTML = '<p style="color:red;">Error al cargar datos.</p>'; });
+            }
         }
     }
     
@@ -3756,7 +3725,60 @@ ob_clean();
             <!-- Se carga dinámicamente -->
           </div>
           <div id="form-insignia" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
-            <!-- Formulario se carga dinámicamente -->
+            <div id="form-insignia-crear">
+              <h4>Crear Nueva Insignia Maestra</h4>
+              <form method="POST" onsubmit="return confirmarOperacion('T_insignias', 'crear')">
+                <input type="hidden" name="accion_opciones" value="T_insignias">
+                <input type="hidden" name="operacion" value="crear">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                  <div>
+                    <label>Tipo Insignia (ID):</label>
+                    <input type="number" name="tipo_insignia" required style="width: 100%; padding: 8px;">
+                  </div>
+                  <div>
+                    <label>Propone Insignia (ID):</label>
+                    <input type="number" name="propone_insignia" required style="width: 100%; padding: 8px;">
+                  </div>
+                  <div>
+                    <label>Programa:</label>
+                    <input type="text" name="programa" required style="width: 100%; padding: 8px;" placeholder="Ej: Ingeniería en Sistemas">
+                  </div>
+                  <div>
+                    <label>Estatus:</label>
+                    <input type="number" name="estatus" value="1" required style="width: 100%; padding: 8px;">
+                  </div>
+                  <div style="grid-column: 1 / -1;">
+                    <label>Descripción:</label>
+                    <textarea name="descripcion" required style="width: 100%; padding: 8px; min-height: 100px;" placeholder="Descripción de la insignia"></textarea>
+                  </div>
+                  <div style="grid-column: 1 / -1;">
+                    <label>Criterio:</label>
+                    <textarea name="criterio" required style="width: 100%; padding: 8px; min-height: 80px;" placeholder="Criterios para otorgar la insignia"></textarea>
+                  </div>
+                  <div>
+                    <label>Fecha Creación:</label>
+                    <input type="date" name="fecha_creacion" value="<?php echo date('Y-m-d'); ?>" required style="width: 100%; padding: 8px;">
+                  </div>
+                  <div>
+                    <label>Fecha Autorización:</label>
+                    <input type="date" name="fecha_autorizacion" value="<?php echo date('Y-m-d'); ?>" required style="width: 100%; padding: 8px;">
+                  </div>
+                  <div>
+                    <label>Nombre Gen Ins:</label>
+                    <input type="text" name="nombre_gen_ins" style="width: 100%; padding: 8px;" placeholder="Ej: TecNM-ITSM">
+                  </div>
+                  <div>
+                    <label>Archivo Visual:</label>
+                    <input type="text" name="archivo_visual" style="width: 100%; padding: 8px;" placeholder="Ej: insignia_nombre.png">
+                  </div>
+                </div>
+                <button type="submit" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Guardar</button>
+                <button type="button" onclick="document.getElementById('form-insignia').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+              </form>
+            </div>
+            <div id="form-insignia-editar" style="display: none;">
+              <!-- Formulario de edición se carga dinámicamente -->
+            </div>
           </div>
         </div>
         
