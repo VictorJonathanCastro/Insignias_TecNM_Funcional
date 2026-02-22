@@ -558,6 +558,10 @@ if (!empty($insignia_data['responsable_id'])) {
             background: #1da1f2;
         }
         
+        .share-btn.linkedin {
+            background: #0A66C2;
+        }
+        
         .share-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 3px 10px rgba(0,0,0,0.2);
@@ -1174,6 +1178,7 @@ if (!empty($insignia_data['responsable_id'])) {
                     $url_whatsapp = 'https://wa.me/?text=' . rawurlencode($mensaje_whatsapp);
                     $url_facebook = 'https://www.facebook.com/sharer/sharer.php?u=' . urlencode($url_compartir);
                     $url_twitter = 'https://twitter.com/intent/tweet?text=' . urlencode($mensaje_twitter) . '&url=' . urlencode($url_compartir);
+                    $url_linkedin = 'https://www.linkedin.com/sharing/share-offsite/?url=' . urlencode($url_compartir);
                     ?>
                     <a href="<?php echo htmlspecialchars($url_whatsapp); ?>" class="share-btn whatsapp" target="_blank">
                         <i class="fab fa-whatsapp"></i> WhatsApp
@@ -1183,6 +1188,9 @@ if (!empty($insignia_data['responsable_id'])) {
                     </a>
                     <a href="<?php echo htmlspecialchars($url_twitter); ?>" class="share-btn twitter" target="_blank">
                         <i class="fab fa-x-twitter"></i> Twitter
+                    </a>
+                    <a href="<?php echo htmlspecialchars($url_linkedin); ?>" class="share-btn linkedin" target="_blank">
+                        <i class="fab fa-linkedin-in"></i> LinkedIn
                     </a>
                 </div>
             </div>
