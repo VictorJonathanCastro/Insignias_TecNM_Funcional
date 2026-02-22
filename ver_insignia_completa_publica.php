@@ -34,6 +34,9 @@ try {
             io.ID_otorgada as id,
         io.Codigo_Insignia as codigo,
             CASE 
+                WHEN io.Codigo_Insignia LIKE '%EMB-BRONCE%' THEN 'EmbajadordelDeporteBronce'
+                WHEN io.Codigo_Insignia LIKE '%EMB-ORO%' THEN 'EmbajadordelDeporteOro'
+                WHEN io.Codigo_Insignia LIKE '%EMB-PLATA%' THEN 'EmbajadordelDeportePlata'
                 WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
                 WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                 WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
@@ -74,6 +77,9 @@ try {
         LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
         LEFT JOIN tipo_insignia tin ON (
             (io.Codigo_Insignia LIKE '%ART%' AND tin." . $campo_nombre_tipo . " LIKE '%Arte%')
+            OR (io.Codigo_Insignia LIKE '%EMB-BRONCE%' AND tin." . $campo_nombre_tipo . " LIKE '%Bronce%')
+            OR (io.Codigo_Insignia LIKE '%EMB-ORO%' AND tin." . $campo_nombre_tipo . " LIKE '%Oro%')
+            OR (io.Codigo_Insignia LIKE '%EMB-PLATA%' AND tin." . $campo_nombre_tipo . " LIKE '%Plata%')
             OR (io.Codigo_Insignia LIKE '%EMB%' AND tin." . $campo_nombre_tipo . " LIKE '%Deporte%')
             OR (io.Codigo_Insignia LIKE '%TAL%' AND tin." . $campo_nombre_tipo . " LIKE '%Científico%')
             OR (io.Codigo_Insignia LIKE '%INN%' AND tin." . $campo_nombre_tipo . " LIKE '%Innovador%')
@@ -105,16 +111,21 @@ try {
     
     // Función para determinar la imagen de la insignia dinámicamente
     function determinarInsigniaDinamica($codigo_insignia, $nombre_insignia) {
+        if (stripos($codigo_insignia, 'EMB-BRONCE') !== false) return 'EmbajadordelDeporteBronce.png';
+        if (stripos($codigo_insignia, 'EMB-ORO') !== false) return 'EmbajadordelDeporteOro.png';
+        if (stripos($codigo_insignia, 'EMB-PLATA') !== false) return 'EmbajadordelDeportePlata.png';
+        if (stripos($nombre_insignia, 'EmbajadordelDeporteBronce') !== false) return 'EmbajadordelDeporteBronce.png';
+        if (stripos($nombre_insignia, 'EmbajadordelDeporteOro') !== false) return 'EmbajadordelDeporteOro.png';
+        if (stripos($nombre_insignia, 'EmbajadordelDeportePlata') !== false) return 'EmbajadordelDeportePlata.png';
         $mapeo_codigos = [
             'ART' => 'Embajador del Arte',
-            'EMB' => 'Embajador del Deporte', 
+            'EMB' => 'Embajador del Deporte',
             'TAL' => 'Talento Científico',
             'INN' => 'Talento Innovador',
             'SOC' => 'Responsabilidad Social',
             'FOR' => 'Formación y Actualización',
             'MOV' => 'Movilidad e Intercambio'
         ];
-        
         $mapeo_imagenes = [
             'Movilidad e Intercambio' => 'MovilidadeIntercambio.png',
             'Embajador del Deporte' => 'EmbajadordelDeporte.png',
@@ -174,16 +185,24 @@ if (!empty($insignia_data['responsable_id'])) {
     }
     }
     
-    // Obtener descripción y criterios: primero de la consulta SQL, luego de sesión, luego valores por defecto
+    // Obtener descripción: consulta SQL, sesión, insignia maestra (Oro/Plata/Bronce), por defecto
     if (empty($insignia_data['descripcion']) || $insignia_data['descripcion'] === null) {
-        // Si no hay descripción en la consulta SQL, intentar obtenerla de la sesión
         if (isset($_SESSION['insignia_data']) && is_array($_SESSION['insignia_data'])) {
             $sid = $_SESSION['insignia_data'];
             if (!empty($sid['codigo']) && $sid['codigo'] === $codigo_insignia && !empty($sid['descripcion'])) {
                 $insignia_data['descripcion'] = $sid['descripcion'];
             }
         }
-        // Si aún no hay descripción, usar valor por defecto
+        if ((empty($insignia_data['descripcion']) || $insignia_data['descripcion'] === null) && preg_match('/EMB-(BRONCE|ORO|PLATA)/i', $codigo_insignia)) {
+            $stmt_desc = $conexion->prepare("SELECT Descripcion FROM T_insignias WHERE Programa LIKE '%Embajador%Deporte%' OR Nombre_gen_ins LIKE '%Embajador%Deporte%' LIMIT 1");
+            if ($stmt_desc && $stmt_desc->execute()) {
+                $res_desc = $stmt_desc->get_result();
+                if ($res_desc && ($r = $res_desc->fetch_assoc()) && !empty(trim($r['Descripcion'] ?? ''))) {
+                    $insignia_data['descripcion'] = $r['Descripcion'];
+                }
+                $stmt_desc->close();
+            }
+        }
         if (empty($insignia_data['descripcion']) || $insignia_data['descripcion'] === null) {
             $insignia_data['descripcion'] = 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.';
         }
