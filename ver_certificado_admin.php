@@ -20,12 +20,49 @@ if (!$insignia_param) {
 // Determinar si es un ID numérico o un código de insignia
 $is_numeric = is_numeric($insignia_param);
 
-// Consulta para obtener datos de la insignia con información real - CORREGIDA
+// Detectar si la tabla tiene columnas de firma digital (no existen en esquema antiguo)
+$tiene_firma = false;
+$check_firma = @$conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'firma_digital_base64'");
+if ($check_firma && $check_firma->num_rows > 0) {
+    $tiene_firma = true;
+}
+$campos_firma_sql = $tiene_firma
+    ? "io.firma_digital_base64, io.hash_verificacion, io.certificado_info, io.fecha_firma"
+    : "NULL as firma_digital_base64, NULL as hash_verificacion, NULL as certificado_info, NULL as fecha_firma";
+
+// Detectar nombre del campo ID (ID_otorgada o id) y Destinatario o destinatario_id
+$check_id_otorgada = @$conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'ID_otorgada'");
+$campo_id_io = ($check_id_otorgada && $check_id_otorgada->num_rows > 0) ? 'ID_otorgada' : 'id';
+$check_dest = @$conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'Destinatario'");
+$campo_dest_io = ($check_dest && $check_dest->num_rows > 0) ? 'Destinatario' : 'destinatario_id';
+$check_fecha = @$conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'Fecha_Emision'");
+$campo_fecha_io = ($check_fecha && $check_fecha->num_rows > 0) ? 'Fecha_Emision' : 'fecha_otorgamiento';
+$check_codigo = @$conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'Codigo_Insignia'");
+$campo_codigo_io = ($check_codigo && $check_codigo->num_rows > 0) ? 'Codigo_Insignia' : 'clave_insignia';
+
+$campo_id_dest = 'ID_destinatario';
+$check_dest_id = @$conexion->query("SHOW COLUMNS FROM destinatario LIKE 'id'");
+if ($check_dest_id && $check_dest_id->num_rows > 0) {
+    $campo_id_dest = 'id';
+}
+
+$campo_resp_io = 'Responsable_Emision';
+$campo_resp_re = 'ID_responsable';
+$check_resp_io = @$conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'responsable_id'");
+if ($check_resp_io && $check_resp_io->num_rows > 0) {
+    $campo_resp_io = 'responsable_id';
+    $check_resp_re = @$conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+    if ($check_resp_re && $check_resp_re->num_rows > 0) {
+        $campo_resp_re = 'id';
+    }
+}
+
+// Consulta para obtener datos de la insignia (compatible con esquema viejo y nuevo)
 $sql = "
     SELECT 
-        io.ID_otorgada as id,
-        io.Fecha_Emision as fecha_otorgamiento,
-        io.Codigo_Insignia as clave_insignia,
+        io.{$campo_id_io} as id,
+        io.{$campo_fecha_io} as fecha_otorgamiento,
+        io.{$campo_codigo_io} as clave_insignia,
         'Certificación oficial' as evidencia,
         d.Nombre_Completo as destinatario,
         d.Matricula,
@@ -33,36 +70,33 @@ $sql = "
         'Reconocimiento por méritos destacados' as Descripcion,
         'Cumplimiento de criterios establecidos' as Criterio,
         CASE 
-            WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
-            WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
-            WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
-            WHEN io.Codigo_Insignia LIKE '%INN%' THEN 'Talento Innovador'
-            WHEN io.Codigo_Insignia LIKE '%SOC%' THEN 'Responsabilidad Social'
-            WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
-            WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
+            WHEN io.{$campo_codigo_io} LIKE '%ART%' THEN 'Embajador del Arte'
+            WHEN io.{$campo_codigo_io} LIKE '%EMB%' THEN 'Embajador del Deporte'
+            WHEN io.{$campo_codigo_io} LIKE '%TAL%' THEN 'Talento Científico'
+            WHEN io.{$campo_codigo_io} LIKE '%INN%' THEN 'Talento Innovador'
+            WHEN io.{$campo_codigo_io} LIKE '%SOC%' THEN 'Responsabilidad Social'
+            WHEN io.{$campo_codigo_io} LIKE '%FOR%' THEN 'Formación y Actualización'
+            WHEN io.{$campo_codigo_io} LIKE '%MOV%' THEN 'Movilidad e Intercambio'
             ELSE 'Insignia TecNM'
         END as nombre_insignia,
         CASE 
-            WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
-            WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
-            WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
+            WHEN io.{$campo_codigo_io} LIKE '%EMB%' THEN 'Desarrollo Personal'
+            WHEN io.{$campo_codigo_io} LIKE '%TAL%' OR io.{$campo_codigo_io} LIKE '%INN%' OR io.{$campo_codigo_io} LIKE '%FOR%' THEN 'Desarrollo Académico'
+            WHEN io.{$campo_codigo_io} LIKE '%ART%' OR io.{$campo_codigo_io} LIKE '%SOC%' OR io.{$campo_codigo_io} LIKE '%MOV%' THEN 'Formación Integral'
             ELSE 'Formación Integral'
         END as categoria,
         'Tecnológico Nacional de México' as institucion,
         '2025-1' as periodo,
         'Activo' as estatus,
         'insignia_default.png' as archivo_imagen,
-        io.firma_digital_base64,
-        io.hash_verificacion,
-        io.certificado_info,
-        io.fecha_firma,
+        $campos_firma_sql,
         re.Nombre_Completo as responsable_nombre,
         NULL as responsable_firma,
         'RESPONSABLE DE EMISIÓN' as cargo_responsable
     FROM insigniasotorgadas io
-    LEFT JOIN destinatario d ON io.Destinatario = d.ID_destinatario
-    LEFT JOIN responsable_emision re ON io.Responsable_Emision = re.ID_responsable
-    WHERE " . ($is_numeric ? "io.ID_otorgada" : "io.Codigo_Insignia") . " = ?
+    LEFT JOIN destinatario d ON io.{$campo_dest_io} = d.{$campo_id_dest}
+    LEFT JOIN responsable_emision re ON io.{$campo_resp_io} = re.{$campo_resp_re}
+    WHERE " . ($is_numeric ? "io.{$campo_id_io}" : "io.{$campo_codigo_io}") . " = ?
 ";
 
 $stmt = $conexion->prepare($sql);
