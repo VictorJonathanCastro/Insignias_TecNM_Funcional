@@ -47,14 +47,15 @@ if ($check_dest_id && $check_dest_id->num_rows > 0) {
 }
 
 $campo_resp_io = 'Responsable_Emision';
-$campo_resp_re = 'ID_responsable';
 $check_resp_io = @$conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'responsable_id'");
 if ($check_resp_io && $check_resp_io->num_rows > 0) {
     $campo_resp_io = 'responsable_id';
-    $check_resp_re = @$conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
-    if ($check_resp_re && $check_resp_re->num_rows > 0) {
-        $campo_resp_re = 'id';
-    }
+}
+// Detectar PK de responsable_emision (puede ser id o ID_responsable)
+$campo_resp_re = 'ID_responsable';
+$check_resp_re = @$conexion->query("SHOW COLUMNS FROM responsable_emision LIKE 'id'");
+if ($check_resp_re && $check_resp_re->num_rows > 0) {
+    $campo_resp_re = 'id';
 }
 
 // Consulta para obtener datos de la insignia (compatible con esquema viejo y nuevo)
