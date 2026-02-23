@@ -396,27 +396,37 @@ $abrir_modal_tab_insignias = false; // true después de crear/editar/eliminar in
 if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'destinatario') {
     try {
         if ($_POST['operacion'] == 'crear') {
-            $nombre = limpiarEntrada($_POST['nombre_completo'] ?? '');
+            $nombre = trim(limpiarEntrada($_POST['nombre'] ?? ''));
+            $apellido = trim(limpiarEntrada($_POST['apellido'] ?? ''));
+            $nombre_completo = $nombre . ($apellido !== '' ? ' ' . $apellido : '');
+            if ($nombre_completo === '') {
+                $nombre_completo = limpiarEntrada($_POST['nombre_completo'] ?? '');
+            }
             $curp = limpiarEntrada($_POST['curp'] ?? '');
             $correo = limpiarEntrada($_POST['correo'] ?? '');
             $matricula = limpiarEntrada($_POST['matricula'] ?? '');
             $itcentro = intval($_POST['itcentro'] ?? 0);
             
             $stmt = $conexion->prepare("INSERT INTO destinatario (Nombre_Completo, Curp, Correo, Matricula, ITCentro) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssi", $nombre, $curp, $correo, $matricula, $itcentro);
+            $stmt->bind_param("ssssi", $nombre_completo, $curp, $correo, $matricula, $itcentro);
             $stmt->execute();
             $stmt->close();
             $mensaje_opciones = "Destinatario creado exitosamente";
         } elseif ($_POST['operacion'] == 'editar') {
             $id = intval($_POST['id']);
-            $nombre = limpiarEntrada($_POST['nombre_completo'] ?? '');
+            $nombre = trim(limpiarEntrada($_POST['nombre'] ?? ''));
+            $apellido = trim(limpiarEntrada($_POST['apellido'] ?? ''));
+            $nombre_completo = $nombre . ($apellido !== '' ? ' ' . $apellido : '');
+            if ($nombre_completo === '') {
+                $nombre_completo = limpiarEntrada($_POST['nombre_completo'] ?? '');
+            }
             $curp = limpiarEntrada($_POST['curp'] ?? '');
             $correo = limpiarEntrada($_POST['correo'] ?? '');
             $matricula = limpiarEntrada($_POST['matricula'] ?? '');
             $itcentro = intval($_POST['itcentro'] ?? 0);
             
             $stmt = $conexion->prepare("UPDATE destinatario SET Nombre_Completo=?, Curp=?, Correo=?, Matricula=?, ITCentro=? WHERE ID_destinatario=?");
-            $stmt->bind_param("ssssii", $nombre, $curp, $correo, $matricula, $itcentro, $id);
+            $stmt->bind_param("ssssii", $nombre_completo, $curp, $correo, $matricula, $itcentro, $id);
             $stmt->execute();
             $stmt->close();
             $mensaje_opciones = "Destinatario actualizado exitosamente";
@@ -583,7 +593,7 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'insignias
             $stmt->bind_param("i", $id);
             $stmt->execute();
             $stmt->close();
-            $mensaje_opciones = "Insignia otorgada / certificado eliminado correctamente";
+            // No mostrar mensaje para no aparecer por defecto al abrir el modal
         } else {
             $mensaje_error_opciones = "No existe la tabla insigniasotorgadas";
         }
@@ -603,7 +613,7 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'T_insigni
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $stmt->close();
-        $mensaje_opciones = "Insignia otorgada eliminada correctamente";
+        // No mostrar mensaje para no aparecer por defecto
     } catch (Exception $e) {
         $mensaje_error_opciones = "Error al eliminar: " . $e->getMessage();
     }
@@ -2818,8 +2828,12 @@ ob_clean();
                     <input type="hidden" name="operacion" value="crear">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div>
-                            <label>Nombre Completo:</label>
-                            <input type="text" name="nombre_completo" required style="width: 100%; padding: 8px;">
+                            <label>Nombre:</label>
+                            <input type="text" name="nombre" required style="width: 100%; padding: 8px;">
+                        </div>
+                        <div>
+                            <label>Apellido(s):</label>
+                            <input type="text" name="apellido" style="width: 100%; padding: 8px;">
                         </div>
                         <div>
                             <label>CURP:</label>
@@ -2847,6 +2861,11 @@ ob_clean();
             fetch(`ajax_opciones.php?tabla=destinatario&accion=obtener&id=${id}`)
                 .then(response => response.json())
                 .then(data => {
+                    const fullName = (data.Nombre_Completo || '').trim();
+                    const spaceIdx = fullName.indexOf(' ');
+                    const nombre = spaceIdx > 0 ? fullName.substring(0, spaceIdx) : fullName;
+                    const apellido = spaceIdx > 0 ? fullName.substring(spaceIdx + 1) : '';
+                    const esc = (s) => (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                     formDiv.innerHTML = `
                         <h4>Editar Destinatario</h4>
                         <form method="POST" onsubmit="return confirmarOperacion('destinatario', 'editar')">
@@ -2855,20 +2874,24 @@ ob_clean();
                             <input type="hidden" name="id" value="${data.ID_destinatario}">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                                 <div>
-                                    <label>Nombre Completo:</label>
-                                    <input type="text" name="nombre_completo" value="${data.Nombre_Completo || ''}" required style="width: 100%; padding: 8px;">
+                                    <label>Nombre:</label>
+                                    <input type="text" name="nombre" value="${esc(nombre)}" required style="width: 100%; padding: 8px;">
+                                </div>
+                                <div>
+                                    <label>Apellido(s):</label>
+                                    <input type="text" name="apellido" value="${esc(apellido)}" style="width: 100%; padding: 8px;">
                                 </div>
                                 <div>
                                     <label>CURP:</label>
-                                    <input type="text" name="curp" value="${data.Curp || ''}" maxlength="18" required style="width: 100%; padding: 8px;">
+                                    <input type="text" name="curp" value="${esc(data.Curp)}" maxlength="18" required style="width: 100%; padding: 8px;">
                                 </div>
                                 <div>
                                     <label>Correo:</label>
-                                    <input type="email" name="correo" value="${data.Correo || ''}" required style="width: 100%; padding: 8px;">
+                                    <input type="email" name="correo" value="${esc(data.Correo)}" required style="width: 100%; padding: 8px;">
                                 </div>
                                 <div>
                                     <label>Matrícula:</label>
-                                    <input type="text" name="matricula" value="${data.Matricula || ''}" required style="width: 100%; padding: 8px;">
+                                    <input type="text" name="matricula" value="${esc(data.Matricula)}" required style="width: 100%; padding: 8px;">
                                 </div>
                                 <div>
                                     <label>IT Centro:</label>
@@ -2879,7 +2902,8 @@ ob_clean();
                             <button type="button" onclick="document.getElementById('form-destinatario').style.display='none'" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
                         </form>
                     `;
-                });
+                })
+                .catch(err => { formDiv.innerHTML = '<p style="color:red;">Error al cargar datos del destinatario.</p>'; });
         }
     }
     
