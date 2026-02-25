@@ -4,6 +4,13 @@
 // Proyecto Insignias TecNM
 // ========================================
 
+// Prueba rápida: si accede con ?ver=1 muestra OK (para confirmar que el archivo actualizado está en el servidor)
+if (!empty($_GET['ver']) && $_GET['ver'] === '1') {
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo "carga_masiva_excel.php OK - PHP " . PHP_VERSION . " - " . date('Y-m-d H:i:s');
+    exit;
+}
+
 // Habilitar reporte de errores para depuración (ANTES de cualquier output)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
