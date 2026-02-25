@@ -1401,35 +1401,61 @@ class CargaMasivaExcel {
     }
     
     /**
+     * Buscar índice de columna probando varios nombres posibles (alias).
+     */
+    private function buscarColumna($columnas, $alias) {
+        foreach ($alias as $nombre) {
+            $k = strtolower(trim($nombre ?? ''));
+            if ($k !== '' && isset($columnas[$k])) {
+                return $columnas[$k];
+            }
+        }
+        return null;
+    }
+
+    /**
      * Validar datos de insignia otorgada
      */
     private function validarDatosInsigniaOtorgada($row, $headers, $fila) {
         $datos = [];
         
-        // Mapear columnas por nombre (case-insensitive)
+        // Mapear columnas por nombre (case-insensitive), normalizar espacios
         $columnas = [];
         foreach ($headers as $idx => $header) {
-            $columnas[strtolower(trim($header ?? ''))] = $idx;
+            $h = trim($header ?? '');
+            $key = strtolower($h);
+            $columnas[$key] = $idx;
+            $columnas[str_replace(' ', '_', $key)] = $idx;
+            $columnas[str_replace('_', ' ', $key)] = $idx;
         }
         
-        // Validar campos requeridos para insigniasotorgadas
-        $campos_requeridos = ['Destinatario', 'Fecha_Emision'];
-        
-        foreach ($campos_requeridos as $campo) {
-            $campo_lower = strtolower($campo);
-            if (!isset($columnas[$campo_lower])) {
-                $this->errores[] = "Fila $fila: Columna '$campo' no encontrada";
-                return false;
-            }
-            
-            $valor = trim($row[$columnas[$campo_lower]] ?? '');
-            if (empty($valor)) {
-                $this->errores[] = "Fila $fila: Campo '$campo' es requerido";
-                return false;
-            }
-            
-            $datos[$campo] = $valor;
+        // Destinatario: aceptar varios nombres usados en Excel
+        $alias_destinatario = ['destinatario', 'destinatario_id', 'id_destinatario', 'nombre_destinatario', 'estudiante', 'nombre_completo', 'destinatario_id'];
+        $idx_dest = $this->buscarColumna($columnas, $alias_destinatario);
+        if ($idx_dest === null) {
+            $this->errores[] = "Fila $fila: Columna 'Destinatario' no encontrada (pruebe: Destinatario, Destinatario_id, Nombre_Destinatario, Estudiante)";
+            return false;
         }
+        $valor_dest = trim($row[$idx_dest] ?? '');
+        if ($valor_dest === '') {
+            $this->errores[] = "Fila $fila: Campo 'Destinatario' es requerido";
+            return false;
+        }
+        $datos['Destinatario'] = $valor_dest;
+        
+        // Fecha_Emision: aceptar varios nombres
+        $alias_fecha = ['fecha_emision', 'fecha emision', 'fecha', 'fecha_otorgamiento', 'fecha otorgamiento', 'fecha_emision'];
+        $idx_fecha = $this->buscarColumna($columnas, $alias_fecha);
+        if ($idx_fecha === null) {
+            $this->errores[] = "Fila $fila: Columna 'Fecha_Emision' no encontrada (pruebe: Fecha_Emision, Fecha, Fecha_Otorgamiento)";
+            return false;
+        }
+        $valor_fecha = trim($row[$idx_fecha] ?? '');
+        if ($valor_fecha === '') {
+            $this->errores[] = "Fila $fila: Campo 'Fecha_Emision' es requerido";
+            return false;
+        }
+        $datos['Fecha_Emision'] = $valor_fecha;
         
         // Obtener Codigo_Insignia (puede estar vacío, se generará automáticamente)
         $codigo_insignia = '';
