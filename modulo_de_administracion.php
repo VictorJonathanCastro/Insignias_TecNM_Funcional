@@ -437,6 +437,19 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'destinatar
             $stmt->execute();
             $stmt->close();
             $mensaje_opciones = "Destinatario eliminado exitosamente";
+        } elseif ($_POST['operacion'] == 'eliminar_ultimos') {
+            $cantidad = (int)($_POST['cantidad'] ?? 0);
+            $permitidos = [20, 50, 100, 200, 500];
+            if (!in_array($cantidad, $permitidos)) {
+                $mensaje_error_opciones = "Cantidad no permitida. Use 20, 50, 100, 200 o 500.";
+            } else {
+                $stmt = $conexion->prepare("DELETE FROM destinatario ORDER BY ID_destinatario DESC LIMIT ?");
+                $stmt->bind_param("i", $cantidad);
+                $stmt->execute();
+                $eliminados = $stmt->affected_rows;
+                $stmt->close();
+                $mensaje_opciones = "Se eliminaron {$eliminados} destinatario(s) (últimos registros).";
+            }
         }
     } catch (Exception $e) {
         $mensaje_error_opciones = "Error: " . $e->getMessage();
@@ -614,6 +627,40 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'T_insigni
         $stmt->execute();
         $stmt->close();
         // No mostrar mensaje para no aparecer por defecto
+    } catch (Exception $e) {
+        $mensaje_error_opciones = "Error al eliminar: " . $e->getMessage();
+    }
+}
+
+// Eliminar últimos N registros de Insignias Otorgadas (insigniasotorgadas y/o T_insignias_otorgadas)
+if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'insignias_otorgadas_ultimos' && isset($_POST['operacion']) && $_POST['operacion'] === 'eliminar_ultimos') {
+    try {
+        $cantidad = (int)($_POST['cantidad'] ?? 0);
+        $permitidos = [20, 50, 100, 200, 500];
+        if (!in_array($cantidad, $permitidos)) {
+            $mensaje_error_opciones = "Cantidad no permitida. Use 20, 50, 100, 200 o 500.";
+        } else {
+            $total_eliminados = 0;
+            $tabla_io = $conexion->query("SHOW TABLES LIKE 'insigniasotorgadas'");
+            if ($tabla_io && $tabla_io->num_rows > 0) {
+                $col_otorgada = $conexion->query("SHOW COLUMNS FROM insigniasotorgadas LIKE 'ID_otorgada'");
+                $pk = ($col_otorgada && $col_otorgada->num_rows > 0) ? 'ID_otorgada' : 'id';
+                $stmt = $conexion->prepare("DELETE FROM insigniasotorgadas ORDER BY $pk DESC LIMIT ?");
+                $stmt->bind_param("i", $cantidad);
+                $stmt->execute();
+                $total_eliminados += $stmt->affected_rows;
+                $stmt->close();
+            }
+            $tabla_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
+            if ($tabla_t && $tabla_t->num_rows > 0) {
+                $stmt = $conexion->prepare("DELETE FROM T_insignias_otorgadas ORDER BY id DESC LIMIT ?");
+                $stmt->bind_param("i", $cantidad);
+                $stmt->execute();
+                $total_eliminados += $stmt->affected_rows;
+                $stmt->close();
+            }
+            $mensaje_opciones = $total_eliminados > 0 ? "Se eliminaron {$total_eliminados} registro(s) de insignias otorgadas." : "No se encontraron registros para eliminar.";
+        }
     } catch (Exception $e) {
         $mensaje_error_opciones = "Error al eliminar: " . $e->getMessage();
     }
@@ -2972,6 +3019,40 @@ ob_clean();
             form.submit();
         }
     }
+
+    function eliminarUltimosDestinatarios() {
+        const sel = document.getElementById('cantidad-eliminar-destinatarios');
+        const cantidad = sel ? parseInt(sel.value, 10) : 20;
+        if (!confirm('¿Eliminar los últimos ' + cantidad + ' destinatarios (por ID)? Esta acción no se puede deshacer.')) {
+            return;
+        }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            <input type="hidden" name="accion_opciones" value="destinatario">
+            <input type="hidden" name="operacion" value="eliminar_ultimos">
+            <input type="hidden" name="cantidad" value="${cantidad}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function eliminarUltimosInsigniasOtorgadas() {
+        const sel = document.getElementById('cantidad-eliminar-insignias-otorgadas');
+        const cantidad = sel ? parseInt(sel.value, 10) : 20;
+        if (!confirm('¿Eliminar los últimos ' + cantidad + ' registros de insignias otorgadas (por ID)? Esta acción no se puede deshacer.')) {
+            return;
+        }
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            <input type="hidden" name="accion_opciones" value="insignias_otorgadas_ultimos">
+            <input type="hidden" name="operacion" value="eliminar_ultimos">
+            <input type="hidden" name="cantidad" value="${cantidad}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
     
     function editarCategoria(id, nombre) {
         const nuevoNombre = prompt('Editar nombre de categoría:', nombre);
@@ -3854,9 +3935,18 @@ ob_clean();
         <!-- Tab Destinatarios -->
         <div id="tab-destinatarios" class="tab-opciones-content active">
           <h3>Gestión de Destinatarios</h3>
-          <div style="margin-bottom: 20px;">
-            <button onclick="mostrarFormDestinatario('crear')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-right: 10px;">➕ Crear Nuevo</button>
+          <div style="margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+            <button onclick="mostrarFormDestinatario('crear')" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">➕ Crear Nuevo</button>
             <button onclick="cargarDestinatarios()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+            <span style="margin-left: 8px;">Eliminar últimos:</span>
+            <select id="cantidad-eliminar-destinatarios" style="padding: 8px 12px; border-radius: 5px; border: 1px solid #ced4da;">
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="500">500</option>
+            </select>
+            <button type="button" onclick="eliminarUltimosDestinatarios()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🗑️ Eliminar últimos registros</button>
           </div>
           <div id="lista-destinatarios" style="max-height: 500px; overflow-y: auto;">
             <!-- Se carga dinámicamente -->
@@ -3976,8 +4066,17 @@ ob_clean();
         <!-- Tab Insignias Otorgadas (desde Más Opciones) -->
         <div id="tab-insignias-otorgadas" class="tab-opciones-content">
           <h3>Gestión de Insignias Otorgadas</h3>
-          <div style="margin-bottom: 20px;">
+          <div style="margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
             <button onclick="cargarInsigniasOtorgadas()" style="background: #17a2b8; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🔄 Actualizar Lista</button>
+            <span style="margin-left: 8px;">Eliminar últimos:</span>
+            <select id="cantidad-eliminar-insignias-otorgadas" style="padding: 8px 12px; border-radius: 5px; border: 1px solid #ced4da;">
+              <option value="20">20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="500">500</option>
+            </select>
+            <button type="button" onclick="eliminarUltimosInsigniasOtorgadas()" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">🗑️ Eliminar últimos registros</button>
           </div>
           <div id="lista-insignias-otorgadas" style="max-height: 280px; overflow: auto; min-width: 0;">
             <div style="text-align: center; padding: 20px; color: #6c757d;">Use «Actualizar Lista» para cargar insignias otorgadas.</div>
