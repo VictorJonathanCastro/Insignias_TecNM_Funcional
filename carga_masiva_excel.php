@@ -70,15 +70,16 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
             throw new Exception("Error de conexión a MySQL: " . ($conexion->connect_error ?? "Desconocido"));
         }
         
-        // Verificar sesión de administrador
-        if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'Admin') {
+        // Verificar sesión de administrador (aceptar Admin o Administrador)
+        $rol = $_SESSION['rol'] ?? '';
+        if (!isset($_SESSION['usuario_id']) || !in_array($rol, ['Admin', 'Administrador'], true)) {
             if (ob_get_level()) {
                 ob_clean();
             }
             header('Location: login.php');
             exit();
         }
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         // Limpiar cualquier salida previa (incluyendo de conexion.php)
         while (ob_get_level()) {
             ob_end_clean();
@@ -104,38 +105,6 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
         <body>
             <div class="error-box">
                 <h1>Error al cargar el sistema</h1>
-                <p>' . htmlspecialchars($e->getMessage()) . '</p>
-                <p><a href="modulo_de_administracion.php">← Volver al Panel</a></p>
-            </div>
-        </body>
-        </html>';
-        exit();
-    } catch (Error $e) {
-        // Limpiar cualquier salida previa (incluyendo de conexion.php)
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-        error_log("Error fatal en carga_masiva_excel.php (inicio): " . $e->getMessage());
-        // No usar http_response_code(500) aquí, usar 200 para mostrar el error
-        if (!headers_sent()) {
-            http_response_code(200);
-            header('Content-Type: text/html; charset=UTF-8');
-        }
-        echo '<!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="UTF-8">
-            <title>Error - Carga Masiva</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
-                h1 { color: #dc3545; }
-                .error-details { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            </style>
-        </head>
-        <body>
-            <div class="error-box">
-                <h1>Error fatal al cargar el sistema</h1>
                 <p>' . htmlspecialchars($e->getMessage()) . '</p>
                 <p><a href="modulo_de_administracion.php">← Volver al Panel</a></p>
             </div>
