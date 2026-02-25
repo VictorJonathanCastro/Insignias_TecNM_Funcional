@@ -418,7 +418,7 @@ class CargaMasivaExcel {
         // Procesar cada hoja
         for ($i = 0; $i < $total_hojas; $i++) {
             $sheet = $spreadsheet->getSheet($i);
-            $nombre_hoja = strtolower(trim($sheet->getTitle()));
+            $nombre_hoja = strtolower(trim($sheet->getTitle() ?? ''));
             $data = $sheet->toArray();
             
             if (empty($data) || count($data) < 2) {
@@ -429,7 +429,7 @@ class CargaMasivaExcel {
             
             // Detectar tipo de tabla por headers
             $headers_originales = $data[0];
-            $headers_normalizados = array_map('strtolower', array_map('trim', $headers_originales));
+            $headers_normalizados = array_map('strtolower', array_map(function ($v) { return trim($v ?? ''); }, $headers_originales));
             $tipo_detectado = $this->detectarTipoTabla($headers_normalizados, $nombre_hoja, $mapeo_hojas);
             
             if (!$tipo_detectado) {
@@ -609,7 +609,7 @@ class CargaMasivaExcel {
                     $fila_excel = $fila + 2; // +2 porque fila 1 es headers y empezamos desde 0
                     $col_fecha = null;
                     foreach ($headers as $idx => $header) {
-                        if (strtolower(trim($header)) === 'fecha_emision') {
+                        if (strtolower(trim($header ?? '')) === 'fecha_emision') {
                             $col_fecha = $idx;
                             break;
                         }
@@ -1409,7 +1409,7 @@ class CargaMasivaExcel {
         // Mapear columnas por nombre (case-insensitive)
         $columnas = [];
         foreach ($headers as $idx => $header) {
-            $columnas[strtolower(trim($header))] = $idx;
+            $columnas[strtolower(trim($header ?? ''))] = $idx;
         }
         
         // Validar campos requeridos para insigniasotorgadas
@@ -1441,7 +1441,7 @@ class CargaMasivaExcel {
         // Validar fecha - aceptar múltiples formatos y corregir errores comunes
         $fecha_valida = false;
         $fecha_formateada = null;
-        $fecha_original = trim($datos['Fecha_Emision']);
+        $fecha_original = trim($datos['Fecha_Emision'] ?? '');
         
         // Detectar y corregir formato erróneo común: YYYY-MM-YYYY (ej: 2025-08-2025)
         if (preg_match('/^(\d{4})-(\d{1,2})-(\d{4})$/', $fecha_original, $matches)) {
@@ -1554,7 +1554,7 @@ class CargaMasivaExcel {
         $campo_id_destinatario = ($check_destinatario && $check_destinatario->num_rows > 0) ? 'id' : 'ID_destinatario';
         
         $destinatario_id = null;
-        $valor_destinatario = trim($datos['Destinatario']);
+        $valor_destinatario = trim($datos['Destinatario'] ?? '');
         
         // PRIORIDAD 1: Si NO es numérico (es texto/nombre), buscar por nombre completo primero
         if (!is_numeric($valor_destinatario)) {
@@ -1820,10 +1820,10 @@ class CargaMasivaExcel {
         }
         
         // Limpiar el email
-        $email_limpio = trim($email);
+        $email_limpio = trim($email ?? '');
         $email_limpio = preg_replace('/[\r\n\t]+/', '', $email_limpio); // Quitar saltos de línea y tabs
         $email_limpio = preg_replace('/\s+/', '', $email_limpio); // Quitar todos los espacios
-        $email_limpio = trim($email_limpio, " \t\n\r\0\x0B\"'`"); // Quitar comillas y espacios
+        $email_limpio = trim($email_limpio ?? '', " \t\n\r\0\x0B\"'`"); // Quitar comillas y espacios
         
         // Validar formato básico
         if (empty($email_limpio)) {
@@ -1856,7 +1856,7 @@ class CargaMasivaExcel {
      */
     private function normalizarNombreColumna($nombre) {
         // Convertir a minúsculas, quitar espacios, guiones y caracteres especiales
-        $normalizado = strtolower(trim($nombre));
+        $normalizado = strtolower(trim($nombre ?? ''));
         $normalizado = str_replace([' ', '-', '_', '.', 'á', 'é', 'í', 'ó', 'ú', 'ñ'], 
                                    ['', '', '', '', 'a', 'e', 'i', 'o', 'u', 'n'], 
                                    $normalizado);
