@@ -448,6 +448,7 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] == 'destinatar
                 $stmt->execute();
                 $eliminados = $stmt->affected_rows;
                 $stmt->close();
+                $eliminados = ($eliminados < 0) ? 0 : (int)$eliminados;
                 $mensaje_opciones = "Se eliminaron {$eliminados} destinatario(s) (últimos registros).";
             }
         }
@@ -648,7 +649,8 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'insignias
                 $stmt = $conexion->prepare("DELETE FROM insigniasotorgadas ORDER BY $pk DESC LIMIT ?");
                 $stmt->bind_param("i", $cantidad);
                 $stmt->execute();
-                $total_eliminados += $stmt->affected_rows;
+                $n = $stmt->affected_rows;
+                $total_eliminados += ($n < 0) ? 0 : (int)$n;
                 $stmt->close();
             }
             $tabla_t = $conexion->query("SHOW TABLES LIKE 'T_insignias_otorgadas'");
@@ -656,7 +658,8 @@ if (isset($_POST['accion_opciones']) && $_POST['accion_opciones'] === 'insignias
                 $stmt = $conexion->prepare("DELETE FROM T_insignias_otorgadas ORDER BY id DESC LIMIT ?");
                 $stmt->bind_param("i", $cantidad);
                 $stmt->execute();
-                $total_eliminados += $stmt->affected_rows;
+                $n = $stmt->affected_rows;
+                $total_eliminados += ($n < 0) ? 0 : (int)$n;
                 $stmt->close();
             }
             $mensaje_opciones = $total_eliminados > 0 ? "Se eliminaron {$total_eliminados} registro(s) de insignias otorgadas." : "No se encontraron registros para eliminar.";
