@@ -604,8 +604,10 @@ class CargaMasivaExcel {
                 if ($sheet !== null) {
                     $fila_excel = $fila + 2; // +2 porque fila 1 es headers y empezamos desde 0
                     $col_fecha = null;
+                    $alias_fecha_loop = ['fecha_emision', 'fecha emision', 'fecha', 'fecha_otorgamiento'];
                     foreach ($headers as $idx => $header) {
-                        if (strtolower(trim($header ?? '')) === 'fecha_emision') {
+                        $h = strtolower(trim((string)($header ?? '')));
+                        if (in_array($h, $alias_fecha_loop, true) || str_replace(' ', '_', $h) === 'fecha_emision') {
                             $col_fecha = $idx;
                             break;
                         }
@@ -1418,12 +1420,11 @@ class CargaMasivaExcel {
             $this->errores[] = "Fila $fila: Headers inválidos";
             return false;
         }
-        $headers = array_values($headers);
         if (!is_array($row)) {
             $row = [];
         }
 
-        // Mapear columnas por nombre (case-insensitive), normalizar espacios
+        // Mapear columnas por nombre (case-insensitive), normalizar espacios (no reindexar: mantener claves como en $row)
         $columnas = [];
         foreach ($headers as $idx => $header) {
             $h = trim((string)($header ?? ''));
