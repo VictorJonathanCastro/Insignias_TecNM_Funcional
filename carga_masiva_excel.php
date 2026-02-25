@@ -1124,7 +1124,7 @@ class CargaMasivaExcel {
             if (empty(array_filter($row))) continue;
             
             try {
-                $columnas = array_flip($headers);
+                $columnas = $this->headersToColumnas($headers);
                 $nombre_estatus = trim($row[$columnas['Nombre_Estatus']] ?? '');
                 $acron = trim($row[$columnas['Acron_Estatus']] ?? '');
                 
@@ -1169,7 +1169,7 @@ class CargaMasivaExcel {
             if (empty(array_filter($row))) continue;
             
             try {
-                $columnas = array_flip($headers);
+                $columnas = $this->headersToColumnas($headers);
                 $nombre_completo = trim($row[$columnas['Nombre_Completo']] ?? '');
                 $adscripcion = trim($row[$columnas['Adscripcion']] ?? '');
                 $cargo = trim($row[$columnas['Cargo']] ?? '');
@@ -1236,7 +1236,7 @@ class CargaMasivaExcel {
             if (empty(array_filter($row))) continue;
             
             try {
-                $columnas = array_flip($headers);
+                $columnas = $this->headersToColumnas($headers);
                 $tipo_insignia = trim($row[$columnas['Tipo_Insignia']] ?? '');
                 $propone_insignia = trim($row[$columnas['Propone_Insignia']] ?? '');
                 $programa = trim($row[$columnas['Programa']] ?? '');
@@ -1295,7 +1295,7 @@ class CargaMasivaExcel {
             if (empty(array_filter($row))) continue;
             
             try {
-                $columnas = array_flip($headers);
+                $columnas = $this->headersToColumnas($headers);
                 $nombre = trim($row[$columnas['Nombre']] ?? '');
                 $apellido_paterno = trim($row[$columnas['Apellido_Paterno']] ?? '');
                 $apellido_materno = trim($row[$columnas['Apellido_Materno']] ?? '');
@@ -1730,7 +1730,7 @@ class CargaMasivaExcel {
      */
     private function validarDatosDestinatario($row, $headers, $fila) {
         $datos = [];
-        $columnas = array_flip($headers);
+        $columnas = $this->headersToColumnas($headers);
         
         // Validar que tenemos al menos Nombre_Completo o Nombre
         $tiene_nombre_completo = isset($columnas['Nombre_Completo']) && !empty(trim($row[$columnas['Nombre_Completo']] ?? ''));
@@ -1861,6 +1861,14 @@ class CargaMasivaExcel {
                                    ['', '', '', '', 'a', 'e', 'i', 'o', 'u', 'n'], 
                                    $normalizado);
         return $normalizado;
+    }
+
+    /**
+     * Convierte array de headers a mapa nombre_columna => índice. array_flip() solo acepta string/int.
+     */
+    private function headersToColumnas($headers) {
+        $safe = array_map(function ($h) { return is_string($h) || is_int($h) ? $h : (string)($h ?? ''); }, $headers);
+        return array_flip($safe);
     }
     
     /**
