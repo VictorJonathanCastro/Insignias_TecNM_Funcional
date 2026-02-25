@@ -1418,15 +1418,25 @@ class CargaMasivaExcel {
      */
     private function validarDatosInsigniaOtorgada($row, $headers, $fila) {
         $datos = [];
-        
+        if (!is_array($headers)) {
+            $this->errores[] = "Fila $fila: Headers inválidos";
+            return false;
+        }
+        $headers = array_values($headers);
+        if (!is_array($row)) {
+            $row = [];
+        }
+
         // Mapear columnas por nombre (case-insensitive), normalizar espacios
         $columnas = [];
         foreach ($headers as $idx => $header) {
-            $h = trim($header ?? '');
+            $h = trim((string)($header ?? ''));
             $key = strtolower($h);
-            $columnas[$key] = $idx;
-            $columnas[str_replace(' ', '_', $key)] = $idx;
-            $columnas[str_replace('_', ' ', $key)] = $idx;
+            if ($key !== '') {
+                $columnas[$key] = $idx;
+                $columnas[str_replace(' ', '_', $key)] = $idx;
+                $columnas[str_replace('_', ' ', $key)] = $idx;
+            }
         }
         
         // Destinatario: aceptar varios nombres usados en Excel
