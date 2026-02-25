@@ -403,16 +403,16 @@ class CargaMasivaExcel {
         
         $this->exitos[] = "📊 Iniciando procesamiento de $total_hojas hoja(s) del Excel...";
         
-        // Mapeo de nombres de hojas a tipos de carga
+        // Mapeo de nombres de hojas a tipos de carga (orden: más específico primero para no confundir con "insignias")
         $mapeo_hojas = [
-            'insignias_otorgadas' => ['insignias', 'otorgadas', 'insignias otorgadas', 'insigniasotorgadas'],
-            'destinatarios' => ['destinatarios', 'estudiantes', 'personas'],
-            'centros_it' => ['centros', 'it', 'centros it', 'institutos'],
-            'tipos_insignia' => ['tipos', 'tipos insignia', 'tipos de insignia'],
-            'categorias_insignia' => ['categorias', 'categorías', 'categorias insignia'],
+            'categorias_insignia' => ['cat_insignias', 't_cat_insignias', 'categorias', 'categorías', 'categorias insignia'],
+            'tipos_insignia' => ['tipo_insignia', 't_tipo_insignia', 't_insignias', 'insignias_maestras', 'tipos', 'tipos insignia', 'tipos de insignia'],
+            'centros_it' => ['t_centros', 'centros', 'centros it', 'institutos'],
             'periodos_emision' => ['periodos', 'periodos emision', 'periodos de emision'],
             'estatus' => ['estatus', 'estados', 'status'],
-            'responsables_emision' => ['responsables', 'responsables emision', 'responsables de emision']
+            'responsables_emision' => ['t_responsable_emision', 'responsable_emision', 'responsables', 'responsables emision', 'responsables de emision'],
+            'destinatarios' => ['t_desti', 'desti', 'destinatarios', 'estudiantes', 'personas'],
+            'insignias_otorgadas' => ['t_insignias_otorgadas', 'insignias otorgadas', 'insigniasotorgadas', 'otorgadas']
         ];
         
         // Procesar cada hoja
