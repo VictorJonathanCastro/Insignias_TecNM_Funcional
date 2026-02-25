@@ -3362,47 +3362,6 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
                                accept=".xlsx,.xls" required>
                     </div>
                     
-                    <!-- Opción de Firma Digital (para Insignias Otorgadas o Todas las Tablas) -->
-                    <div class="form-group" id="firma-group" style="display: none;">
-                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #2196f3; margin-bottom: 15px;">
-                            <label style="display: flex; align-items: center; cursor: pointer; font-weight: 600; color: #1976d2;">
-                                <input type="checkbox" name="firmar_insignias" id="firmar_insignias" value="1" style="margin-right: 10px; width: 20px; height: 20px;">
-                                <span>✍️ ¿Deseas firmar las insignias digitalmente?</span>
-                            </label>
-                            <p id="texto-explicativo-firma" style="margin: 10px 0 0 30px; color: #666; font-size: 14px;">
-                                Si marcas esta opción, todas las insignias se firmarán automáticamente con tu e.firma (SAT)
-                            </p>
-                        </div>
-                        
-                        <div id="campos-firma" style="display: none; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px solid #dee2e6;">
-                            <h4 style="color: #2c3e50; margin-bottom: 15px;">📋 Datos de Firma Digital (e.firma SAT)</h4>
-                            
-                            <div class="form-group">
-                                <label for="certificado">Certificado (.cer): <span style="color: red;">*</span></label>
-                                <input type="file" name="certificado" id="certificado" accept=".cer" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
-                                <small style="color: #666; display: block; margin-top: 5px;">Archivo de certificado digital (.cer) de tu e.firma</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="clave_privada">Clave Privada (.key): <span style="color: red;">*</span></label>
-                                <input type="file" name="clave_privada" id="clave_privada" accept=".key" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
-                                <small style="color: #666; display: block; margin-top: 5px;">Archivo de clave privada (.key) de tu e.firma</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="contrasena_firma">Contraseña de la e.firma: <span style="color: red;">*</span></label>
-                                <input type="password" name="contrasena_firma" id="contrasena_firma" 
-                                       placeholder="Ingresa la contraseña de tu e.firma" 
-                                       style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px;">
-                                <small style="color: #666; display: block; margin-top: 5px;">Contraseña que usas para acceder a tu e.firma en el portal del SAT</small>
-                            </div>
-                            
-                            <div style="background: #fff3cd; padding: 12px; border-radius: 5px; border-left: 4px solid #ffc107; margin-top: 15px;">
-                                <strong>⚠️ Importante:</strong> Los archivos .cer y .key se procesan temporalmente y se eliminan inmediatamente después de generar las firmas. No se almacenan en el servidor.
-                            </div>
-                        </div>
-                    </div>
-                    
                     <button type="submit" name="cargar_datos" class="btn btn-success">
                         🚀 Procesar Archivo
                     </button>
@@ -3488,55 +3447,10 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
             }
         });
         
-        // Mostrar/ocultar campos de firma según el tipo de carga
-        document.getElementById('tipo_carga').addEventListener('change', function(e) {
-            const tipoCarga = e.target.value;
-            const firmaGroup = document.getElementById('firma-group');
-            const camposFirma = document.getElementById('campos-firma');
-            const firmarCheckbox = document.getElementById('firmar_insignias');
-            
-            // Mostrar opción de firma si es "Insignias Otorgadas" o "Todas las Tablas"
-            if (tipoCarga === 'insignias_otorgadas' || tipoCarga === 'todas_las_tablas') {
-                firmaGroup.style.display = 'block';
-                // Si el checkbox está marcado, mostrar campos
-                if (firmarCheckbox.checked) {
-                    camposFirma.style.display = 'block';
-                }
-                // Actualizar texto explicativo según el tipo
-                const textoExplicativo = document.getElementById('texto-explicativo-firma');
-                if (textoExplicativo) {
-                    if (tipoCarga === 'todas_las_tablas') {
-                        textoExplicativo.textContent = 'Si marcas esta opción, solo las Insignias Otorgadas se firmarán automáticamente con tu e.firma (SAT). Las demás tablas no se verán afectadas.';
-                    } else {
-                        textoExplicativo.textContent = 'Si marcas esta opción, todas las insignias se firmarán automáticamente con tu e.firma (SAT)';
-                    }
-                }
-            } else {
-                firmaGroup.style.display = 'none';
-                camposFirma.style.display = 'none';
-                firmarCheckbox.checked = false;
-            }
-        });
-        
-        // Mostrar/ocultar campos de certificado según el checkbox
-        document.getElementById('firmar_insignias').addEventListener('change', function(e) {
-            const camposFirma = document.getElementById('campos-firma');
-            if (e.target.checked) {
-                camposFirma.style.display = 'block';
-            } else {
-                camposFirma.style.display = 'none';
-                // Limpiar campos
-                document.getElementById('certificado').value = '';
-                document.getElementById('clave_privada').value = '';
-                document.getElementById('contrasena_firma').value = '';
-            }
-        });
-        
         // Confirmación antes de procesar
         document.querySelector('form[enctype="multipart/form-data"]').addEventListener('submit', function(e) {
             const tipoCarga = document.getElementById('tipo_carga').value;
             const archivo = document.getElementById('archivo_excel').files[0];
-            const firmarInsignias = document.getElementById('firmar_insignias').checked;
             
             if (!tipoCarga || !archivo) {
                 e.preventDefault();
@@ -3544,28 +3458,7 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
                 return;
             }
             
-            // Validar campos de firma si está habilitada (para insignias otorgadas o todas las tablas)
-            if (firmarInsignias && (tipoCarga === 'insignias_otorgadas' || tipoCarga === 'todas_las_tablas')) {
-                const certificado = document.getElementById('certificado').files[0];
-                const clavePrivada = document.getElementById('clave_privada').files[0];
-                const contrasena = document.getElementById('contrasena_firma').value;
-                
-                if (!certificado || !clavePrivada || !contrasena) {
-                    e.preventDefault();
-                    if (tipoCarga === 'todas_las_tablas') {
-                        alert('Para firmar las Insignias Otorgadas, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña. Las demás tablas no se verán afectadas.');
-                    } else {
-                    alert('Para firmar las insignias, debes cargar el certificado (.cer), la clave privada (.key) y proporcionar la contraseña.');
-                    }
-                    return;
-                }
-            }
-            
-            let mensaje = `¿Está seguro de procesar el archivo "${archivo.name}" para ${tipoCarga}?`;
-            if (firmarInsignias && tipoCarga === 'insignias_otorgadas') {
-                mensaje += '\n\n⚠️ Las insignias se firmarán digitalmente con tu e.firma.';
-            }
-            
+            const mensaje = `¿Está seguro de procesar el archivo "${archivo.name}" para ${tipoCarga}?`;
             if (!confirm(mensaje)) {
                 e.preventDefault();
             }
