@@ -14,6 +14,26 @@ if (!ob_get_level()) {
     ob_start();
 }
 
+// Si hay error fatal, mostrar mensaje en la página (ayuda a diagnosticar HTTP 500)
+register_shutdown_function(function () {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        while (ob_get_level()) {
+            ob_end_clean();
+        }
+        if (!headers_sent()) {
+            http_response_code(200);
+            header('Content-Type: text/html; charset=UTF-8');
+        }
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error - Carga Masiva</title></head><body style="font-family:sans-serif;padding:20px;background:#f5f5f5">';
+        echo '<h1 style="color:#c00">Error en carga_masiva_excel.php</h1>';
+        echo '<p><strong>' . htmlspecialchars($e['message']) . '</strong></p>';
+        echo '<p>Archivo: ' . htmlspecialchars($e['file']) . ' — Línea: ' . (int)$e['line'] . '</p>';
+        echo '<p><small>Revise que el archivo en el servidor esté actualizado (git pull o subir la última versión).</small></p>';
+        echo '</body></html>';
+    }
+});
+
 // Iniciar sesión solo si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
     @session_start();
