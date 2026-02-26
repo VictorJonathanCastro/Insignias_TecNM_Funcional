@@ -1732,8 +1732,8 @@ class CargaMasivaExcel {
             $datos['Apellido_Materno'] = trim($row[$columnas['Apellido_Materno']] ?? '');
         }
         
-        // ITCentro: Id_Centro, ITCentro (numérico o nombre del instituto)
-        $valor_itc = $this->getValDestinatario($row, $columnas, ['ITCentro', 'Id_Centro']);
+        // ITCentro: ITCentro, Id_Centro o "Instituto Tecnológico de Adscripción" (exportación evento TecNM)
+        $valor_itc = $this->getValDestinatario($row, $columnas, ['ITCentro', 'Id_Centro', 'Instituto Tecnológico de Adscripción']);
         if ($valor_itc === '') {
             $this->errores[] = "Fila $fila: Se requiere 'ITCentro' o 'Id_Centro'";
             return false;
@@ -2092,18 +2092,21 @@ class CargaMasivaExcel {
                     ]
                 ],
                 'Destinatarios' => [
-                    'headers' => ['ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro'],
+                    'headers' => [
+                        'FolioRegistroEvento', 'Instituto Tecnológico de Adscripción', 'Género', 'Disciplina', 'Correo Electrónico para Notificación', 'Evento', 'Lugar', 'Registro', 'Registro Participación',
+                        'ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro'
+                    ],
                     'datos' => [
-                        [1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico'],
-                        [2, 'Adrián Mendoza Rendón', 'MERA040624HGRNNDA02', 'C21321039', '', '', '', 'Instituto Tecnológico de Acapulco'],
-                        [3, 'Juan Pérez Gómez', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '', '', 'Instituto Tecnológico de Agua Prieta'],
-                        [4, 'María González López', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '', '', 'Instituto Tecnológico de Aguascalientes'],
-                        [5, 'Carlos Ramírez Martínez', 'RAMC850320HDFRGN03', '2024003', '', '', '', 'Instituto Tecnológico de Celaya'],
-                        [6, 'Ana Sánchez Hernández', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '', '', 'Instituto Tecnológico de Chihuahua'],
-                        [7, 'Roberto Torres Díaz', 'TODR880725HDFRGN05', '2024005', '', '', '', 'Instituto Tecnológico de Durango'],
-                        [8, 'Laura Morales Silva', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '', '', 'Instituto Tecnológico de Morelia'],
-                        [9, 'Fernando Jiménez Ruiz', 'JIRF870415HDFRGN07', '2024007', '', '', '', 'Instituto Tecnológico de Puebla'],
-                        [10, 'Patricia Castro Moreno', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '', '', 'Instituto Tecnológico de Veracruz']
+                        ['Registro de participación ENDTecNM2025: 81757', 'Instituto Tecnológico de Acapulco', 'M', 'Natación', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81757', 'Registro de participación ENDTecNM2025: 81757', 1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico'],
+                        ['Registro de participación ENDTecNM2025: 81775', 'Instituto Tecnológico de Agua Prieta', 'M', 'Basquetbol', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81775', 'Registro de participación ENDTecNM2025: 81775', 2, 'Adrián Mendoza Rendón', 'MERA040624HGRNNDA02', 'C21321039', '', '', '', 'Instituto Tecnológico de Acapulco'],
+                        ['Registro de participación ENDTecNM2025: 81776', 'Instituto Tecnológico de Aguascalientes', 'M', 'Taekwondo', 'juan.perez@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Primer lugar', 'Registro de participación ENDTecNM2025: 81776', 'Registro de participación ENDTecNM2025: 81776', 3, 'Juan Pérez Gómez', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '', '', 'Instituto Tecnológico de Agua Prieta'],
+                        ['Registro de participación ENDTecNM2025: 81777', 'Instituto Tecnológico de Celaya', 'F', 'Atletismo', 'maria.gonzalez@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81777', 'Registro de participación ENDTecNM2025: 81777', 4, 'María González López', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '', '', 'Instituto Tecnológico de Aguascalientes'],
+                        ['Registro de participación ENDTecNM2025: 81778', 'Instituto Tecnológico de Chihuahua', 'M', 'Sóftbol', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81778', 'Registro de participación ENDTecNM2025: 81778', 5, 'Carlos Ramírez Martínez', 'RAMC850320HDFRGN03', '2024003', '', '', '', 'Instituto Tecnológico de Celaya'],
+                        ['Registro de participación ENDTecNM2025: 81779', 'Instituto Tecnológico de Durango', 'F', 'Ajedrez', 'ana.sanchez@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Primer lugar', 'Registro de participación ENDTecNM2025: 81779', 'Registro de participación ENDTecNM2025: 81779', 6, 'Ana Sánchez Hernández', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '', '', 'Instituto Tecnológico de Chihuahua'],
+                        ['Registro de participación ENDTecNM2025: 81780', 'Instituto Tecnológico de Morelia', 'M', 'Tenis', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81780', 'Registro de participación ENDTecNM2025: 81780', 7, 'Roberto Torres Díaz', 'TODR880725HDFRGN05', '2024005', '', '', '', 'Instituto Tecnológico de Durango'],
+                        ['Registro de participación ENDTecNM2025: 81781', 'Instituto Tecnológico de Puebla', 'F', 'Natación', 'laura.morales@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81781', 'Registro de participación ENDTecNM2025: 81781', 8, 'Laura Morales Silva', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '', '', 'Instituto Tecnológico de Morelia'],
+                        ['Registro de participación ENDTecNM2025: 81782', 'Instituto Tecnológico de Veracruz', 'M', 'Basquetbol', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81782', 'Registro de participación ENDTecNM2025: 81782', 9, 'Fernando Jiménez Ruiz', 'JIRF870415HDFRGN07', '2024007', '', '', '', 'Instituto Tecnológico de Puebla'],
+                        ['Registro de participación ENDTecNM2025: 81783', 'Centro Nacional de Investigación y Desarrollo Tecnológico (CENIDET)', 'F', 'Atletismo', 'patricia.castro@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Primer lugar', 'Registro de participación ENDTecNM2025: 81783', 'Registro de participación ENDTecNM2025: 81783', 10, 'Patricia Castro Moreno', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '', '', 'Instituto Tecnológico de Veracruz']
                     ]
                 ],
                 'insigniasotorgadas' => [
@@ -2302,18 +2305,21 @@ class CargaMasivaExcel {
                     ];
                     break;
                 case 'destinatarios':
-                    $headers = ['ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro'];
+                    $headers = [
+                        'FolioRegistroEvento', 'Instituto Tecnológico de Adscripción', 'Género', 'Disciplina', 'Correo Electrónico para Notificación', 'Evento', 'Lugar', 'Registro', 'Registro Participación',
+                        'ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro'
+                    ];
                     $datos_ejemplo = [
-                        [1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico'],
-                        [2, 'Adrián Mendoza Rendón', 'MERA040624HGRNNDA02', 'C21321039', '', '', '', 'Instituto Tecnológico de Acapulco'],
-                        [3, 'Juan Pérez Gómez', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '', '', 'Instituto Tecnológico de Agua Prieta'],
-                        [4, 'María González López', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '', '', 'Instituto Tecnológico de Aguascalientes'],
-                        [5, 'Carlos Ramírez Martínez', 'RAMC850320HDFRGN03', '2024003', '', '', '', 'Instituto Tecnológico de Celaya'],
-                        [6, 'Ana Sánchez Hernández', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '', '', 'Instituto Tecnológico de Chihuahua'],
-                        [7, 'Roberto Torres Díaz', 'TODR880725HDFRGN05', '2024005', '', '', '', 'Instituto Tecnológico de Durango'],
-                        [8, 'Laura Morales Silva', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '', '', 'Instituto Tecnológico de Morelia'],
-                        [9, 'Fernando Jiménez Ruiz', 'JIRF870415HDFRGN07', '2024007', '', '', '', 'Instituto Tecnológico de Puebla'],
-                        [10, 'Patricia Castro Moreno', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '', '', 'Instituto Tecnológico de Veracruz']
+                        ['Registro de participación ENDTecNM2025: 81757', 'Instituto Tecnológico de Acapulco', 'M', 'Natación', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81757', 'Registro de participación ENDTecNM2025: 81757', 1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico'],
+                        ['Registro de participación ENDTecNM2025: 81775', 'Instituto Tecnológico de Agua Prieta', 'M', 'Basquetbol', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81775', 'Registro de participación ENDTecNM2025: 81775', 2, 'Adrián Mendoza Rendón', 'MERA040624HGRNNDA02', 'C21321039', '', '', '', 'Instituto Tecnológico de Acapulco'],
+                        ['Registro de participación ENDTecNM2025: 81776', 'Instituto Tecnológico de Aguascalientes', 'M', 'Taekwondo', 'juan.perez@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Primer lugar', 'Registro de participación ENDTecNM2025: 81776', 'Registro de participación ENDTecNM2025: 81776', 3, 'Juan Pérez Gómez', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '', '', 'Instituto Tecnológico de Agua Prieta'],
+                        ['Registro de participación ENDTecNM2025: 81777', 'Instituto Tecnológico de Celaya', 'F', 'Atletismo', 'maria.gonzalez@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81777', 'Registro de participación ENDTecNM2025: 81777', 4, 'María González López', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '', '', 'Instituto Tecnológico de Aguascalientes'],
+                        ['Registro de participación ENDTecNM2025: 81778', 'Instituto Tecnológico de Chihuahua', 'M', 'Sóftbol', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81778', 'Registro de participación ENDTecNM2025: 81778', 5, 'Carlos Ramírez Martínez', 'RAMC850320HDFRGN03', '2024003', '', '', '', 'Instituto Tecnológico de Celaya'],
+                        ['Registro de participación ENDTecNM2025: 81779', 'Instituto Tecnológico de Durango', 'F', 'Ajedrez', 'ana.sanchez@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Primer lugar', 'Registro de participación ENDTecNM2025: 81779', 'Registro de participación ENDTecNM2025: 81779', 6, 'Ana Sánchez Hernández', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '', '', 'Instituto Tecnológico de Chihuahua'],
+                        ['Registro de participación ENDTecNM2025: 81780', 'Instituto Tecnológico de Morelia', 'M', 'Tenis', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81780', 'Registro de participación ENDTecNM2025: 81780', 7, 'Roberto Torres Díaz', 'TODR880725HDFRGN05', '2024005', '', '', '', 'Instituto Tecnológico de Durango'],
+                        ['Registro de participación ENDTecNM2025: 81781', 'Instituto Tecnológico de Puebla', 'F', 'Natación', 'laura.morales@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81781', 'Registro de participación ENDTecNM2025: 81781', 8, 'Laura Morales Silva', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '', '', 'Instituto Tecnológico de Morelia'],
+                        ['Registro de participación ENDTecNM2025: 81782', 'Instituto Tecnológico de Veracruz', 'M', 'Basquetbol', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81782', 'Registro de participación ENDTecNM2025: 81782', 9, 'Fernando Jiménez Ruiz', 'JIRF870415HDFRGN07', '2024007', '', '', '', 'Instituto Tecnológico de Puebla'],
+                        ['Registro de participación ENDTecNM2025: 81783', 'Centro Nacional de Investigación y Desarrollo Tecnológico (CENIDET)', 'F', 'Atletismo', 'patricia.castro@tecnm.mx', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Primer lugar', 'Registro de participación ENDTecNM2025: 81783', 'Registro de participación ENDTecNM2025: 81783', 10, 'Patricia Castro Moreno', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '', '', 'Instituto Tecnológico de Veracruz']
                     ];
                     break;
                 case 'centros_it':
