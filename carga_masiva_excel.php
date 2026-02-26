@@ -434,7 +434,9 @@ class CargaMasivaExcel {
         
         // Destinatarios - solo si NO tiene Codigo_Insignia (para evitar confusión)
         if (!in_array('codigo_insignia', $headers) && !in_array('id_insignia', $headers)) {
-            if (in_array('nombre_completo', $headers) && (in_array('matricula', $headers) || in_array('correo', $headers))) {
+            $tiene_nombre = in_array('nombre_completo', $headers) || in_array('nombre completo', $headers);
+            $tiene_id = in_array('matricula', $headers) || in_array('correo', $headers) || in_array('curp', $headers) || in_array('correo_inst', $headers) || in_array('correo_per', $headers);
+            if ($tiene_nombre && $tiene_id) {
                 return 'destinatarios';
             }
         }
@@ -784,6 +786,13 @@ class CargaMasivaExcel {
                     $valores[] = '?';
                     $tipos .= 's';
                     $params[] = $datos['Correo'];
+                }
+                
+                if (in_array('Fecha_Creación', $columnas_disponibles) && !empty($datos['Fecha_Creación'] ?? '')) {
+                    $campos[] = 'Fecha_Creación';
+                    $valores[] = '?';
+                    $tipos .= 's';
+                    $params[] = $datos['Fecha_Creación'];
                 }
                 
                 if (empty($campos)) {
@@ -1684,46 +1693,75 @@ class CargaMasivaExcel {
     }
     
     /**
-     * Validar datos de destinatario
+     * Obtener valor de fila por primera columna que exista en el mapa (nombres alternativos).
+     */
+    private function getValDestinatario($row, $columnas, $nombres_posibles) {
+        foreach ($nombres_posibles as $nombre) {
+            if (isset($columnas[$nombre])) {
+                $idx = $columnas[$nombre];
+                $val = trim($row[$idx] ?? '');
+                if ($val !== '') {
+                    return $val;
+                }
+            }
+        }
+        return '';
+    }
+    
+    /**
+     * Validar datos de destinatario (acepta formato TecNM: Nombre Completo, Correo_Inst, Correo_Per, ITCentro por nombre).
      */
     private function validarDatosDestinatario($row, $headers, $fila) {
         $datos = [];
         $columnas = $this->headersToColumnas($headers);
         
-        // Validar que tenemos al menos Nombre_Completo o Nombre
-        $tiene_nombre_completo = isset($columnas['Nombre_Completo']) && !empty(trim($row[$columnas['Nombre_Completo']] ?? ''));
+        // Nombre completo: aceptar "Nombre_Completo" o "Nombre Completo" (formato TecNM)
+        $nombre_completo = $this->getValDestinatario($row, $columnas, ['Nombre_Completo', 'Nombre Completo']);
         $tiene_nombre = isset($columnas['Nombre']) && !empty(trim($row[$columnas['Nombre']] ?? ''));
         
-        if (!$tiene_nombre_completo && !$tiene_nombre) {
-            $this->errores[] = "Fila $fila: Se requiere 'Nombre_Completo' o 'Nombre'";
+        if ($nombre_completo === '' && !$tiene_nombre) {
+            $this->errores[] = "Fila $fila: Se requiere 'Nombre_Completo' o 'Nombre Completo' o 'Nombre'";
             return false;
         }
         
-        // Nombre completo (puede venir directamente o construirse)
-        if ($tiene_nombre_completo) {
-            $datos['Nombre_Completo'] = trim($row[$columnas['Nombre_Completo']] ?? '');
+        if ($nombre_completo !== '') {
+            $datos['Nombre_Completo'] = $nombre_completo;
         } else {
             $datos['Nombre'] = trim($row[$columnas['Nombre']] ?? '');
             $datos['Apellido_Paterno'] = trim($row[$columnas['Apellido_Paterno']] ?? '');
             $datos['Apellido_Materno'] = trim($row[$columnas['Apellido_Materno']] ?? '');
         }
         
-        // ITCentro (puede venir como Id_Centro o ITCentro)
-        if (isset($columnas['ITCentro']) && !empty(trim($row[$columnas['ITCentro']] ?? ''))) {
-            $datos['ITCentro'] = trim($row[$columnas['ITCentro']]);
-        } elseif (isset($columnas['Id_Centro']) && !empty(trim($row[$columnas['Id_Centro']] ?? ''))) {
-            $datos['ITCentro'] = trim($row[$columnas['Id_Centro']]);
-        } else {
+        // ITCentro: Id_Centro, ITCentro (numérico o nombre del instituto)
+        $valor_itc = $this->getValDestinatario($row, $columnas, ['ITCentro', 'Id_Centro']);
+        if ($valor_itc === '') {
             $this->errores[] = "Fila $fila: Se requiere 'ITCentro' o 'Id_Centro'";
             return false;
         }
         
-        // Validar que ITCentro es numérico
-        if (!is_numeric($datos['ITCentro'])) {
-            $this->errores[] = "Fila $fila: ITCentro debe ser numérico";
-            return false;
+        if (is_numeric($valor_itc)) {
+            $datos['ITCentro'] = (int)$valor_itc;
+        } else {
+            // Resolver nombre del instituto a ID
+            $sql = "SELECT id FROM it_centros WHERE Nombre_itc = ? OR Nombre_itc LIKE ? ORDER BY id LIMIT 1";
+            $stmt = $this->conexion->prepare($sql);
+            if ($stmt) {
+                $like = '%' . $valor_itc . '%';
+                $stmt->bind_param("ss", $valor_itc, $like);
+                $stmt->execute();
+                $res = $stmt->get_result();
+                if ($res && $res->num_rows > 0) {
+                    $datos['ITCentro'] = (int)$res->fetch_assoc()['id'];
+                } else {
+                    $this->errores[] = "Fila $fila: ITCentro '{$valor_itc}' no encontrado en it_centros";
+                    $stmt->close();
+                    return false;
+                }
+                $stmt->close();
+            } else {
+                $datos['ITCentro'] = (int)$valor_itc;
+            }
         }
-        $datos['ITCentro'] = (int)$datos['ITCentro'];
         
         // Validar que ITCentro existe en it_centros
         $sql = "SELECT id FROM it_centros WHERE id = ?";
@@ -1740,15 +1778,15 @@ class CargaMasivaExcel {
             $stmt->close();
         }
         
+        // Correo: Correo, Correo_Inst o Correo_Per (formato TecNM)
+        $datos['Correo'] = $this->getValDestinatario($row, $columnas, ['Correo', 'Correo_Inst', 'Correo_Per', 'Correo Electrónico para Notificación']);
+        
         // Campos opcionales
         if (isset($columnas['Curp'])) {
             $datos['Curp'] = trim($row[$columnas['Curp']] ?? '');
         }
         if (isset($columnas['Matricula'])) {
             $datos['Matricula'] = trim($row[$columnas['Matricula']] ?? '');
-        }
-        if (isset($columnas['Correo'])) {
-            $datos['Correo'] = trim($row[$columnas['Correo']] ?? '');
         }
         if (isset($columnas['Telefono'])) {
             $datos['Telefono'] = trim($row[$columnas['Telefono']] ?? '');
@@ -1758,6 +1796,9 @@ class CargaMasivaExcel {
         }
         if (isset($columnas['Rol'])) {
             $datos['Rol'] = trim($row[$columnas['Rol']] ?? 'Estudiante');
+        }
+        if (isset($columnas['Fecha_Creación'])) {
+            $datos['Fecha_Creación'] = trim($row[$columnas['Fecha_Creación']] ?? '');
         }
         
         // Validar email si se proporciona
@@ -2051,18 +2092,18 @@ class CargaMasivaExcel {
                     ]
                 ],
                 'Destinatarios' => [
-                    'headers' => ['Id_Centro', 'Nombre_Completo', 'Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Genero', 'Curp', 'Matricula', 'Correo', 'Telefono', 'Rol'],
+                    'headers' => ['ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro'],
                     'datos' => [
-                        [1, 'Juan Pérez Gómez', 'Juan', 'Pérez', 'Gómez', 'Masculino', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '5551234567', 'Estudiante'],
-                        [1, 'María González López', 'María', 'González', 'López', 'Femenino', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '5551234568', 'Estudiante'],
-                        [1, 'Carlos Ramírez Martínez', 'Carlos', 'Ramírez', 'Martínez', 'Masculino', 'RAMC850320HDFRGN03', '2024003', 'carlos.ramirez@tecnm.mx', '5551234569', 'Estudiante'],
-                        [1, 'Ana Sánchez Hernández', 'Ana', 'Sánchez', 'Hernández', 'Femenino', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '5551234570', 'Estudiante'],
-                        [1, 'Roberto Torres Díaz', 'Roberto', 'Torres', 'Díaz', 'Masculino', 'TODR880725HDFRGN05', '2024005', 'roberto.torres@tecnm.mx', '5551234571', 'Estudiante'],
-                        [1, 'Laura Morales Silva', 'Laura', 'Morales', 'Silva', 'Femenino', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '5551234572', 'Estudiante'],
-                        [1, 'Fernando Jiménez Ruiz', 'Fernando', 'Jiménez', 'Ruiz', 'Masculino', 'JIRF870415HDFRGN07', '2024007', 'fernando.jimenez@tecnm.mx', '5551234573', 'Estudiante'],
-                        [1, 'Patricia Castro Moreno', 'Patricia', 'Castro', 'Moreno', 'Femenino', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '5551234574', 'Estudiante'],
-                        [1, 'Gabriel Mendoza Vega', 'Gabriel', 'Mendoza', 'Vega', 'Masculino', 'MEVG890825HDFRGN09', '2024009', 'gabriel.mendoza@tecnm.mx', '5551234575', 'Estudiante'],
-                        [1, 'Luis Hernández Campos', 'Luis', 'Hernández', 'Campos', 'Masculino', 'HECL900930HDFRGN10', '2024010', 'luis.hernandez@tecnm.mx', '5551234576', 'Estudiante']
+                        [1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico'],
+                        [2, 'Adrián Mendoza Rendón', 'MERA040624HGRNNDA02', 'C21321039', '', '', '', 'Instituto Tecnológico de Acapulco'],
+                        [3, 'Juan Pérez Gómez', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '', '', 'Instituto Tecnológico de Agua Prieta'],
+                        [4, 'María González López', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '', '', 'Instituto Tecnológico de Aguascalientes'],
+                        [5, 'Carlos Ramírez Martínez', 'RAMC850320HDFRGN03', '2024003', '', '', '', 'Instituto Tecnológico de Celaya'],
+                        [6, 'Ana Sánchez Hernández', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '', '', 'Instituto Tecnológico de Chihuahua'],
+                        [7, 'Roberto Torres Díaz', 'TODR880725HDFRGN05', '2024005', '', '', '', 'Instituto Tecnológico de Durango'],
+                        [8, 'Laura Morales Silva', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '', '', 'Instituto Tecnológico de Morelia'],
+                        [9, 'Fernando Jiménez Ruiz', 'JIRF870415HDFRGN07', '2024007', '', '', '', 'Instituto Tecnológico de Puebla'],
+                        [10, 'Patricia Castro Moreno', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '', '', 'Instituto Tecnológico de Veracruz']
                     ]
                 ],
                 'insigniasotorgadas' => [
@@ -2261,18 +2302,18 @@ class CargaMasivaExcel {
                     ];
                     break;
                 case 'destinatarios':
-                    $headers = ['Id_Centro', 'Nombre_Completo', 'Nombre', 'Apellido_Paterno', 'Apellido_Materno', 'Genero', 'Curp', 'Matricula', 'Correo', 'Telefono', 'Rol'];
+                    $headers = ['ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro'];
                     $datos_ejemplo = [
-                        [1, 'Juan Pérez Gómez', 'Juan', 'Pérez', 'Gómez', 'Masculino', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '5551234567', 'Estudiante'],
-                        [1, 'María González López', 'María', 'González', 'López', 'Femenino', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '5551234568', 'Estudiante'],
-                        [1, 'Carlos Ramírez Martínez', 'Carlos', 'Ramírez', 'Martínez', 'Masculino', 'RAMC850320HDFRGN03', '2024003', 'carlos.ramirez@tecnm.mx', '5551234569', 'Estudiante'],
-                        [1, 'Ana Sánchez Hernández', 'Ana', 'Sánchez', 'Hernández', 'Femenino', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '5551234570', 'Estudiante'],
-                        [1, 'Roberto Torres Díaz', 'Roberto', 'Torres', 'Díaz', 'Masculino', 'TODR880725HDFRGN05', '2024005', 'roberto.torres@tecnm.mx', '5551234571', 'Estudiante'],
-                        [1, 'Laura Morales Silva', 'Laura', 'Morales', 'Silva', 'Femenino', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '5551234572', 'Estudiante'],
-                        [1, 'Fernando Jiménez Ruiz', 'Fernando', 'Jiménez', 'Ruiz', 'Masculino', 'JIRF870415HDFRGN07', '2024007', 'fernando.jimenez@tecnm.mx', '5551234573', 'Estudiante'],
-                        [1, 'Patricia Castro Moreno', 'Patricia', 'Castro', 'Moreno', 'Femenino', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '5551234574', 'Estudiante'],
-                        [1, 'Gabriel Mendoza Vega', 'Gabriel', 'Mendoza', 'Vega', 'Masculino', 'MEVG890825HDFRGN09', '2024009', 'gabriel.mendoza@tecnm.mx', '5551234575', 'Estudiante'],
-                        [1, 'Luis Hernández Campos', 'Luis', 'Hernández', 'Campos', 'Masculino', 'HECL900930HDFRGN10', '2024010', 'luis.hernandez@tecnm.mx', '5551234576', 'Estudiante']
+                        [1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico'],
+                        [2, 'Adrián Mendoza Rendón', 'MERA040624HGRNNDA02', 'C21321039', '', '', '', 'Instituto Tecnológico de Acapulco'],
+                        [3, 'Juan Pérez Gómez', 'PERJ800101HDFRGN01', '2024001', 'juan.perez@tecnm.mx', '', '', 'Instituto Tecnológico de Agua Prieta'],
+                        [4, 'María González López', 'GOLM900215HDFRGN02', '2024002', 'maria.gonzalez@tecnm.mx', '', '', 'Instituto Tecnológico de Aguascalientes'],
+                        [5, 'Carlos Ramírez Martínez', 'RAMC850320HDFRGN03', '2024003', '', '', '', 'Instituto Tecnológico de Celaya'],
+                        [6, 'Ana Sánchez Hernández', 'SAHA920510HDFRGN04', '2024004', 'ana.sanchez@tecnm.mx', '', '', 'Instituto Tecnológico de Chihuahua'],
+                        [7, 'Roberto Torres Díaz', 'TODR880725HDFRGN05', '2024005', '', '', '', 'Instituto Tecnológico de Durango'],
+                        [8, 'Laura Morales Silva', 'MOSL910330HDFRGN06', '2024006', 'laura.morales@tecnm.mx', '', '', 'Instituto Tecnológico de Morelia'],
+                        [9, 'Fernando Jiménez Ruiz', 'JIRF870415HDFRGN07', '2024007', '', '', '', 'Instituto Tecnológico de Puebla'],
+                        [10, 'Patricia Castro Moreno', 'CAMP920620HDFRGN08', '2024008', 'patricia.castro@tecnm.mx', '', '', 'Instituto Tecnológico de Veracruz']
                     ];
                     break;
                 case 'centros_it':
