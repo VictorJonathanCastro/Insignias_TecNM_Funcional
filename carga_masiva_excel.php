@@ -62,9 +62,8 @@ if (session_status() === PHP_SESSION_NONE) {
 // (no cuando se incluye desde otro archivo)
 if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
     try {
-        // Cargar conexión (ruta absoluta para evitar fallos según el directorio de trabajo del servidor)
-        $conexion_file = __DIR__ . DIRECTORY_SEPARATOR . 'conexion.php';
-        $conexion_loaded = (file_exists($conexion_file)) ? @include_once $conexion_file : false;
+        // Cargar conexión (igual que cuando funcionaba)
+        $conexion_loaded = @include_once __DIR__ . '/conexion.php';
         
         if ($conexion_loaded === false) {
             throw new Exception("No se pudo cargar el archivo conexion.php");
@@ -128,10 +127,7 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
 } else {
     // Si se está incluyendo, solo cargar la conexión si no está definida
     if (!isset($conexion)) {
-        $conexion_file = __DIR__ . DIRECTORY_SEPARATOR . 'conexion.php';
-        if (file_exists($conexion_file)) {
-            require_once $conexion_file;
-        }
+        require_once __DIR__ . '/conexion.php';
     }
 }
 
