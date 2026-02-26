@@ -1,129 +1,39 @@
 <?php
-// ========================================
-// SISTEMA DE CARGA MASIVA VIA EXCEL
-// Proyecto Insignias TecNM
-// ========================================
+// SISTEMA DE CARGA MASIVA VIA EXCEL - Insignias TecNM
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
-// Buffer desde el inicio para evitar 500 por salida antes de headers
 if (!ob_get_level()) {
     ob_start();
 }
 
-// Prueba rápida: si accede con ?ver=1 muestra OK
-if (!empty($_GET['ver']) && $_GET['ver'] === '1') {
-    header('Content-Type: text/plain; charset=UTF-8');
-    echo "carga_masiva_excel.php OK - PHP " . PHP_VERSION . " - " . date('Y-m-d H:i:s');
-    exit;
-}
-
-// Requiere PHP 7.0+
-if (version_compare(PHP_VERSION, '7.0.0', '<')) {
-    header('Content-Type: text/html; charset=UTF-8');
-    echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body style="font-family:sans-serif;padding:20px;background:#f5f5f5">';
-    echo '<h1 style="color:#c00">Se requiere PHP 7.0 o superior</h1><p>Versión actual: ' . htmlspecialchars(PHP_VERSION) . '</p>';
-    echo '<p><a href="modulo_de_administracion.php">Volver al panel</a></p></body></html>';
-    exit;
-}
-
-// No mostrar errores en pantalla (evitar que un Notice rompa la respuesta y cause 500)
-error_reporting(E_ALL);
-ini_set('display_errors', '0');
-ini_set('display_startup_errors', '0');
-ini_set('log_errors', '1');
-
-// Si hay error fatal, mostrar mensaje en la página (ayuda a diagnosticar HTTP 500)
-register_shutdown_function(function () {
-    $e = error_get_last();
-    if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
-        while (ob_get_level()) {
-            @ob_end_clean();
-        }
-        if (!headers_sent()) {
-            http_response_code(200);
-            header('Content-Type: text/html; charset=UTF-8');
-        }
-        $msg = isset($e['message']) ? $e['message'] : 'Error desconocido';
-        $file = isset($e['file']) ? $e['file'] : '';
-        $line = isset($e['line']) ? (int)$e['line'] : 0;
-        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error - Carga Masiva</title></head><body style="font-family:sans-serif;padding:20px;background:#f5f5f5">';
-        echo '<h1 style="color:#c00">Error en carga_masiva_excel.php</h1>';
-        echo '<p><strong>' . htmlspecialchars($msg) . '</strong></p>';
-        echo '<p>Archivo: ' . htmlspecialchars($file) . ' — Línea: ' . $line . '</p>';
-        echo '<p><a href="modulo_de_administracion.php">Volver al panel</a></p>';
-        echo '</body></html>';
-    }
-});
-
-// Iniciar sesión solo si no está ya iniciada
 if (session_status() === PHP_SESSION_NONE) {
     @session_start();
 }
 
-// Solo ejecutar el código principal si el archivo se accede directamente
-// (no cuando se incluye desde otro archivo)
 if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
     try {
-        // Cargar conexión (igual que cuando funcionaba)
         $conexion_loaded = @include_once __DIR__ . '/conexion.php';
-        
-        if ($conexion_loaded === false) {
-            throw new Exception("No se pudo cargar el archivo conexion.php");
+        if ($conexion_loaded === false || !isset($conexion) || !$conexion) {
+            throw new Exception('No se pudo conectar a la base de datos. Revise conexion.php');
         }
-        
-        // Verificar que la conexión se haya establecido
-        if (!isset($conexion)) {
-            throw new Exception("Variable \$conexion no definida después de cargar conexion.php");
-        }
-        
-        if (!$conexion) {
-            throw new Exception("Conexión a base de datos es null o false");
-        }
-        
         if (isset($conexion->connect_errno) && $conexion->connect_errno) {
-            throw new Exception("Error de conexión a MySQL: " . ($conexion->connect_error ?? "Desconocido"));
+            throw new Exception('Error MySQL: ' . (isset($conexion->connect_error) ? $conexion->connect_error : 'Sin detalle'));
         }
-        
-        // Verificar sesión de administrador (aceptar Admin o Administrador)
-        $rol = $_SESSION['rol'] ?? '';
-        if (!isset($_SESSION['usuario_id']) || !in_array($rol, ['Admin', 'Administrador'], true)) {
-            if (ob_get_level()) {
-                ob_clean();
-            }
+        $rol = isset($_SESSION['rol']) ? $_SESSION['rol'] : '';
+        if (!isset($_SESSION['usuario_id']) || !in_array($rol, array('Admin', 'Administrador'), true)) {
+            if (ob_get_level()) { @ob_clean(); }
             header('Location: login.php');
-            exit();
+            exit;
         }
-    } catch (Throwable $e) {
-        // Limpiar cualquier salida previa (incluyendo de conexion.php)
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-        error_log("Error en carga_masiva_excel.php (inicio): " . $e->getMessage());
-        // No usar http_response_code(500) aquí, usar 200 para mostrar el error
-        if (!headers_sent()) {
-            http_response_code(200);
-            header('Content-Type: text/html; charset=UTF-8');
-        }
-        echo '<!DOCTYPE html>
-        <html lang="es">
-        <head>
-            <meta charset="UTF-8">
-            <title>Error - Carga Masiva</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-                .error-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
-                h1 { color: #dc3545; }
-                .error-details { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
-            </style>
-        </head>
-        <body>
-            <div class="error-box">
-                <h1>Error al cargar el sistema</h1>
-                <p>' . htmlspecialchars($e->getMessage()) . '</p>
-                <p><a href="modulo_de_administracion.php">← Volver al Panel</a></p>
-            </div>
-        </body>
-        </html>';
-        exit();
+    } catch (Exception $e) {
+        if (ob_get_level()) { @ob_clean(); }
+        header('Content-Type: text/html; charset=UTF-8');
+        echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body style="font-family:sans-serif;padding:20px">';
+        echo '<h1>Error</h1><p>' . htmlspecialchars($e->getMessage()) . '</p>';
+        echo '<p><a href="modulo_de_administracion.php">Volver al panel</a></p></body></html>';
+        exit;
     }
 } else {
     // Si se está incluyendo, solo cargar la conexión si no está definida
@@ -135,11 +45,8 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
 // Incluir librería para leer Excel
 $vendor_path = __DIR__ . '/vendor/autoload.php';
 if (!file_exists($vendor_path)) {
-    // Limpiar cualquier salida previa
-    if (ob_get_level()) {
-        ob_clean();
-    }
-    http_response_code(200); // Cambiar a 200 para mostrar el mensaje de error correctamente
+    if (ob_get_level()) { @ob_clean(); }
+    http_response_code(200);
     header('Content-Type: text/html; charset=UTF-8');
     echo '<!DOCTYPE html>
     <html lang="es">
