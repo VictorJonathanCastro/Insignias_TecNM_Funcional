@@ -1320,12 +1320,17 @@ class CargaMasivaExcel {
     
     /**
      * Buscar índice de columna probando varios nombres posibles (alias).
+     * Usado en validarDatosInsigniaOtorgada. No confundir con buscarColumna($headers, $nombre_buscado, $variaciones).
      */
-    private function buscarColumna($columnas, $alias) {
+    private function buscarColumnaPorAlias($columnas, $alias) {
         foreach ($alias as $nombre) {
             $k = strtolower(trim($nombre ?? ''));
             if ($k !== '' && isset($columnas[$k])) {
                 return $columnas[$k];
+            }
+            $k2 = str_replace(' ', '_', $k);
+            if ($k2 !== '' && isset($columnas[$k2])) {
+                return $columnas[$k2];
             }
         }
         return null;
@@ -1358,7 +1363,7 @@ class CargaMasivaExcel {
         
         // Destinatario: aceptar varios nombres usados en Excel
         $alias_destinatario = ['destinatario', 'destinatario_id', 'id_destinatario', 'nombre_destinatario', 'estudiante', 'nombre_completo', 'destinatario_id'];
-        $idx_dest = $this->buscarColumna($columnas, $alias_destinatario);
+        $idx_dest = $this->buscarColumnaPorAlias($columnas, $alias_destinatario);
         if ($idx_dest === null) {
             $this->errores[] = "Fila $fila: Columna 'Destinatario' no encontrada (pruebe: Destinatario, Destinatario_id, Nombre_Destinatario, Estudiante)";
             return false;
@@ -1372,7 +1377,7 @@ class CargaMasivaExcel {
         
         // Fecha_Emision: aceptar varios nombres
         $alias_fecha = ['fecha_emision', 'fecha emision', 'fecha', 'fecha_otorgamiento', 'fecha otorgamiento', 'fecha_emision'];
-        $idx_fecha = $this->buscarColumna($columnas, $alias_fecha);
+        $idx_fecha = $this->buscarColumnaPorAlias($columnas, $alias_fecha);
         if ($idx_fecha === null) {
             $this->errores[] = "Fila $fila: Columna 'Fecha_Emision' no encontrada (pruebe: Fecha_Emision, Fecha, Fecha_Otorgamiento)";
             return false;
