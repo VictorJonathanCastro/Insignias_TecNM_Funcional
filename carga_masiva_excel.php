@@ -11,6 +11,15 @@ if (!empty($_GET['ver']) && $_GET['ver'] === '1') {
     exit;
 }
 
+// Requiere PHP 7.0+ (el script usa ?? y Throwable)
+if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+    header('Content-Type: text/html; charset=UTF-8');
+    echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body style="font-family:sans-serif;padding:20px;background:#f5f5f5">';
+    echo '<h1 style="color:#c00">Se requiere PHP 7.0 o superior</h1><p>Versión actual: ' . htmlspecialchars(PHP_VERSION) . '</p>';
+    echo '<p><a href="modulo_de_administracion.php">Volver al panel</a></p></body></html>';
+    exit;
+}
+
 // Habilitar reporte de errores para depuración (ANTES de cualquier output)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -26,17 +35,20 @@ register_shutdown_function(function () {
     $e = error_get_last();
     if ($e && in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
         while (ob_get_level()) {
-            ob_end_clean();
+            @ob_end_clean();
         }
         if (!headers_sent()) {
             http_response_code(200);
             header('Content-Type: text/html; charset=UTF-8');
         }
+        $msg = isset($e['message']) ? $e['message'] : 'Error desconocido';
+        $file = isset($e['file']) ? $e['file'] : '';
+        $line = isset($e['line']) ? (int)$e['line'] : 0;
         echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error - Carga Masiva</title></head><body style="font-family:sans-serif;padding:20px;background:#f5f5f5">';
         echo '<h1 style="color:#c00">Error en carga_masiva_excel.php</h1>';
-        echo '<p><strong>' . htmlspecialchars($e['message']) . '</strong></p>';
-        echo '<p>Archivo: ' . htmlspecialchars($e['file']) . ' — Línea: ' . (int)$e['line'] . '</p>';
-        echo '<p><small>Revise que el archivo en el servidor esté actualizado (git pull o subir la última versión).</small></p>';
+        echo '<p><strong>' . htmlspecialchars($msg) . '</strong></p>';
+        echo '<p>Archivo: ' . htmlspecialchars($file) . ' — Línea: ' . $line . '</p>';
+        echo '<p><a href="modulo_de_administracion.php">Volver al panel</a></p>';
         echo '</body></html>';
     }
 });
@@ -50,8 +62,9 @@ if (session_status() === PHP_SESSION_NONE) {
 // (no cuando se incluye desde otro archivo)
 if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
     try {
-        // Cargar conexión con supresión de errores para capturarlos manualmente
-        $conexion_loaded = @include_once 'conexion.php';
+        // Cargar conexión (ruta absoluta para evitar fallos según el directorio de trabajo del servidor)
+        $conexion_file = __DIR__ . DIRECTORY_SEPARATOR . 'conexion.php';
+        $conexion_loaded = (file_exists($conexion_file)) ? @include_once $conexion_file : false;
         
         if ($conexion_loaded === false) {
             throw new Exception("No se pudo cargar el archivo conexion.php");
@@ -115,7 +128,10 @@ if (basename($_SERVER['PHP_SELF']) === 'carga_masiva_excel.php') {
 } else {
     // Si se está incluyendo, solo cargar la conexión si no está definida
     if (!isset($conexion)) {
-        require_once 'conexion.php';
+        $conexion_file = __DIR__ . DIRECTORY_SEPARATOR . 'conexion.php';
+        if (file_exists($conexion_file)) {
+            require_once $conexion_file;
+        }
     }
 }
 
