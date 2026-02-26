@@ -11,7 +11,6 @@ if (!ob_get_level()) {
 
 // Prueba rápida: si accede con ?ver=1 muestra OK
 if (!empty($_GET['ver']) && $_GET['ver'] === '1') {
-    if (ob_get_level()) { ob_end_clean(); }
     header('Content-Type: text/plain; charset=UTF-8');
     echo "carga_masiva_excel.php OK - PHP " . PHP_VERSION . " - " . date('Y-m-d H:i:s');
     exit;
@@ -19,7 +18,6 @@ if (!empty($_GET['ver']) && $_GET['ver'] === '1') {
 
 // Requiere PHP 7.0+
 if (version_compare(PHP_VERSION, '7.0.0', '<')) {
-    if (ob_get_level()) { ob_end_clean(); }
     header('Content-Type: text/html; charset=UTF-8');
     echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body style="font-family:sans-serif;padding:20px;background:#f5f5f5">';
     echo '<h1 style="color:#c00">Se requiere PHP 7.0 o superior</h1><p>Versión actual: ' . htmlspecialchars(PHP_VERSION) . '</p>';
