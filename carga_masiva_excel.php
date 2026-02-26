@@ -1992,6 +1992,9 @@ class CargaMasivaExcel {
                     'datos' => [
                         ['Embajador del Arte', 'Reconocimiento por destacar en actividades artísticas y culturales', 1],
                         ['Embajador del Deporte', 'Reconocimiento por excelencia en actividades deportivas', 3],
+                        ['Embajador del Deporte Oro', 'Reconocimiento máximo por excelencia en actividades deportivas (nivel Oro)', 3],
+                        ['Embajador del Deporte Plata', 'Reconocimiento por excelencia en actividades deportivas (nivel Plata)', 3],
+                        ['Embajador del Deporte Bronce', 'Reconocimiento por excelencia en actividades deportivas (nivel Bronce)', 3],
                         ['Talento Científico', 'Reconocimiento por participación destacada en proyectos científicos', 2],
                         ['Talento Innovador', 'Reconocimiento por innovación tecnológica', 2],
                         ['Responsabilidad Social', 'Reconocimiento por participación en actividades de responsabilidad social', 1],
@@ -2292,6 +2295,9 @@ class CargaMasivaExcel {
                     $datos_ejemplo = [
                         ['Embajador del Arte', 'Reconocimiento por destacar en actividades artísticas y culturales', 1],
                         ['Embajador del Deporte', 'Reconocimiento por excelencia en actividades deportivas', 3],
+                        ['Embajador del Deporte Oro', 'Reconocimiento máximo por excelencia en actividades deportivas (nivel Oro)', 3],
+                        ['Embajador del Deporte Plata', 'Reconocimiento por excelencia en actividades deportivas (nivel Plata)', 3],
+                        ['Embajador del Deporte Bronce', 'Reconocimiento por excelencia en actividades deportivas (nivel Bronce)', 3],
                         ['Talento Científico', 'Reconocimiento por participación destacada en proyectos científicos', 2],
                         ['Talento Innovador', 'Reconocimiento por innovación tecnológica', 2],
                         ['Responsabilidad Social', 'Reconocimiento por participación en actividades de responsabilidad social', 1],
