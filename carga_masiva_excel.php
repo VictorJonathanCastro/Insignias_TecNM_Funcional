@@ -4,15 +4,22 @@
 // Proyecto Insignias TecNM
 // ========================================
 
-// Prueba rápida: si accede con ?ver=1 muestra OK (para confirmar que el archivo actualizado está en el servidor)
+// Buffer desde el inicio para evitar 500 por salida antes de headers
+if (!ob_get_level()) {
+    ob_start();
+}
+
+// Prueba rápida: si accede con ?ver=1 muestra OK
 if (!empty($_GET['ver']) && $_GET['ver'] === '1') {
+    if (ob_get_level()) { ob_end_clean(); }
     header('Content-Type: text/plain; charset=UTF-8');
     echo "carga_masiva_excel.php OK - PHP " . PHP_VERSION . " - " . date('Y-m-d H:i:s');
     exit;
 }
 
-// Requiere PHP 7.0+ (el script usa ?? y Throwable)
+// Requiere PHP 7.0+
 if (version_compare(PHP_VERSION, '7.0.0', '<')) {
+    if (ob_get_level()) { ob_end_clean(); }
     header('Content-Type: text/html; charset=UTF-8');
     echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body style="font-family:sans-serif;padding:20px;background:#f5f5f5">';
     echo '<h1 style="color:#c00">Se requiere PHP 7.0 o superior</h1><p>Versión actual: ' . htmlspecialchars(PHP_VERSION) . '</p>';
@@ -20,15 +27,11 @@ if (version_compare(PHP_VERSION, '7.0.0', '<')) {
     exit;
 }
 
-// Habilitar reporte de errores para depuración (ANTES de cualquier output)
+// No mostrar errores en pantalla (evitar que un Notice rompa la respuesta y cause 500)
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-
-// Iniciar output buffering para evitar problemas con headers
-if (!ob_get_level()) {
-    ob_start();
-}
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+ini_set('log_errors', '1');
 
 // Si hay error fatal, mostrar mensaje en la página (ayuda a diagnosticar HTTP 500)
 register_shutdown_function(function () {
