@@ -420,20 +420,17 @@ class CargaMasivaExcel {
         $headers_str = implode(' ', $headers);
         
         // PRIORIDAD: Insignias Otorgadas (insigniasotorgadas) - verificar PRIMERO
-        // Si tiene Codigo_Insignia, es definitivamente insigniasotorgadas (aunque tenga otras columnas)
-        if (in_array('codigo_insignia', $headers)) {
-            // Verificar que también tenga Destinatario para confirmar
-            if (in_array('destinatario', $headers)) {
-                return 'insignias_otorgadas';
-            }
+        $tiene_codigo = in_array('codigo_insignia', $headers) || in_array('código_insignia', $headers);
+        $tiene_dest = in_array('destinatario', $headers) || in_array('id_destinatario', $headers);
+        if ($tiene_codigo && $tiene_dest) {
+            return 'insignias_otorgadas';
         }
-        // También reconocer estructura antigua por compatibilidad
         if (in_array('id_insignia', $headers) && in_array('id_destinatario', $headers)) {
             return 'insignias_otorgadas';
         }
         
         // Destinatarios - solo si NO tiene Codigo_Insignia (para evitar confusión)
-        if (!in_array('codigo_insignia', $headers) && !in_array('id_insignia', $headers)) {
+        if (!$tiene_codigo && !in_array('id_insignia', $headers)) {
             $tiene_nombre = in_array('nombre_completo', $headers) || in_array('nombre completo', $headers);
             $tiene_id = in_array('matricula', $headers) || in_array('correo', $headers) || in_array('curp', $headers) || in_array('correo_inst', $headers) || in_array('correo_per', $headers);
             if ($tiene_nombre && $tiene_id) {
@@ -1370,11 +1367,11 @@ class CargaMasivaExcel {
             }
         }
         
-        // Destinatario: aceptar varios nombres usados en Excel
-        $alias_destinatario = ['destinatario', 'destinatario_id', 'id_destinatario', 'nombre_destinatario', 'estudiante', 'nombre_completo', 'destinatario_id'];
+        // Destinatario: aceptar Destinatario (nombre) o Id_Destinatario (ID numérico)
+        $alias_destinatario = ['id_destinatario', 'destinatario', 'destinatario_id', 'nombre_destinatario', 'estudiante', 'nombre_completo'];
         $idx_dest = $this->buscarColumnaPorAlias($columnas, $alias_destinatario);
         if ($idx_dest === null) {
-            $this->errores[] = "Fila $fila: Columna 'Destinatario' no encontrada (pruebe: Destinatario, Destinatario_id, Nombre_Destinatario, Estudiante)";
+            $this->errores[] = "Fila $fila: Columna 'Destinatario' o 'Id_Destinatario' no encontrada";
             return false;
         }
         $valor_dest = trim($row[$idx_dest] ?? '');
@@ -1398,10 +1395,11 @@ class CargaMasivaExcel {
         }
         $datos['Fecha_Emision'] = $valor_fecha;
         
-        // Obtener Codigo_Insignia (puede estar vacío, se generará automáticamente)
+        // Obtener Codigo_Insignia / Código_Insignia (puede estar vacío, se generará automáticamente)
         $codigo_insignia = '';
-        if (isset($columnas['codigo_insignia'])) {
-            $codigo_insignia = trim($row[$columnas['codigo_insignia']] ?? '');
+        $idx_cod = $columnas['codigo_insignia'] ?? $columnas['código_insignia'] ?? null;
+        if ($idx_cod !== null) {
+            $codigo_insignia = trim($row[$idx_cod] ?? '');
         }
         $datos['Codigo_Insignia'] = $codigo_insignia;
         
@@ -1661,8 +1659,9 @@ class CargaMasivaExcel {
         
         // Campos opcionales
         $datos['Periodo_Emision'] = null;
-        if (isset($columnas['periodo_emision']) && !empty(trim($row[$columnas['periodo_emision']] ?? ''))) {
-            $valor = trim($row[$columnas['periodo_emision']]);
+        $idx_per = $columnas['periodo_emision'] ?? $columnas['id_periodo_emision'] ?? null;
+        if ($idx_per !== null && !empty(trim($row[$idx_per] ?? ''))) {
+            $valor = trim($row[$idx_per]);
             if (is_numeric($valor)) {
                 $datos['Periodo_Emision'] = (int)$valor;
             }
@@ -1677,10 +1676,24 @@ class CargaMasivaExcel {
         }
         
         $datos['Estatus'] = null;
-        if (isset($columnas['estatus']) && !empty(trim($row[$columnas['estatus']] ?? ''))) {
-            $valor = trim($row[$columnas['estatus']]);
+        $idx_est = $columnas['estatus'] ?? $columnas['id_estatus'] ?? null;
+        if ($idx_est !== null && !empty(trim($row[$idx_est] ?? ''))) {
+            $valor = trim($row[$idx_est]);
             if (is_numeric($valor)) {
                 $datos['Estatus'] = (int)$valor;
+            } else {
+                // Resolver por nombre (ej. "Aprobada" -> id en tabla estatus)
+                $sql_est = "SELECT id FROM estatus WHERE Nombre_Estatus = ? OR Acron_Estatus = ? LIMIT 1";
+                $stmt_est = $this->conexion->prepare($sql_est);
+                if ($stmt_est) {
+                    $stmt_est->bind_param("ss", $valor, $valor);
+                    $stmt_est->execute();
+                    $res_est = $stmt_est->get_result();
+                    if ($res_est && $res_est->num_rows > 0) {
+                        $datos['Estatus'] = (int)$res_est->fetch_assoc()['id'];
+                    }
+                    $stmt_est->close();
+                }
             }
         }
         
@@ -2110,25 +2123,28 @@ class CargaMasivaExcel {
                     ]
                 ],
                 'insigniasotorgadas' => [
-                    'headers' => ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'],
-                    // IMPORTANTE: 
-                    // - Destinatario: Usa NOMBRE COMPLETO (texto), NO ID numérico. El sistema buscará o creará automáticamente.
-                    // - Codigo_Insignia: Puede estar vacío, se generará automáticamente. Si proporcionas uno, debe ser único.
-                    // - Periodo_Emision, Responsable_Emision: Pueden estar vacíos. Si usas un ID, debe existir en la BD.
-                    // - Estatus: Puede estar vacío, se usará 1 (Activo) por defecto. Si usas un ID, debe existir.
-                    // - Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15) - REQUERIDO
-                    // NOTA: Los valores de ejemplo usan campos opcionales vacíos. Puedes dejarlos vacíos o llenarlos con IDs válidos.
+                    'headers' => ['id', 'Id_Insignia', 'Id_Destinatario', 'Evidencia', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus', 'Código_Insignia', 'Fecha_Creacion_Registro'],
                     'datos' => [
-                        ['TECNM-2025-ART-001', 'Juan Pérez Gómez', '', '', '1', '2025-01-15'],
-                        ['TECNM-2025-EMB-002', 'María González López', '', '', '1', '2025-01-16'],
-                        ['TECNM-2025-TAL-003', 'Carlos Ramírez Martínez', '', '', '1', '2025-01-17'],
-                        ['TECNM-2025-INN-004', 'Ana Sánchez Hernández', '', '', '1', '2025-01-18'],
-                        ['TECNM-2025-SOC-005', 'Roberto Torres Díaz', '', '', '1', '2025-01-19'],
-                        ['TECNM-2025-FOR-006', 'Laura Morales Silva', '', '', '1', '2025-01-20'],
-                        ['TECNM-2025-MOV-007', 'Fernando Jiménez Ruiz', '', '', '1', '2025-01-21'],
-                        ['TECNM-2025-ART-008', 'Patricia Castro Moreno', '', '', '1', '2025-01-22'],
-                        ['TECNM-2025-EMB-009', 'Gabriel Mendoza Vega', '', '', '1', '2025-01-23'],
-                        ['TECNM-2025-TAL-010', 'Luis Hernández Campos', '', '', '1', '2025-01-24']
+                        [1, 3, 1, 'Registro de participación ENDTecNM2025: 84757', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-1', ''],
+                        [2, 3, 2, 'Registro de participación ENDTecNM2025: 81775', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-2', ''],
+                        [3, 3, 3, 'Registro de participación ENDTecNM2025: 81776', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-3', ''],
+                        [4, 3, 4, 'Registro de participación ENDTecNM2025: 81777', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-4', ''],
+                        [5, 3, 5, 'Registro de participación ENDTecNM2025: 81778', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-5', ''],
+                        [6, 3, 6, 'Registro de participación ENDTecNM2025: 81779', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-6', ''],
+                        [7, 3, 7, 'Registro de participación ENDTecNM2025: 81780', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-7', ''],
+                        [8, 3, 8, 'Registro de participación ENDTecNM2025: 81781', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-8', ''],
+                        [9, 3, 9, 'Registro de participación ENDTecNM2025: 81782', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-9', ''],
+                        [10, 3, 10, 'Registro de participación ENDTecNM2025: 81783', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-10', ''],
+                        [11, 3, 11, 'Registro de participación ENDTecNM2025: 84758', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-11', ''],
+                        [12, 3, 12, 'Registro de participación ENDTecNM2025: 84759', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-12', ''],
+                        [13, 3, 13, 'Registro de participación ENDTecNM2025: 84760', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-13', ''],
+                        [14, 3, 14, 'Registro de participación ENDTecNM2025: 84761', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-14', ''],
+                        [15, 3, 15, 'Registro de participación ENDTecNM2025: 84762', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-15', ''],
+                        [16, 3, 16, 'Registro de participación ENDTecNM2025: 84763', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-16', ''],
+                        [17, 3, 17, 'Registro de participación ENDTecNM2025: 84764', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-17', ''],
+                        [18, 3, 18, 'Registro de participación ENDTecNM2025: 84765', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-18', ''],
+                        [19, 3, 19, 'Registro de participación ENDTecNM2025: 84766', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-19', ''],
+                        [20, 3, 20, 'Registro de participación ENDTecNM2025: 84767', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-20', '']
                     ]
                 ]
             ];
@@ -2283,25 +2299,18 @@ class CargaMasivaExcel {
             
             switch ($tipo) {
                 case 'insignias_otorgadas':
-                    $headers = ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'];
-                    // IMPORTANTE: 
-                    // - Destinatario: Usa NOMBRE COMPLETO (texto), NO ID numérico. El sistema buscará o creará automáticamente.
-                    // - Codigo_Insignia: Puede estar vacío, se generará automáticamente. Si proporcionas uno, debe ser único.
-                    // - Periodo_Emision, Responsable_Emision: Pueden estar vacíos. Si usas un ID, debe existir en la BD.
-                    // - Estatus: Puede estar vacío, se usará 1 (Activo) por defecto. Si usas un ID, debe existir.
-                    // - Fecha_Emision: Formato YYYY-MM-DD (ej: 2025-01-15) - REQUERIDO
-                    // NOTA: Los valores de ejemplo usan campos opcionales vacíos. Puedes dejarlos vacíos o llenarlos con IDs válidos.
+                    $headers = ['id', 'Id_Insignia', 'Id_Destinatario', 'Evidencia', 'Fecha_Emision', 'Id_Periodo_Emision', 'Id_Estatus', 'Código_Insignia', 'Fecha_Creacion_Registro'];
                     $datos_ejemplo = [
-                        ['TECNM-2025-ART-001', 'Juan Pérez Gómez', '', '', '1', '2025-01-15'],
-                        ['TECNM-2025-EMB-002', 'María González López', '', '', '1', '2025-01-16'],
-                        ['TECNM-2025-TAL-003', 'Carlos Ramírez Martínez', '', '', '1', '2025-01-17'],
-                        ['TECNM-2025-INN-004', 'Ana Sánchez Hernández', '', '', '1', '2025-01-18'],
-                        ['TECNM-2025-SOC-005', 'Roberto Torres Díaz', '', '', '1', '2025-01-19'],
-                        ['TECNM-2025-FOR-006', 'Laura Morales Silva', '', '', '1', '2025-01-20'],
-                        ['TECNM-2025-MOV-007', 'Fernando Jiménez Ruiz', '', '', '1', '2025-01-21'],
-                        ['TECNM-2025-ART-008', 'Patricia Castro Moreno', '', '', '1', '2025-01-22'],
-                        ['TECNM-2025-EMB-009', 'Gabriel Mendoza Vega', '', '', '1', '2025-01-23'],
-                        ['TECNM-2025-TAL-010', 'Luis Hernández Campos', '', '', '1', '2025-01-24']
+                        [1, 3, 1, 'Registro de participación ENDTecNM2025: 84757', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-1', ''],
+                        [2, 3, 2, 'Registro de participación ENDTecNM2025: 81775', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-2', ''],
+                        [3, 3, 3, 'Registro de participación ENDTecNM2025: 81776', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-3', ''],
+                        [4, 3, 4, 'Registro de participación ENDTecNM2025: 81777', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-4', ''],
+                        [5, 3, 5, 'Registro de participación ENDTecNM2025: 81778', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-5', ''],
+                        [6, 3, 6, 'Registro de participación ENDTecNM2025: 81779', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-6', ''],
+                        [7, 3, 7, 'Registro de participación ENDTecNM2025: 81780', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-7', ''],
+                        [8, 3, 8, 'Registro de participación ENDTecNM2025: 81781', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-8', ''],
+                        [9, 3, 9, 'Registro de participación ENDTecNM2025: 81782', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-9', ''],
+                        [10, 3, 10, 'Registro de participación ENDTecNM2025: 81783', '2025-11-28', 20252, 'Aprobada', 'TecNM-SExtVin-Fint-EDep-10', '']
                     ];
                     break;
                 case 'destinatarios':
