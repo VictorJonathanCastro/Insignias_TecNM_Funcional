@@ -2107,7 +2107,7 @@ class CargaMasivaExcel {
                 'Destinatarios' => [
                     'headers' => [
                         'ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro',
-                        'FolioRegistroEvento', 'Instituto Tecnológico de Adscripción', 'Género', 'Disciplina', 'Correo Electrónico para Notificación', 'Evento', 'Lugar', 'Registro', 'Registro Participación'
+                        'FolioRegistroEvento', 'Instituto Tecnológico de Adscripción', 'Género', 'Disciplina', 'Correo Electrónico para Notificación', 'Matricula', 'Evento', 'Lugar', 'Registro', 'Registro Participación'
                     ],
                     'datos' => [
                         [1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico', 'Registro de participación ENDTecNM2025: 81757', 'Instituto Tecnológico de Acapulco', 'M', 'Natación', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81757', 'Registro de participación ENDTecNM2025: 81757'],
@@ -2316,7 +2316,7 @@ class CargaMasivaExcel {
                 case 'destinatarios':
                     $headers = [
                         'ID destinatario', 'Nombre Completo', 'Curp', 'Matricula', 'Correo_Inst', 'Correo_Per', 'Fecha_Creación', 'ITCentro',
-                        'FolioRegistroEvento', 'Instituto Tecnológico de Adscripción', 'Género', 'Disciplina', 'Correo Electrónico para Notificación', 'Evento', 'Lugar', 'Registro', 'Registro Participación'
+                        'FolioRegistroEvento', 'Instituto Tecnológico de Adscripción', 'Género', 'Disciplina', 'Correo Electrónico para Notificación', 'Matricula', 'Evento', 'Lugar', 'Registro', 'Registro Participación'
                     ];
                     $datos_ejemplo = [
                         [1, 'Emmanuel Sanchez Gomez', 'SAGE010809HMCNMMA01', 'IT719IF025', '', '', '', 'Centro Nacional de Investigación y Desarrollo Tecnológico', 'Registro de participación ENDTecNM2025: 81757', 'Instituto Tecnológico de Acapulco', 'M', 'Natación', '', 'LXVII Evento Nacional Deportivo del TecNM 2025', 'Participante', 'Registro de participación ENDTecNM2025: 81757', 'Registro de participación ENDTecNM2025: 81757'],
