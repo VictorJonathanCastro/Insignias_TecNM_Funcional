@@ -509,6 +509,40 @@ class CargaMasivaExcel {
         }
         $procesados = 0;
         
+        // Detectar si insigniasotorgadas tiene Id_Insignia y Descripcion (para misma lógica que registro 1 por 1)
+        $col_id_insignia = null;
+        $col_descripcion = null;
+        $res_cols = $this->conexion->query("SHOW COLUMNS FROM insigniasotorgadas");
+        if ($res_cols) {
+            while ($c = $res_cols->fetch_assoc()) {
+                $f = $c['Field'] ?? '';
+                if (strcasecmp($f, 'Id_Insignia') === 0) {
+                    $col_id_insignia = $f;
+                }
+                if (strcasecmp($f, 'Descripcion') === 0) {
+                    $col_descripcion = $f;
+                }
+            }
+        }
+        // Si no existen, intentar agregar columnas para que la descripción de Insignias Maestra se guarde
+        if ($col_id_insignia === null) {
+            if (@$this->conexion->query("ALTER TABLE insigniasotorgadas ADD COLUMN Id_Insignia INT NULL DEFAULT NULL AFTER Fecha_Emision")) {
+                $col_id_insignia = 'Id_Insignia';
+                $this->exitos[] = "Se agregó la columna Id_Insignia a insigniasotorgadas para vincular con Insignias Maestra.";
+            }
+        }
+        if ($col_descripcion === null) {
+            if (@$this->conexion->query("ALTER TABLE insigniasotorgadas ADD COLUMN Descripcion TEXT NULL DEFAULT NULL AFTER Id_Insignia")) {
+                $col_descripcion = 'Descripcion';
+                $this->exitos[] = "Se agregó la columna Descripcion a insigniasotorgadas para la descripción de Insignias Maestra.";
+            } elseif ($col_descripcion === null && $col_id_insignia !== null) {
+                if (@$this->conexion->query("ALTER TABLE insigniasotorgadas ADD COLUMN Descripcion TEXT NULL DEFAULT NULL AFTER Fecha_Emision")) {
+                    $col_descripcion = 'Descripcion';
+                    $this->exitos[] = "Se agregó la columna Descripcion a insigniasotorgadas.";
+                }
+            }
+        }
+        
         // Si tenemos acceso al spreadsheet, usarlo para leer fechas correctamente
         $sheet = null;
         if ($spreadsheet !== null && $sheet_index !== null) {
@@ -570,23 +604,37 @@ class CargaMasivaExcel {
                 $datos = $this->validarDatosInsigniaOtorgada($row, $headers, $fila + 2);
                 if (!$datos) continue;
                 
-                // Insertar en base de datos (tabla insigniasotorgadas)
-                $sql = "INSERT INTO insigniasotorgadas 
-                        (Codigo_Insignia, Destinatario, Periodo_Emision, Responsable_Emision, Estatus, Fecha_Emision) 
-                        VALUES (?, ?, ?, ?, ?, ?)";
-                
-                $stmt = $this->conexion->prepare($sql);
-                if (!$stmt) {
-                    throw new Exception("Error al preparar consulta de insignia otorgada: " . $this->conexion->error);
-                }
-                $stmt->bind_param("siiiss", 
+                // Insertar en base de datos (tabla insigniasotorgadas); incluir Id_Insignia y Descripcion si existen columnas
+                $campos = ['Codigo_Insignia', 'Destinatario', 'Periodo_Emision', 'Responsable_Emision', 'Estatus', 'Fecha_Emision'];
+                $placeholders = ['?', '?', '?', '?', '?', '?'];
+                $tipos = 'siiiss';
+                $params = [
                     $datos['Codigo_Insignia'],
                     $datos['Destinatario'],
                     $datos['Periodo_Emision'],
                     $datos['Responsable_Emision'],
                     $datos['Estatus'],
                     $datos['Fecha_Emision']
-                );
+                ];
+                if ($col_id_insignia !== null) {
+                    $campos[] = $col_id_insignia;
+                    $placeholders[] = '?';
+                    $tipos .= 'i';
+                    $params[] = $datos['Id_Insignia'] ?? null;
+                }
+                if ($col_descripcion !== null) {
+                    $campos[] = $col_descripcion;
+                    $placeholders[] = '?';
+                    $tipos .= 's';
+                    $params[] = isset($datos['Descripcion_maestra']) && $datos['Descripcion_maestra'] !== '' ? $datos['Descripcion_maestra'] : null;
+                }
+                $sql = "INSERT INTO insigniasotorgadas (" . implode(', ', $campos) . ") VALUES (" . implode(', ', $placeholders) . ")";
+                
+                $stmt = $this->conexion->prepare($sql);
+                if (!$stmt) {
+                    throw new Exception("Error al preparar consulta de insignia otorgada: " . $this->conexion->error);
+                }
+                $stmt->bind_param($tipos, ...$params);
                 
                 if ($stmt->execute()) {
                     $insignia_id = $this->conexion->insert_id;
@@ -1402,6 +1450,38 @@ class CargaMasivaExcel {
             $codigo_insignia = trim($row[$idx_cod] ?? '');
         }
         $datos['Codigo_Insignia'] = $codigo_insignia;
+        
+        // Id_Insignia y Descripcion desde Insignias Maestra (T_insignias) - misma lógica que registro 1 por 1
+        $datos['Id_Insignia'] = null;
+        $datos['Descripcion_maestra'] = null;
+        $alias_id_insignia = ['id_insignia', 'id insignia', 'insignia_id', 'id_insignia_maestra'];
+        $idx_id_ins = $this->buscarColumnaPorAlias($columnas, $alias_id_insignia);
+        if ($idx_id_ins !== null && isset($row[$idx_id_ins]) && trim((string)($row[$idx_id_ins] ?? '')) !== '') {
+            $valor_id_ins = trim((string)$row[$idx_id_ins]);
+            if (is_numeric($valor_id_ins)) {
+                $id_insignia_int = (int) $valor_id_ins;
+                $tabla_t_insignias = $this->conexion->query("SHOW TABLES LIKE 'T_insignias'");
+                if ($tabla_t_insignias && $tabla_t_insignias->num_rows > 0) {
+                    $stmt_ti = $this->conexion->prepare("SELECT id, Descripcion FROM T_insignias WHERE id = ? LIMIT 1");
+                    if ($stmt_ti) {
+                        $stmt_ti->bind_param("i", $id_insignia_int);
+                        $stmt_ti->execute();
+                        $res_ti = $stmt_ti->get_result();
+                        if ($res_ti && $res_ti->num_rows > 0) {
+                            $row_ti = $res_ti->fetch_assoc();
+                            $datos['Id_Insignia'] = (int) $row_ti['id'];
+                            $datos['Descripcion_maestra'] = trim((string)($row_ti['Descripcion'] ?? ''));
+                            if ($datos['Descripcion_maestra'] !== '') {
+                                $this->exitos[] = "Fila $fila: Descripción tomada de Insignias Maestra (Id_Insignia: {$datos['Id_Insignia']})";
+                            }
+                        } else {
+                            $this->errores[] = "Fila $fila: Id_Insignia $id_insignia_int no existe en T_insignias. Se ignora; la descripción se obtendrá por código.";
+                        }
+                        $stmt_ti->close();
+                    }
+                }
+            }
+        }
         
         // Validar fecha - aceptar múltiples formatos y corregir errores comunes
         $fecha_valida = false;

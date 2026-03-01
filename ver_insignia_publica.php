@@ -32,15 +32,23 @@ try {
         $tiene_nombre_insignia = ($check_nombre_tipo && $check_nombre_tipo->num_rows > 0);
         $campo_nombre_tipo = $tiene_nombre_insignia ? 'Nombre_Insignia' : 'Nombre_ins';
         
-        $sql = "
-            SELECT 
-                io.ID_otorgada as id,
-                io.Codigo_Insignia as codigo,
-                io.Fecha_Emision as fecha_emision,
-                d.Nombre_Completo as destinatario,
-                d.Curp as curp,
-                d.Matricula as matricula,
-                CASE 
+        // Si insigniasotorgadas tiene Id_Insignia, usar Insignias Maestra para descripción y nombre (igual que registro 1 por 1)
+        $tiene_io_id_insignia = false;
+        $tiene_io_descripcion = false;
+        $res_io_cols = $conexion->query("SHOW COLUMNS FROM insigniasotorgadas");
+        if ($res_io_cols) {
+            while ($col = $res_io_cols->fetch_assoc()) {
+                $fn = $col['Field'] ?? '';
+                if (strcasecmp($fn, 'Id_Insignia') === 0) {
+                    $tiene_io_id_insignia = true;
+                }
+                if (strcasecmp($fn, 'Descripcion') === 0) {
+                    $tiene_io_descripcion = true;
+                }
+            }
+        }
+        $join_maestra = '';
+        $sel_nombre = "CASE 
                     WHEN io.Codigo_Insignia LIKE '%ART%' THEN 'Embajador del Arte'
                     WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Embajador del Deporte'
                     WHEN io.Codigo_Insignia LIKE '%TAL%' THEN 'Talento Científico'
@@ -49,14 +57,34 @@ try {
                     WHEN io.Codigo_Insignia LIKE '%FOR%' THEN 'Formación y Actualización'
                     WHEN io.Codigo_Insignia LIKE '%MOV%' THEN 'Movilidad e Intercambio'
                     ELSE 'Insignia TecNM'
-                END as nombre_insignia,
+                END";
+        $sel_desc = "COALESCE(ti.Descripcion, 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.')";
+        $order_extra = "ORDER BY ti.Fecha_Creacion DESC";
+        if ($tiene_io_id_insignia) {
+            $join_maestra = " LEFT JOIN T_insignias ti_maestra ON ti_maestra.id = io.Id_Insignia";
+            $sel_nombre = "COALESCE(ti_maestra.Programa, ti_maestra.Nombre_gen_ins, " . $sel_nombre . ")";
+            $sel_desc = "COALESCE(" . ($tiene_io_descripcion ? "NULLIF(TRIM(io.Descripcion), ''), " : "") . "ti_maestra.Descripcion, ti.Descripcion, 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.')";
+            $order_extra = "ORDER BY ti_maestra.id DESC, ti.Fecha_Creacion DESC";
+        } elseif ($tiene_io_descripcion) {
+            $sel_desc = "COALESCE(NULLIF(TRIM(io.Descripcion), ''), ti.Descripcion, 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.')";
+        }
+        
+        $sql = "
+            SELECT 
+                io.ID_otorgada as id,
+                io.Codigo_Insignia as codigo,
+                io.Fecha_Emision as fecha_emision,
+                d.Nombre_Completo as destinatario,
+                d.Curp as curp,
+                d.Matricula as matricula,
+                " . $sel_nombre . " as nombre_insignia,
                 CASE 
                     WHEN io.Codigo_Insignia LIKE '%EMB%' THEN 'Desarrollo Personal'
                     WHEN io.Codigo_Insignia LIKE '%TAL%' OR io.Codigo_Insignia LIKE '%INN%' OR io.Codigo_Insignia LIKE '%FOR%' THEN 'Desarrollo Académico'
                     WHEN io.Codigo_Insignia LIKE '%ART%' OR io.Codigo_Insignia LIKE '%SOC%' OR io.Codigo_Insignia LIKE '%MOV%' THEN 'Formación Integral'
                     ELSE 'Formación Integral'
                 END as categoria,
-                COALESCE(ti.Descripcion, 'Este reconocimiento se otorga por su destacada participación y compromiso con los valores del Tecnológico Nacional de México.') as descripcion,
+                " . $sel_desc . " as descripcion,
                 COALESCE(ti.Criterio, 'Cumplimiento de los criterios establecidos para esta insignia.') as criterios,
                 COALESCE(re.Nombre_Completo, 'Sistema TecNM') as responsable,
                 COALESCE(re.Cargo, 'RESPONSABLE DE EMISIÓN') as cargo_responsable,
@@ -68,6 +96,7 @@ try {
             FROM insigniasotorgadas io
             LEFT JOIN destinatario d ON io.Destinatario = d." . $campo_id_destinatario . "
             LEFT JOIN responsable_emision re ON io.Responsable_Emision = re." . $campo_id_responsable . "
+            " . $join_maestra . "
             LEFT JOIN tipo_insignia tin ON (
                 (io.Codigo_Insignia LIKE '%ART%' AND tin." . $campo_nombre_tipo . " LIKE '%Arte%')
                 OR (io.Codigo_Insignia LIKE '%EMB%' AND tin." . $campo_nombre_tipo . " LIKE '%Deporte%')
@@ -79,7 +108,7 @@ try {
             )
             LEFT JOIN T_insignias ti ON ti.Tipo_Insignia = tin.id
             WHERE io.Codigo_Insignia = ?
-            ORDER BY ti.Fecha_Creacion DESC
+            " . $order_extra . "
             LIMIT 1
         ";
     } elseif ($usar_tabla_t) {
